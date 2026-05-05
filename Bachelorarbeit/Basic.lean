@@ -2,6 +2,7 @@ import Mathlib.Topology.CWComplex.Classical.Basic
 import Mathlib.Topology.CWComplex.Classical.Subcomplex
 import Mathlib.Topology.Constructions.SumProd
 import Mathlib.Analysis.InnerProductSpace.PiL2
+import Mathlib.Analysis.Convex.GaugeRescale
 
 noncomputable section
 set_option linter.style.longLine false
@@ -231,39 +232,8 @@ Prop 2.28
 ∀ m ≥ 0, the pair (D^m , ∂D^m) has the homotopy extension property
 -/
 open Metric
-
-lemma zweizweiacht : ∀ (m : ℕ), m ≥ 0 → HEP_neu (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) (Metric.sphere ⟨0, by simp⟩ 1):= by
-  intro m hm Y hY C f H hf_cont hf_mapsto hH_cont hH_mapsto hfH_agree
-  let h : EuclideanSpace ℝ (Fin m) → Y := fun p =>
-    if hp : norm p ≤ 1 then f ⟨p, by simp[hp]⟩
-    else H (⟨(‖p‖⁻¹ : ℝ) • p, by apply inv_norm_smul_mem_unitClosedBall⟩, norm p - 1)
-  let H' : (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) × ℝ → Y := fun p => h ((1 + p.2) • p.1)
-  use H'
-  have domain_union : Metric.closedBall (0 :  EuclideanSpace ℝ (Fin m)) 2 = Metric.closedBall 0 1 ∪ {p : EuclideanSpace ℝ (Fin m) | 1 ≤ dist 0 p ∧ dist 0 p ≤ 2} := by
-    ext x
-    simp only [Set.mem_union, mem_closedBall, dist_zero_right, dist_zero, Set.mem_setOf_eq]
-    grind
-  have sphere_H' : ∀ (a : (Metric.sphere ⟨(0 : EuclideanSpace ℝ (Fin m)), Metric.mem_closedBall_self zero_le_one⟩ 1)) (t : (Set.Icc 0 1)), H (a, t) = H' (a.val, t.val) := by
-    sorry
-  --have sphere_h : ∀ (a : EuclideanSpace ℝ (Fin m)) (t : (Set.Icc 0 1)), (ha : norm ((1+t) • a) = 1 ) → h (a, by simp[ha] ) = f
-
-  refine ⟨?_, ?_, ?_, ?_⟩
-  · sorry
-  · unfold H' h
-    intro x hx
-    by_cases hp : ‖(1 + x.2) • x.1.val‖ ≤ 1
-    · simp only [hp, reduceDIte]
-      exact Set.mem_preimage.mp (hf_mapsto trivial)
-    · simp[hp]
-
-
-      sorry
-  · intro x
-    simp [H', h, mem_closedBall_zero_iff.mp x.prop]
-  · exact sphere_H'
-
-
-lemma zweizweiacht' : ∀ (m : ℕ), m ≥ 0 → HEP_neu (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) (Metric.sphere ⟨0, by simp⟩ 1):= by
+lemma zweizweiacht' : ∀ (m : ℕ), m ≥ 0 →
+    HEP_neu (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) (Metric.sphere ⟨0, by simp⟩ 1):= by
   intro m hm Y hY C f H hf_cont hf_mapsto hH_cont hH_mapsto hfH_agree
   let h : EuclideanSpace ℝ (Fin m) → Y := fun p =>
     if hp : norm p ≤ 1 then f ⟨p, by simp[hp]⟩
@@ -282,18 +252,19 @@ lemma zweizweiacht' : ∀ (m : ℕ), m ≥ 0 → HEP_neu (Metric.closedBall (0 :
       ext x
       simp [Function.comp_apply, Subtype.coe_eta, mem_closedBall_zero_iff.1 x.prop ]
     · rw [continuousOn_iff_continuous_restrict, Set.restrict_eq, ← continuousOn_univ]
-      -- have : ContinuousOn (fun (q : {(p : EuclideanSpace ℝ (Fin m))| 1 ≤ dist 0 p ∧ dist 0 p ≤ 2}) ↦ H ⟨⟨ (‖q.1‖⁻¹ : ℝ) • q, by sorry ⟩, norm q -1⟩ ) {p | 1 ≤ dist 0 p ∧ dist 0 p ≤ 2} := by sorry
       let G : {(p : EuclideanSpace ℝ (Fin m))| 1 ≤ dist 0 p ∧ dist 0 p ≤ 2} → Y := fun p =>
         H (⟨(‖p.val‖⁻¹ : ℝ) • p, by apply inv_norm_smul_mem_unitClosedBall⟩, norm p.val - 1)
       have hG_cont : ContinuousOn G Set.univ := by
         unfold G
-        apply ContinuousOn.comp' hH_cont ?_ (?_)
+        apply hH_cont.comp'  ?_ (?_)
         · simp only [Set.coe_setOf, Set.mem_setOf_eq, continuousOn_univ, continuous_prodMk]
           refine ⟨?_, Continuous.fun_add (by fun_prop) (by fun_prop) ⟩
-          rw [continuous_iff_continuousAt]
-          intro x x_set x_nbhd
-          
-          sorry
+          refine Continuous.subtype_mk ?_ _
+          refine (continuous_subtype_val.norm.inv₀ ?_).smul continuous_subtype_val
+          intro a
+          have := a.prop.1
+          rw [← dist_zero_left]
+          grind
         · intro a ha
           constructor
           · simp only [Set.mem_setOf_eq, mem_sphere, Subtype.dist_eq, dist_zero_right]
@@ -323,7 +294,7 @@ lemma zweizweiacht' : ∀ (m : ℕ), m ≥ 0 → HEP_neu (Metric.closedBall (0 :
           have := x.prop.1
           simp only [Set.mem_setOf_eq, dist_eq_norm_vsub, vsub_eq_sub, zero_sub, norm_neg] at this
           exact this
-        simp[this,G]
+        simp[this, G]
     · simp only [dist_zero]
       rw [Set.setOf_and]
       refine IsClosed.inter ?_ ?_
@@ -384,14 +355,6 @@ lemma zweizweiacht' : ∀ (m : ℕ), m ≥ 0 → HEP_neu (Metric.closedBall (0 :
     unfold H' h
     have norm_a: ‖a.1.1‖ = 1 := by
         grind [mem_sphere, Subtype.dist_eq, dist_zero_right a.1.1]
-    have : ‖(1 + t.val) • a.val.1‖ ≥ 1 := by
-      rw [norm_smul_of_nonneg ?_ a.1.1]
-      · grw[← t.prop.1]
-        simp only [add_zero, one_mul, ge_iff_le]
-        apply Eq.ge
-        exact norm_a
-      · grw[← t.prop.1]
-        norm_num
     by_cases hp : ‖(1 + t.1) • a.1.val‖ = 1
     · simp [hp]
       have Hf := (hfH_agree  ⟨a.1, by
@@ -406,7 +369,14 @@ lemma zweizweiacht' : ∀ (m : ℕ), m ≥ 0 → HEP_neu (Metric.closedBall (0 :
     · have : ¬ ‖(1 + t.val) • a.val.1‖ ≤ 1 := by
         rw [not_le]
         rw [← ne_eq, ne_comm] at hp
-        exact lt_of_le_of_ne this hp
+        refine lt_of_le_of_ne ?_ hp
+        rw [norm_smul_of_nonneg ?_ a.1.1]
+        · grw[← t.prop.1]
+          simp only [add_zero, one_mul]
+          apply Eq.ge
+          exact norm_a
+        · grw[← t.prop.1]
+          norm_num
       simp only [this, reduceDIte]
       congrm H ( ?_ , ?_)
       · refine SetCoe.ext ?_
@@ -417,5 +387,37 @@ lemma zweizweiacht' : ∀ (m : ℕ), m ≥ 0 → HEP_neu (Metric.closedBall (0 :
         norm_num
 
 
---------------------------------
---------------------------------
+lemma homeomorph_HEP {X Y: Type u} [TopologicalSpace X] [TopologicalSpace Y]
+    (f : X → Y) (A : Set X) : HEP_neu X A → IsHomeomorph f → HEP_neu Y (f '' A) := by
+  sorry
+
+lemma HEP_cube : ∀ (m : ℕ), m ≥ 0 →
+    HEP_neu (Metric.closedBall (0 : (Fin m → ℝ)) 1) (Metric.sphere ⟨0, by simp⟩ 1) := by
+  intro m hm
+  let f : (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) → (Metric.closedBall (0 : (Fin m → ℝ)) 1) := fun
+    p ↦ ⟨(@WithLp.ofLp 2 _ (p.1)) , by ----> want the 2 to be infinity, so we get the maximum norm
+      sorry⟩
+  have f_sphere : f '' (Metric.sphere ⟨0, by simp⟩ 1) = (Metric.sphere ⟨0, by simp⟩ 1) := by sorry
+  rw[← f_sphere]
+  apply (homeomorph_HEP f (Metric.sphere ⟨0, by simp⟩ 1) (zweizweiacht' m hm)) -- warum kann ich es hier trotz L2-norm anwenden?
+  constructor
+  · sorry
+  · sorry
+  · sorry
+
+
+#check IsometryEquiv.image_closedBall
+  -- haben aber keine Isometry
+#check exists_homeomorph_image_interior_closure_frontier_eq_unitBall
+  -- wenn es einfacher ist eine andere kompakte bounded Menge zu bekommen,
+  -- dann kann ich innerhalb eines Raum homeomorph zum unit Ball werden
+
+
+
+/-
+ have h_interior : (interior (Metric.closedBall (0 : (Fin m → ℝ)) 1)).Nonempty := by
+    sorry
+  obtain ⟨w, hw_int, hw_clos, hw_front⟩ := exists_homeomorph_image_interior_closure_frontier_eq_unitBall (convex_closedBall 0 1) h_interior isBounded_closedBall
+
+-/
+-- (Metric.sphere ⟨0, by simp⟩ 1)

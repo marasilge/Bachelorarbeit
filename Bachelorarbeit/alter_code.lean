@@ -360,3 +360,33 @@ lemma zweizweisieben {X : Type u} [TopologicalSpace X] {A : Set X} (hA1 : IsClos
     intro Y hY g hg
     obtain ⟨G, hG⟩ := (zweizweisechs hAB h_choose).2 h Y (by sorry) g hg --> Y in zweizweifuenf_ruek muss nonempty sein
     use G -/
+
+lemma zweizweiacht : ∀ (m : ℕ), m ≥ 0 → HEP_neu (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) (Metric.sphere ⟨0, by simp⟩ 1):= by
+  intro m hm Y hY C f H hf_cont hf_mapsto hH_cont hH_mapsto hfH_agree
+  let h : EuclideanSpace ℝ (Fin m) → Y := fun p =>
+    if hp : norm p ≤ 1 then f ⟨p, by simp[hp]⟩
+    else H (⟨(‖p‖⁻¹ : ℝ) • p, by apply inv_norm_smul_mem_unitClosedBall⟩, norm p - 1)
+  let H' : (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) × ℝ → Y := fun p => h ((1 + p.2) • p.1)
+  use H'
+  have domain_union : Metric.closedBall (0 :  EuclideanSpace ℝ (Fin m)) 2 = Metric.closedBall 0 1 ∪ {p : EuclideanSpace ℝ (Fin m) | 1 ≤ dist 0 p ∧ dist 0 p ≤ 2} := by
+    ext x
+    simp only [Set.mem_union, mem_closedBall, dist_zero_right, dist_zero, Set.mem_setOf_eq]
+    grind
+  have sphere_H' : ∀ (a : (Metric.sphere ⟨(0 : EuclideanSpace ℝ (Fin m)), Metric.mem_closedBall_self zero_le_one⟩ 1)) (t : (Set.Icc 0 1)), H (a, t) = H' (a.val, t.val) := by
+    sorry
+  --have sphere_h : ∀ (a : EuclideanSpace ℝ (Fin m)) (t : (Set.Icc 0 1)), (ha : norm ((1+t) • a) = 1 ) → h (a, by simp[ha] ) = f
+
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · sorry
+  · unfold H' h
+    intro x hx
+    by_cases hp : ‖(1 + x.2) • x.1.val‖ ≤ 1
+    · simp only [hp, reduceDIte]
+      exact Set.mem_preimage.mp (hf_mapsto trivial)
+    · simp[hp]
+
+
+      sorry
+  · intro x
+    simp [H', h, mem_closedBall_zero_iff.mp x.prop]
+  · exact sphere_H'
