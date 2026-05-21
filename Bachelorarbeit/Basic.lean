@@ -404,15 +404,10 @@ lemma zweizweiacht' : ∀ (m : ℕ), m ≥ 0 →
           simp [h_neg] at hp
         · intro h_neg
           simp [h_neg] at hp
-      · rw [Set.sub_mem_Icc_iff_left]
-        simp only [zero_add, Set.mem_Icc]
-        constructor
-        · grind
-        · rw [norm_smul_of_nonneg (by grind) x.1.1]
-          grw[hx.2]
-          simp only [pos_add_self_iff, zero_lt_one, mul_le_iff_le_one_right]
-          rw [← mem_closedBall_zero_iff]
-          exact Subtype.coe_prop x.1
+      · refine ⟨by grind, ?_ ⟩
+        grw [tsub_le_iff_right, norm_smul_of_nonneg (by grind) x.1.1, hx.2]
+        simp only [ pos_add_self_iff, zero_lt_one, mul_le_iff_le_one_right]
+        exact mem_closedBall_zero_iff.1 (Subtype.coe_prop x.1)
   · -- agree f H'
     intro x
     simp [H', h, mem_closedBall_zero_iff.mp x.prop]
@@ -423,10 +418,7 @@ lemma zweizweiacht' : ∀ (m : ℕ), m ≥ 0 →
         grind [mem_sphere, Subtype.dist_eq, dist_zero_right a.1.1]
     by_cases hp : ‖(1 + t.1) • a.1.val‖ = 1
     · simp [hp]
-      have Hf := (hfH_agree  ⟨a.1, by
-        rw [mem_sphere, Subtype.dist_eq]
-        simp[norm_a]
-        ⟩).symm
+      have Hf := (hfH_agree ⟨a.1, by rw [mem_sphere, Subtype.dist_eq, dist_zero_right, norm_a]⟩).symm
       have : t = 0 := by
         simp only [norm_smul_of_nonneg (add_nonneg zero_le_one t.2.1), norm_a, mul_one, add_eq_left,
           Set.Icc.coe_eq_zero] at hp
@@ -512,34 +504,36 @@ lemma homeomorph_HEP {X Y : Type u} [TopologicalSpace X] [TopologicalSpace Y]
 
 -- partial homeomorph -> Hannah
 
-def fun_euclid_max {m : ℕ} : EuclideanSpace ℝ (Fin m) → (Fin m → ℝ) := fun p ↦ p
-def fun_max_euclid {m : ℕ} : (Fin m → ℝ) → EuclideanSpace ℝ (Fin m) := fun p ↦ { ofLp := p }
+variable {m : ℕ}
 
-lemma left_inverse_euclid_max {m : ℕ} : Function.LeftInverse (@ fun_euclid_max m) (@ fun_max_euclid m )  := by
+def fun_euclid_max : EuclideanSpace ℝ (Fin m) → (Fin m → ℝ) := fun p ↦ p
+def fun_max_euclid : (Fin m → ℝ) → EuclideanSpace ℝ (Fin m) := fun p ↦ { ofLp := p }
+
+lemma left_inverse_euclid_max : Function.LeftInverse (@ fun_euclid_max m) (@ fun_max_euclid m )  := by
   intro x
   simp[fun_euclid_max, fun_max_euclid]
 
-lemma right_inverse_euclid_max {m : ℕ} : Function.RightInverse (@ fun_euclid_max m) (@ fun_max_euclid m )  := by
+lemma right_inverse_euclid_max : Function.RightInverse (@ fun_euclid_max m) (@ fun_max_euclid m )  := by
   intro x
   simp[fun_euclid_max, fun_max_euclid]
 
-lemma bij_euclid_max {m : ℕ} : Function.Bijective (@fun_euclid_max m) := by
+lemma bij_euclid_max : Function.Bijective (@fun_euclid_max m) := by
   refine Function.bijective_iff_has_inverse.mpr ?_
   use fun_max_euclid
   refine ⟨right_inverse_euclid_max , left_inverse_euclid_max⟩
 
-lemma IsOpen_euclid_max {m : ℕ} : IsOpenMap (@fun_euclid_max m) := by
-  refine @IsOpenMap.of_inverse _ _ _ _ _ (@fun_max_euclid m) ?_ left_inverse_euclid_max right_inverse_euclid_max
+lemma IsOpen_euclid_max : IsOpenMap (@fun_euclid_max m) := by
+  refine IsOpenMap.of_inverse ?_ left_inverse_euclid_max right_inverse_euclid_max
   unfold fun_max_euclid
   fun_prop
 
-lemma Continuous_euclid_max {m : ℕ} : Continuous (@fun_euclid_max m) := by
+lemma Continuous_euclid_max : Continuous (@fun_euclid_max m) := by
   fun_prop
 
-lemma homeo_euclid_max {m : ℕ} : IsHomeomorph (@fun_euclid_max m) := by
+lemma homeo_euclid_max : IsHomeomorph (@fun_euclid_max m) := by
   refine ⟨ Continuous_euclid_max, IsOpen_euclid_max , bij_euclid_max ⟩
 
-lemma closed_embedding_euclid_max {m : ℕ} : Topology.IsClosedEmbedding (@fun_euclid_max m) := by
+lemma closed_embedding_euclid_max : Topology.IsClosedEmbedding (@fun_euclid_max m) := by
   refine ⟨?_, ?_ ⟩
   · refine ⟨ { eq_induced := rfl }, ?_⟩
     refine Function.HasLeftInverse.injective ?_
@@ -555,16 +549,16 @@ lemma closed_embedding_euclid_max {m : ℕ} : Topology.IsClosedEmbedding (@fun_e
     rw[this]
     exact closure_subset_iff_isClosed.mp fun ⦃a⦄ a_1 ↦ trivial
 
-lemma closure_hG_cosed {m : ℕ} : closure (@fun_euclid_max m '' closedBall 0 1) = (fun_euclid_max '' closedBall 0 1) := by
+lemma closure_hG_cosed : closure (@fun_euclid_max m '' closedBall 0 1) = (fun_euclid_max '' closedBall 0 1) := by
     refine closure_eq_iff_isClosed.mpr ?_
     exact  (Topology.IsClosedEmbedding.isClosed_iff_image_isClosed closed_embedding_euclid_max).mp isClosed_closedBall
 
-lemma interior_hG {m : ℕ} : interior (@fun_euclid_max m '' closedBall 0 1) = fun_euclid_max '' (interior (closedBall 0 1)) := by
-  obtain ⟨a, ha⟩  := isHomeomorph_iff_exists_homeomorph.1  (@homeo_euclid_max m)
+lemma interior_hG : interior (@fun_euclid_max m '' closedBall 0 1) = fun_euclid_max '' (interior (closedBall 0 1)) := by
+  obtain ⟨a, ha⟩  := isHomeomorph_iff_exists_homeomorph.1 (@homeo_euclid_max m)
   rw[← ha]
-  exact (Homeomorph.image_interior a (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) ).symm
+  exact (Homeomorph.image_interior a (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1)).symm
 
-lemma boundary_hG {m : ℕ} : frontier (@fun_euclid_max m '' closedBall 0 1) = fun_euclid_max '' (frontier (closedBall 0 1)) := by
+lemma boundary_hG : frontier (@fun_euclid_max m '' closedBall 0 1) = fun_euclid_max '' (frontier (closedBall 0 1)) := by
   rw [show
       frontier (fun_euclid_max '' closedBall 0 1) =
         closure (fun_euclid_max '' closedBall 0 1) \ interior (fun_euclid_max '' closedBall 0 1)
@@ -573,7 +567,7 @@ lemma boundary_hG {m : ℕ} : frontier (@fun_euclid_max m '' closedBall 0 1) = f
     ← IsClosed.frontier_eq isClosed_closedBall]
 
 
-lemma euclid_max_MapsTo_ball {m : ℕ} : (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1).MapsTo  fun_euclid_max (closedBall 0 1) := by
+lemma euclid_max_MapsTo_ball : (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1).MapsTo  fun_euclid_max (closedBall 0 1) := by
   intro x hx
   refine mem_closedBall_zero_iff.mpr ?_
   rw [pi_norm_le_iff_of_nonneg zero_le_one]
@@ -597,11 +591,11 @@ lemma euclid_max_MapsTo_ball {m : ℕ} : (closedBall (0 : EuclideanSpace ℝ (Fi
   simp
 
 
-lemma convex_euclid_to_max_ball {m : ℕ} : Convex ℝ (fun_euclid_max '' (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1)) := by
+lemma convex_euclid_to_max_ball : Convex ℝ (fun_euclid_max '' (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1)) := by
   refine Convex.is_linear_image (convex_closedBall 0 1) ?_
   exact { map_add := fun x ↦ congrFun rfl, map_smul := fun c ↦ congrFun rfl }
 
-lemma nonempty_euclid_to_max_ball {m : ℕ} : (interior (fun_euclid_max '' (closedBall (0 :EuclideanSpace ℝ (Fin m)) 1))).Nonempty := by
+lemma nonempty_euclid_to_max_ball : (interior (fun_euclid_max '' (closedBall (0 :EuclideanSpace ℝ (Fin m)) 1))).Nonempty := by
   use 0
   rw [mem_interior]
   use fun_euclid_max '' ball 0 1
@@ -609,7 +603,7 @@ lemma nonempty_euclid_to_max_ball {m : ℕ} : (interior (fun_euclid_max '' (clos
   use 0
   refine ⟨mem_ball_self zero_lt_one, by rfl ⟩
 
-lemma bounded_euclid_to_max_ball {m : ℕ} : Bornology.IsBounded (fun_euclid_max '' (closedBall (0 :EuclideanSpace ℝ (Fin m)) 1)) :=
+lemma bounded_euclid_to_max_ball : Bornology.IsBounded (fun_euclid_max '' (closedBall (0 :EuclideanSpace ℝ (Fin m)) 1)) :=
   Bornology.isBounded_induced.mp isBounded_closedBall
 
 
@@ -617,7 +611,9 @@ lemma bounded_euclid_to_max_ball {m : ℕ} : Bornology.IsBounded (fun_euclid_max
 lemma HEP_cube : ∀ (m : ℕ), m ≥ 0 →
     HEP_neu (closedBall (0 : (Fin m → ℝ)) 1) (Metric.sphere ⟨0, by simp⟩ 1) := by
   intro m hm
-  obtain ⟨G, hG_int, hG_closed, hG_frontier⟩ := exists_homeomorph_image_interior_closure_frontier_eq_unitBall convex_euclid_to_max_ball nonempty_euclid_to_max_ball bounded_euclid_to_max_ball
+  obtain ⟨G, hG_int, hG_closed, hG_frontier⟩ :=
+    exists_homeomorph_image_interior_closure_frontier_eq_unitBall convex_euclid_to_max_ball
+    nonempty_euclid_to_max_ball bounded_euclid_to_max_ball
   let f : (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) → (closedBall (0 : (Fin m → ℝ)) 1) := fun p ↦ ⟨G (fun_euclid_max p.1), by
     rw[← hG_closed]
     simp only [Set.mem_image, EmbeddingLike.apply_eq_iff_eq, exists_eq_right]

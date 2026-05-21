@@ -2,11 +2,16 @@ import Mathlib.Topology.CWComplex.Classical.Basic
 import Mathlib.Topology.CWComplex.Classical.Subcomplex
 import Mathlib.Topology.Constructions.SumProd
 import Mathlib.Analysis.InnerProductSpace.PiL2
+import Mathlib.Analysis.Convex.GaugeRescale
+import Bachelorarbeit.HEP_definition
 
 noncomputable section
 set_option linter.style.longLine false
-open Classical  -- muss hier was hin?
 universe u
+
+open Metric
+
+
 
 def fH_agreeOn_A {X Y : Type u} [TopologicalSpace X] [TopologicalSpace Y]
     (f : X → Y) (H : X × ℝ → Y) (A : Set X) : Prop := ∀ (a : A), f a = H (a,0)
