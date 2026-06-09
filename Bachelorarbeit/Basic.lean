@@ -607,14 +607,27 @@ lemma bounded_euclid_to_max_ball : Bornology.IsBounded (fun_euclid_max '' (close
   Bornology.isBounded_induced.mp isBounded_closedBall
 
 
+def G : (Fin m → ℝ) ≃ₜ (Fin m → ℝ):= (exists_homeomorph_image_interior_closure_frontier_eq_unitBall convex_euclid_to_max_ball
+    nonempty_euclid_to_max_ball bounded_euclid_to_max_ball).choose
+
+lemma hG_int : G '' interior (fun_euclid_max '' closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) = ball 0 1 :=
+  (exists_homeomorph_image_interior_closure_frontier_eq_unitBall convex_euclid_to_max_ball
+  nonempty_euclid_to_max_ball bounded_euclid_to_max_ball).choose_spec.1
+
+lemma hg_closed : G '' closure (fun_euclid_max '' closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) = closedBall 0 1  := (exists_homeomorph_image_interior_closure_frontier_eq_unitBall convex_euclid_to_max_ball
+  nonempty_euclid_to_max_ball bounded_euclid_to_max_ball).choose_spec.2.1
+
+lemma hG_front : G '' frontier (fun_euclid_max '' closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) = sphere 0 1 := (exists_homeomorph_image_interior_closure_frontier_eq_unitBall convex_euclid_to_max_ball
+  nonempty_euclid_to_max_ball bounded_euclid_to_max_ball).choose_spec.2.2
 
 lemma HEP_cube : ∀ (m : ℕ), m ≥ 0 →
     HEP_neu (closedBall (0 : (Fin m → ℝ)) 1) (Metric.sphere ⟨0, by simp⟩ 1) := by
   intro m hm
-  obtain ⟨G, hG_int, hG_closed, hG_frontier⟩ :=
+  obtain ⟨G', hG_int, hG_closed, hG_frontier⟩ :=
     exists_homeomorph_image_interior_closure_frontier_eq_unitBall convex_euclid_to_max_ball
     nonempty_euclid_to_max_ball bounded_euclid_to_max_ball
-  let f : (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) → (closedBall (0 : (Fin m → ℝ)) 1) := fun p ↦ ⟨G (fun_euclid_max p.1), by
+  let f : (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) → (closedBall (0 : (Fin m → ℝ)) 1) :=
+    fun p ↦ ⟨G' (fun_euclid_max p.1), by
     rw[← hG_closed]
     simp only [Set.mem_image, EmbeddingLike.apply_eq_iff_eq, exists_eq_right]
     refine closure_induced.mp ?_
@@ -625,9 +638,9 @@ lemma HEP_cube : ∀ (m : ℕ), m ≥ 0 →
   rw [closure_hG_cosed ] at hG_closed
   rw [interior_hG] at hG_int
 
-  have bij_comp : Function.Bijective (G ∘ fun_euclid_max) :=
-    (EquivLike.comp_bijective fun_euclid_max G).mpr bij_euclid_max
-  have bijOn_com : Set.BijOn (G ∘ fun_euclid_max) (closedBall 0 1) (closedBall 0 1) := by
+  have bij_comp : Function.Bijective (G' ∘ fun_euclid_max) :=
+    (EquivLike.comp_bijective fun_euclid_max G').mpr bij_euclid_max
+  have bijOn_com : Set.BijOn (G' ∘ fun_euclid_max) (closedBall 0 1) (closedBall 0 1) := by
     refine Set.BijOn.mk ?_ ?_ ?_
     · rw [Set.mapsTo_iff_image_subset]
       have := (Eq.subset hG_closed)
@@ -666,7 +679,7 @@ lemma HEP_cube : ∀ (m : ℕ), m ≥ 0 →
           rw [Function.Injective.mem_set_image bij_euclid_max.injective, interior_closedBall 0 one_ne_zero, mem_ball] at a_mem
           rw [mem_sphere, Subtype.dist_eq] at ha
           exact (lt_self_iff_false 1).mp (Eq.trans_lt ha.symm a_mem)
-      have G_f_a : G (fun_euclid_max a.1) ∈ sphere 0 1 := by
+      have G_f_a : G' (fun_euclid_max a.1) ∈ sphere 0 1 := by
         rw[← hG_frontier]
         simp [f_a]
       exact mem_sphere.mpr G_f_a

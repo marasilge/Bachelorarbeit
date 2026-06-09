@@ -3,6 +3,7 @@ import Mathlib.Topology.CWComplex.Classical.Subcomplex
 import Mathlib.Topology.Constructions.SumProd
 import Mathlib.Analysis.InnerProductSpace.PiL2
 import Mathlib.Analysis.Convex.GaugeRescale
+import Mathlib.Data.Set.Subset
 
 noncomputable section
 
@@ -33,6 +34,9 @@ def HEP (X : Type u) [TopologicalSpace X] (A : Set X) : Prop :=
   {p : X × ℝ | (p.1 ∈ A) ∧ (p.2 ∈ unitInterval)}.MapsTo H rangeH'  → agreeOn_A f H A
   → ∃ (H' : X × ℝ → Y), IsHomotopyExtension H' f H A rangeH'
 
+open Set.Notation
+def HEP' {Y : Type*} [TopologicalSpace Y] (X C : Set Y) : Prop := HEP X (X ↓∩ C)
+
 -- The pair (X,X) has the HEP :
 
 example : HEP X (@Set.univ X) := by
@@ -47,6 +51,20 @@ example : HEP X (@Set.univ X) := by
   · simp only [implies_true, and_true]
     intro x
     exact hAgree ⟨x, by tauto⟩
+
+-- The pair (X, ∅ ) has the HEP:
+
+example : HEP X ∅ := by
+  intro Y hY rangeH' f H hf1 hf2 hH1 hH2 hAgree
+  let H' : X × ℝ → Y := fun (x,t) ↦ f x
+  use H'
+  refine ⟨?_, ?_ ,?_ ⟩
+  · exact Continuous.continuousOn (Continuous.fst' hf1)
+  · rw [← Set.mapsTo_univ_iff_range_subset] at hf2
+    apply Set.MapsTo.comp hf2 (by tauto)
+  · simp only [H', Subtype.forall, Set.mem_Icc, and_imp, IsEmpty.forall_iff, and_true]
+    intro x
+    tauto
 
 /-
   "Corollary 2.25" for closed:  Let A be a closed subset of a topological space X.
@@ -88,9 +106,6 @@ lemma if_HEP_then_extension :
   cases q.prop with
   | inl h0 => grind
   | inr hA => exact hG.2.2 ⟨q.val.1, hA.1⟩ ⟨ q.val.2, hA.2⟩
-
---> die haves sind alle sehr kurz. Ich habe das Gefühl es lohnt sich nicht wirklich, die aus dem
--- rauszuziehen, oder?
 
 -- Rückrichtung:
 
@@ -169,7 +184,12 @@ lemma if_extension_then_HEP (hA : IsClosed A) :
       specialize hG2 ⟨(a,t), Set.mem_setOf.mpr (Or.inr ⟨Subtype.coe_prop a, Subtype.coe_prop t⟩)⟩
       grind
 
-/-
+structure IsRetractionOn (r : X → X) (B A : Set X) : Prop where
+  continuousOn : ContinuousOn r B
+  mapsTo : B.MapsTo r A
+  fixesOn : ∀ a ∈ A, r a = a
+
+  /-
   "Lemma 2.26": A ⊆ X subspace, then TFAE:
   (i): ∀ g : A → Y, there exists an extension G : X → Y
   (ii): A is a retract of X, i.e. ∃ r: X → A s.th. r is the indentity on A
@@ -178,7 +198,7 @@ lemma if_extension_then_HEP (hA : IsClosed A) :
 lemma extension_then_retract {B : Set X} (hX : Nonempty X) :
     (∀ (Y : Type u) [TopologicalSpace Y] (C : Set Y) (g : X → Y), ContinuousOn g A → A.MapsTo g C →
     ∃ G : X → Y , ContinuousOn G B ∧ B.MapsTo G C ∧ ∀ a : A, g a = G a ) →
-    ∃ r : X → X, ContinuousOn r B ∧ B.MapsTo r A ∧ ∀ a : A, r a = a := by
+    ∃ r : X → X, IsRetractionOn r B A  := by
   classical
   intro h
   let g : X → X := fun p =>
@@ -190,17 +210,18 @@ lemma extension_then_retract {B : Set X} (hX : Nonempty X) :
   have hg_mapsAA : Set.MapsTo g A A := by
     intro a ha
     simp only [dite_eq_ite, g, ha, ↓reduceIte]
-  obtain ⟨G, hG1, hG2⟩ := h X A g hg_cont hg_mapsAA
-  exact ⟨G, hG1, hG2.1, (by intro a; grind)⟩
+  obtain ⟨G, hG1, hG2, hG3⟩ := h X A g hg_cont hg_mapsAA
+  exact ⟨G, hG1, hG2, by
+    intro a ha
+    rw[← hG3 ⟨a, ha⟩]
+    exact (Ne.dite_eq_left_iff fun h a ↦ h ha).mpr ha⟩
 
-
-lemma retract_then_extension {B : Set X} (hAB : A ⊆ B) (hX : Nonempty X) :
-    (∃ r : X → X, ContinuousOn r B ∧ B.MapsTo r A ∧ ∀ a : A, r a = a ) →
+lemma retract_then_extension {B : Set X} (hAB : A ⊆ B) (hX : Nonempty X)
+    (r : X → X) (hr : IsRetractionOn r B A) :
     ∀ (Y : Type u) [TopologicalSpace Y] (C : Set Y) (g : X → Y), ContinuousOn g A → A.MapsTo g C →
     ∃ G : X → Y , ContinuousOn G B ∧ B.MapsTo G C ∧ ∀ a : A, g a = G a := by
   classical
-  intro h Y hY C g hg hgAC
-  obtain ⟨r, hr_cont, ⟨hrBA, hr_id⟩⟩ := h
+  intro Y hY C g hg hgAC
   let G : X → Y := fun p =>
     if hp : p ∈ B then g (r p)
     else Classical.choice (Nonempty.map2 (fun a ↦ g) hX hX)
@@ -208,12 +229,13 @@ lemma retract_then_extension {B : Set X} (hAB : A ⊆ B) (hX : Nonempty X) :
   · unfold G
     simp only [dite_eq_ite, continuousOn_iff_continuous_restrict, Set.restrict_ite]
     rw [← continuousOn_iff_continuous_restrict]
-    exact ContinuousOn.comp hg hr_cont hrBA
+    exact ContinuousOn.comp hg hr.continuousOn hr.mapsTo
   · intro b hb
     simp only [dite_eq_ite, hb, ↓reduceIte, G]
-    exact hgAC (hrBA hb)
+    exact hgAC (hr.mapsTo hb)
   · intro a
-    simp [G, Set.mem_of_mem_of_subset a.prop hAB, hr_id]
+    simp [G, Set.mem_of_mem_of_subset a.prop hAB, hr.fixesOn]
+
 
 /-
 retraction criterion :
@@ -223,14 +245,10 @@ retraction criterion :
 The condition A ⊆ X closed is only needed for "→".
 -/
 
-lemma if_HEP_then_retraction {X : Type u} [TopologicalSpace X] {A : Set X} (hA : Nonempty A) :
-    HEP X A →
-    (∃ (r : X × ℝ → X × ℝ),
-    ContinuousOn r {p : X × ℝ | p.2 ∈ unitInterval} ∧
-    {p : X × ℝ | p.2 ∈ unitInterval}.MapsTo r
-    ({p : X × ℝ | p.2 = 0 ∨ (p.1 ∈ A) ∧ p.2 ∈ unitInterval}) ∧
-    ∀ a : {p : X × ℝ | p.2 = 0 ∨ (p.1 ∈ A) ∧ p.2 ∈ unitInterval}, r a = a ):= by
-  intro h_HEP
+lemma if_HEP_then_retraction {X : Type u} [TopologicalSpace X] {A : Set X} (hA : Nonempty A)
+    (h_HEP : HEP X A) : ∃ r : X × ℝ → X × ℝ, IsRetractionOn r {p : X × ℝ | p.2 ∈ unitInterval}
+    {p : X × ℝ | p.2 = 0 ∨ (p.1 ∈ A) ∧ p.2 ∈ unitInterval}
+    := by
   apply extension_then_retract
     (nonempty_prod.2 ⟨Set.Nonempty.to_type (Set.nonempty_coe_sort.mp hA), instNonemptyOfInhabited⟩)
   intro Y hY C g hg_cont hg_mapsto
@@ -238,18 +256,21 @@ lemma if_HEP_then_retraction {X : Type u} [TopologicalSpace X] {A : Set X} (hA :
   use G
 
 lemma retraction_criterion_closed (hA1 : IsClosed A) (hA2 : Nonempty A) :
-    HEP X A ↔
-    (∃ (r : X × ℝ → X × ℝ), ContinuousOn r {p : X × ℝ | p.2 ∈ unitInterval} ∧
-    {p : X × ℝ | p.2 ∈ unitInterval}.MapsTo r {p : X × ℝ | p.2 = 0 ∨ (p.1 ∈ A) ∧ p.2 ∈ unitInterval}
-    ∧ ∀ a : {p : X × ℝ | p.2 = 0 ∨ (p.1 ∈ A) ∧ p.2 ∈ unitInterval}, r a = a ):= by
+    HEP X A ↔∃ r : X × ℝ → X × ℝ, IsRetractionOn r {p : X × ℝ | p.2 ∈ unitInterval}
+    {p : X × ℝ | p.2 = 0 ∨ (p.1 ∈ A) ∧ p.2 ∈ unitInterval}:= by
   have hX : Nonempty (X × ℝ ):=
     (nonempty_prod.2 ⟨Set.Nonempty.to_type (Set.nonempty_coe_sort.mp hA2), instNonemptyOfInhabited⟩)
   refine ⟨if_HEP_then_retraction hA2 , ?_ ⟩
   intro h
   apply if_extension_then_HEP hA1
   intro Y hY C g hg1 hg2
-  obtain ⟨G, hG1, hG2, hG3⟩ := (retract_then_extension (by simp) hX) h Y C g hg1 hg2
+  obtain ⟨r, hr⟩ := h
+  obtain ⟨G, hG1, hG2, hG3⟩ := (retract_then_extension (by simp) hX) r hr Y C g hg1 hg2
   use G
+
+-- corollary:
+--lemma HEP_Discrete {X J : Type u} [TopologicalSpace X] [TopologicalSpace J] [DiscreteTopology J]
+   -- {A : Set X} (h_HEP : HEP X A) : HEP (J × X) (J × A) := by sorry
 
 
 
@@ -260,8 +281,7 @@ lemma retraction_criterion_closed (hA1 : IsClosed A) (hA2 : Nonempty A) :
 -- partial homeomorph -> Hannah
 -- Definition rausziehen (Beweis kürzer machen)
 
-
-lemma homeomorph_HEP {X Y : Type u} [TopologicalSpace X] [TopologicalSpace Y]
+lemma homeomorph_HEP {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
     (f : X → Y) (A : Set X) (hA_closed : IsClosed A) (hA_nonempty : Nonempty A) :
     HEP X A → IsHomeomorph f → HEP Y (f '' A) := by
   intro h_hep1 hf
@@ -289,17 +309,25 @@ lemma homeomorph_HEP {X Y : Type u} [TopologicalSpace X] [TopologicalSpace Y]
       obtain h1 | h2 := Set.mem_setOf.1 hx
       · exact Or.inl h1
       · exact Or.inr ⟨⟨x.1, h2.1, rfl⟩, h2.2⟩
-    exact Set.MapsTo.comp maps (Set.MapsTo.comp hr.2.1
+    exact Set.MapsTo.comp maps (Set.MapsTo.comp hr.mapsTo
       (Set.mapsTo_iff_subset_preimage.mpr fun a b ↦ b))
-  · intro b
+  · intro b hb
     unfold r'
-    rw [ hr.2.2 ⟨(f_inv b.1.1, b.1.2), ?_⟩]
+    rw [ hr.fixesOn (f_inv b.1, b.2) ?_]
     · grind
     · simp only [Set.mem_setOf_eq]
-      by_cases h : b.1.2 = 0
-      · exact Or.inl h
+      by_cases h : b.2 = 0
+      · exact Or.symm (Or.inr h)
       · right
-        have := b.prop
-        simp only [Set.mem_setOf, Set.mem_setOf_eq, h, false_or] at this
-        simp only [this.2, and_true]
-        exact (Set.mem_image_iff_of_inverse hf1 hf2).mp this.1
+        simp only [Set.mem_image, Set.mem_Icc, Set.mem_setOf_eq, h, false_or] at hb
+        simp only [Set.mem_Icc, hb.2, and_self, and_true]
+        exact (Set.mem_image_iff_of_inverse hf1 hf2).mp hb.1
+
+-- Partial Equiv, ... should be replaced by paritalHomeomorph
+lemma partialHomeomorph_HEP {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
+  (f : PartialEquiv X Y) {X1 X2 : Set X} {Y1 Y2 : Set Y} (hY : Y2 ⊆ Y1) (hX : X2 ⊆ X1)
+  (hs1 : f.source = X1) (ht : f.target = Y1) (hs2 : ContinuousOn f X1)
+(ht2 : ContinuousOn f.symm Y1) (h2 : f.toFun '' X2 = Y2)
+  (hHEP : HEP' X1 X2) : HEP' Y1 Y2 := by
+
+  sorry
