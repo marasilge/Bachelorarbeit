@@ -116,7 +116,7 @@ lemma zweizweifuenf_rueck {X : Type u} [TopologicalSpace X] {A : Set X} (hA_clos
       exact ContinuousOn.comp hH_cont (by fun_prop) (Set.mapsTo_iff_subset_preimage.mpr fun a a_1 ↦ a_1)
     · exact isClosed_eq (by fun_prop) (by fun_prop)
     · refine IsClosed.and ?_ ?_
-      · have : { x : X × ℝ | x.1 ∈ A} = {x : X | x ∈ A } ×ˢ { a : ℝ | true} := by grind
+      · have : { x : X × ℝ | x.1 ∈ A} = {x : X | x ∈ A } ×ˢ { a : ℝ | true} := by sorry
         rw[this]
         exact IsClosed.prod (isClosed_coinduced.mpr hA_closed) (isClosed_const)
       · refine IsClosed.and ?_ ?_
@@ -404,8 +404,8 @@ lemma zweizweiacht' : ∀ (m : ℕ), m ≥ 0 →
           simp [h_neg] at hp
         · intro h_neg
           simp [h_neg] at hp
-      · refine ⟨by grind, ?_ ⟩
-        grw [tsub_le_iff_right, norm_smul_of_nonneg (by grind) x.1.1, hx.2]
+      · refine ⟨by sorry, ?_ ⟩ -- ehemals grind
+        grw [tsub_le_iff_right, norm_smul_of_nonneg (by sorry) x.1.1, hx.2] -- ehemals grind
         simp only [ pos_add_self_iff, zero_lt_one, mul_le_iff_le_one_right]
         exact mem_closedBall_zero_iff.1 (Subtype.coe_prop x.1)
   · -- agree f H'
@@ -415,7 +415,8 @@ lemma zweizweiacht' : ∀ (m : ℕ), m ≥ 0 →
     intro a t
     unfold H' h
     have norm_a: ‖a.1.1‖ = 1 := by
-        grind [mem_sphere, Subtype.dist_eq, dist_zero_right a.1.1]
+       sorry
+       -- grind [mem_sphere, Subtype.dist_eq, dist_zero_right a.1.1]
     by_cases hp : ‖(1 + t.1) • a.1.val‖ = 1
     · simp [hp]
       have Hf := (hfH_agree ⟨a.1, by rw [mem_sphere, Subtype.dist_eq, dist_zero_right, norm_a]⟩).symm
@@ -531,7 +532,7 @@ lemma Continuous_euclid_max : Continuous (@fun_euclid_max m) := by
   fun_prop
 
 lemma homeo_euclid_max : IsHomeomorph (@fun_euclid_max m) := by
-  refine ⟨ Continuous_euclid_max, IsOpen_euclid_max , bij_euclid_max ⟩
+  refine ⟨Continuous_euclid_max, IsOpen_euclid_max , bij_euclid_max ⟩
 
 lemma closed_embedding_euclid_max : Topology.IsClosedEmbedding (@fun_euclid_max m) := by
   refine ⟨?_, ?_ ⟩
@@ -563,9 +564,8 @@ lemma boundary_hG : frontier (@fun_euclid_max m '' closedBall 0 1) = fun_euclid_
       frontier (fun_euclid_max '' closedBall 0 1) =
         closure (fun_euclid_max '' closedBall 0 1) \ interior (fun_euclid_max '' closedBall 0 1)
       from rfl]
-  rw[closure_hG_cosed, interior_hG, ← Set.image_diff bij_euclid_max.injective (closedBall 0 1) (interior (closedBall 0 1)),
+  rw[closure_hG_cosed, interior_hG, ← Set.image_sdiff bij_euclid_max.injective (closedBall 0 1) (interior (closedBall 0 1)),
     ← IsClosed.frontier_eq isClosed_closedBall]
-
 
 lemma euclid_max_MapsTo_ball : (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1).MapsTo  fun_euclid_max (closedBall 0 1) := by
   intro x hx
@@ -582,14 +582,13 @@ lemma euclid_max_MapsTo_ball : (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1).M
     intro j  hj
     positivity
   let ij : Finset.univ.attach := {
-    val := ⟨ i, by simp⟩
-    property := by simp }
+    val := ⟨i, Finset.mem_univ i⟩
+    property := by simp}
   have : i = ij.1 := by
     simp[ij]
   rw[this]
   apply Finset.single_le_sum hf
   simp
-
 
 lemma convex_euclid_to_max_ball : Convex ℝ (fun_euclid_max '' (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1)) := by
   refine Convex.is_linear_image (convex_closedBall 0 1) ?_
@@ -605,7 +604,6 @@ lemma nonempty_euclid_to_max_ball : (interior (fun_euclid_max '' (closedBall (0 
 
 lemma bounded_euclid_to_max_ball : Bornology.IsBounded (fun_euclid_max '' (closedBall (0 :EuclideanSpace ℝ (Fin m)) 1)) :=
   Bornology.isBounded_induced.mp isBounded_closedBall
-
 
 def G : (Fin m → ℝ) ≃ₜ (Fin m → ℝ):= (exists_homeomorph_image_interior_closure_frontier_eq_unitBall convex_euclid_to_max_ball
     nonempty_euclid_to_max_ball bounded_euclid_to_max_ball).choose
@@ -637,14 +635,14 @@ lemma HEP_cube : ∀ (m : ℕ), m ≥ 0 →
     ⟩
   rw [closure_hG_cosed ] at hG_closed
   rw [interior_hG] at hG_int
-
   have bij_comp : Function.Bijective (G' ∘ fun_euclid_max) :=
     (EquivLike.comp_bijective fun_euclid_max G').mpr bij_euclid_max
   have bijOn_com : Set.BijOn (G' ∘ fun_euclid_max) (closedBall 0 1) (closedBall 0 1) := by
     refine Set.BijOn.mk ?_ ?_ ?_
     · rw [Set.mapsTo_iff_image_subset]
       have := (Eq.subset hG_closed)
-      grind
+      --grind
+      sorry
     · exact Function.Injective.injOn (Function.Bijective.injective bij_comp)
     · rw[Set.surjOn_comp_iff]
       exact (Set.image_eq_iff_surjOn_mapsTo.1 hG_closed).1
@@ -684,9 +682,13 @@ lemma HEP_cube : ∀ (m : ℕ), m ≥ 0 →
         simp [f_a]
       exact mem_sphere.mpr G_f_a
   rw[← f_sphere]
-  apply homeomorph_HEP _ _ (isClosed_sphere) (by sorry)  (zweizweiacht' m hm)
+  apply homeomorph_HEP _ _ (isClosed_sphere) (by sorry) (zweizweiacht' m hm)
+  apply isHomeomorph_iff_continuous_bijective.2
   constructor
   · fun_prop
+  · exact bij_f
+
+/-
   · obtain ⟨ f_inv , hf1, hf2 ⟩ := (Function.bijective_iff_has_inverse).1 bij_f
     refine IsOpenMap.of_inverse ?_ hf2 hf1
     let comp' : (Fin m → ℝ) → EuclideanSpace ℝ (Fin m) := fun_max_euclid ∘ G.invFun
@@ -755,7 +757,7 @@ lemma HEP_cube : ∀ (m : ℕ), m ≥ 0 →
       sorry-/ -/
   · exact bij_f
 
-
+-/
 
 
 
@@ -812,3 +814,245 @@ lemma HEP_cube : ∀ (m : ℕ), m ≥ 0 →
 
 -/
 -- (Metric.sphere ⟨0, by simp⟩ 1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+/-
+HEP for the pair (X,A), if X is obtained from A by attaching m-cells
+-/
+--set_option trace.Meta.synthInstance true
+/-
+
+open Set.Notation
+open Topology
+open RelCWComplex
+
+variable {Y : Type*} [TopologicalSpace Y] (X C : Set Y) [RelCWComplex X C] {m : ℕ}
+  (A : Subcomplex X)
+
+
+def r_cube (hm : 0 < m) : (closedBall (0 : Fin m → ℝ) 1) × ℝ → (closedBall (0 : Fin m → ℝ) 1) × ℝ :=
+  Exists.choose ((retraction_criterion_closed isClosed_sphere (by
+    have := (@NormedSpace.sphere_nonempty (Fin m → ℝ) _ _ ?_ 0 1).2 zero_le_one
+    · use ⟨this.choose, Metric.sphere_subset_closedBall this.choose_spec⟩
+      exact mem_sphere.mpr this.choose_spec
+    · refine nontrivialTopology_iff_exists_norm_ne_zero.mpr ?_
+      simp only [ne_eq, norm_eq_zero]
+      use Pi.single ⟨0, hm⟩ 1
+      exact Function.ne_iff.mpr ⟨ ⟨0, hm⟩, by simp⟩)).1
+    (HEP_cube_boundary m (Nat.zero_le m)))
+
+lemma r_cube1 (hm : 0 < m) : ContinuousOn (r_cube hm) {p | p.2 ∈ unitInterval}:=
+  (Exists.choose_spec ((retraction_criterion_closed isClosed_sphere (by
+    have := (@NormedSpace.sphere_nonempty (Fin m → ℝ) _ _ ?_ 0 1).2 zero_le_one
+    · use ⟨this.choose, Metric.sphere_subset_closedBall this.choose_spec⟩
+      exact mem_sphere.mpr this.choose_spec
+    · refine nontrivialTopology_iff_exists_norm_ne_zero.mpr ?_
+      simp only [ne_eq, norm_eq_zero]
+      use Pi.single ⟨0, hm⟩ 1
+      exact Function.ne_iff.mpr ⟨ ⟨0, hm⟩, by simp⟩)).1
+  (HEP_cube_boundary m (Nat.zero_le m)))).1
+
+lemma r_cube2 (hm : 0 < m) : {p | p.2 ∈ unitInterval}.MapsTo (r_cube hm)
+  {p | p.2 = 0 ∨ p.1 ∈ (sphere ⟨ 0, by simp⟩  1) ∧ p.2 ∈ unitInterval} :=
+  (Exists.choose_spec ((retraction_criterion_closed isClosed_sphere (by
+    have := (@NormedSpace.sphere_nonempty (Fin m → ℝ) _ _ ?_ 0 1).2 zero_le_one
+    · use ⟨this.choose, Metric.sphere_subset_closedBall this.choose_spec⟩
+      exact mem_sphere.mpr this.choose_spec
+    · refine nontrivialTopology_iff_exists_norm_ne_zero.mpr ?_
+      simp only [ne_eq, norm_eq_zero]
+      use Pi.single ⟨0, hm⟩ 1
+      exact Function.ne_iff.mpr ⟨ ⟨0, hm⟩, by simp⟩)).1
+  (HEP_cube_boundary m (Nat.zero_le m)))).2.1
+
+
+lemma r_cube3 (hm : 0 < m) :
+  ∀ (a : {(p : (closedBall (0 : Fin m → ℝ) 1) × ℝ ) | p.2 = 0 ∨
+    p.1 ∈ (sphere (⟨0, by simp⟩ : (closedBall (0 : Fin m → ℝ) 1)) 1) ∧ p.2 ∈ unitInterval}),
+    (r_cube hm) a = a :=
+  (Exists.choose_spec ((retraction_criterion_closed isClosed_sphere (by
+    have := (@NormedSpace.sphere_nonempty (Fin m → ℝ) _ _ ?_ 0 1).2 zero_le_one
+    · use ⟨this.choose, Metric.sphere_subset_closedBall this.choose_spec⟩
+      exact mem_sphere.mpr this.choose_spec
+    · refine nontrivialTopology_iff_exists_norm_ne_zero.mpr ?_
+      simp only [ne_eq, norm_eq_zero]
+      use Pi.single ⟨0, hm⟩ 1
+      exact Function.ne_iff.mpr ⟨ ⟨0, hm⟩, by simp⟩)).1
+  (HEP_cube_boundary m (Nat.zero_le m)))).2.2
+
+
+-- universal property of the quotient:
+#check Topology.IsQuotientMap.lift
+-- iff für quotientmap
+#check Topology.isQuotientMap_iff'
+-- wann ist etwas im CW complex closed:
+#check RelCWComplex.closed
+
+
+def RestrictMap (i : cell X m) : closedBall (0 : Fin m → ℝ) 1 →
+  closedCell m i :=
+  Set.MapsTo.restrict (map m i) ( closedBall 0 1)
+    (closedCell m i) (Set.mapsTo_image (map m i) (closedBall 0 1))
+
+lemma RestrictMap_isClosedMap [T2Space Y] (i : cell X m) : IsClosedMap (RestrictMap X C i) :=
+  Continuous.isClosedMap (ContinuousOn.mapsToRestrict (continuousOn m i) _ )
+
+lemma RestrictMap_Continuous (i : cell X m) : Continuous (RestrictMap X C i) :=
+  ContinuousOn.mapsToRestrict (continuousOn m i) _
+
+lemma quotient_Restrict (i : cell X m) [T2Space Y] : IsQuotientMap (RestrictMap X C i) := by
+  have Restrict_Surj : Function.Surjective (RestrictMap X C i) :=
+            (Set.MapsTo.restrict_surjective_iff (RestrictMap._proof_1 X C i)).mpr (fun a a_1 ↦ a_1)
+  constructor
+  · exact Restrict_Surj
+  · refine Eq.symm ((fun {X} {t₁ t₂} ↦ TopologicalSpace.ext_iff_isClosed.mpr) ?_)
+    intro S
+    constructor
+    · intro hs_map
+      rw[isClosed_coinduced] at hs_map
+      rw [isClosed_induced_iff]
+      use Subtype.val ∘ (RestrictMap X C i) '' (RestrictMap X C i ⁻¹' S)
+      constructor
+      · rw[RelCWComplex.closed X _ ?_ ]
+        · constructor
+          · intro n j
+            refine IsClosed.inter ?_ (isClosed_closedCell)
+            have : IsClosedMap (Subtype.val ∘ RestrictMap X C i) := by
+              refine IsClosedMap.comp ?_ (by exact RestrictMap_isClosedMap X C i)
+              exact IsClosed.isClosedMap_subtype_val isClosed_closedCell
+            exact this (RestrictMap X C i ⁻¹' S) hs_map
+          · refine IsClosed.inter ?_ (by exact isClosedBase X)
+            have : IsClosedMap (Subtype.val ∘ RestrictMap X C i) := by
+              refine IsClosedMap.comp ?_ (by exact RestrictMap_isClosedMap X C i)
+              exact IsClosed.isClosedMap_subtype_val isClosed_closedCell
+            exact isClosed_coinduced.mpr (this (RestrictMap X C i ⁻¹' S) hs_map)
+        · refine Set.MapsTo.image_subset (Set.MapsTo.comp_right ?_ (RestrictMap X C i))
+          rw [Set.mapsTo_iff_subset_preimage,
+            Set.preimage_val_eq_univ_of_subset (closedCell_subset_complex m i)]
+          tauto
+      · ext s
+        constructor
+        · intro hs
+          rw [Set.image_comp Subtype.val (RestrictMap X C i) (RestrictMap X C i ⁻¹' S),
+            Set.image_preimage_eq_range_inter, Set.image_val_inter] at hs
+          have := hs.2
+          simp only [Set.mem_image, Subtype.exists, exists_and_right, exists_eq_right,
+            Subtype.coe_eta, Subtype.coe_prop, exists_const] at this
+          exact this
+        · intro hs
+          simp only [Set.mem_preimage, Set.mem_image]
+          use Function.surjInv Restrict_Surj s
+          simp only [Function.surjInv_eq Restrict_Surj, Function.comp_apply, and_true]
+          exact hs
+    · -- wenn im CW-complex closed, dann auch in der coinduced topology
+      intro hs
+      refine isClosed_coinduced.mpr ?_
+      refine IsClosed.preimage ?_ hs
+      exact (ContinuousOn.mapsToRestrict (continuousOn m i) _)
+/-
+Claime das folgende, ohne es jetzt beweisen zu wollen: -/
+
+lemma QuotientProductIdentityOnLocallyCompact {X Y Z : Type*} [TopologicalSpace X] [TopologicalSpace Y]
+    [TopologicalSpace Z] {f : X → Y} (hf : IsQuotientMap f) (hZ : LocallyCompactSpace Z) :
+    IsQuotientMap (Prod.map f (@id Z)) := by
+  sorry -- erstmal nicht
+
+
+
+def C_Prod (i : cell X m) :
+  C(closedBall (0 : Fin m → ℝ) 1 × unitInterval , closedCell m i × unitInterval) where
+    toFun := (Prod.map (RestrictMap X C i) id)
+    continuous_toFun := Continuous.prodMap (RestrictMap_Continuous X C i) continuous_id
+
+lemma quotient_RestrictIdentity (i : cell X m) [T2Space Y] :
+    IsQuotientMap (C_Prod X C i) :=
+  QuotientProductIdentityOnLocallyCompact (quotient_Restrict X C i)
+    (WeaklyLocallyCompactSpace.locallyCompactSpace)
+
+def gprod (i : cell X m) (hm : 0 < m) :
+  C(closedBall (0 : Fin m → ℝ) 1 × unitInterval , closedCell m i × ℝ ) where
+    toFun := fun (p,t) ↦
+      (⟨map m i (r_cube hm (p,t)).1, Set.mem_image_of_mem (map m i) (Subtype.coe_prop (r_cube hm (p, t)).1)⟩,
+      (r_cube hm (p,t)).2)
+    continuous_toFun := by
+      rw [continuous_prodMk]
+      constructor
+      ·
+        --apply ContinuousOn.comp_continuous ?_ ?_ `_
+        sorry
+      · exact continuous_snd.comp ((r_cube1 hm).comp_continuous (by fun_prop) (fun x ↦ x.2.2))
+
+
+
+lemma RestrictFactors (i : cell X m) (hm : 0 < m) :  Function.FactorsThrough (gprod X C i hm) (C_Prod X C i):= by
+  intro x y heq
+  simp only [C_Prod, ContinuousMap.coe_mk, Prod.ext_iff] at heq
+  obtain ⟨heq1, heq2⟩ := heq
+  simp only [Prod.map_fst, Prod.map_snd, id_eq] at heq2 heq1
+  simp only [gprod, Prod.mk.eta, ContinuousMap.coe_mk, Prod.mk.injEq, Subtype.mk.injEq]
+  constructor
+  · sorry
+  · sorry
+
+def retractionCell_toFun [T2Space Y] (i : cell X m) (hm : 0 < m) : C(closedCell m i × unitInterval, closedCell m i × ℝ) :=
+  (quotient_RestrictIdentity X C i).lift (gprod X C i hm) (RestrictFactors X C i hm)
+
+
+
+
+/-
+def gfun ( i : cell X m) (t : ℝ ) (hm : 0 ≤ m): Metric.closedBall (0 : Fin m → ℝ) 1 →
+  (map m i).toFun '' (Metric.closedBall 0 1) := fun p ↦
+  ⟨(map m i).toFun ∘ (r_cube hm (p,t)).1, by sorry⟩
+
+variable (p : closedBall (0 : Fin 4 → ℝ) 1) (i : cell X 4)
+#check (map 4 i).toFun (r_cube zero_le_four).1 (p,0.4)
+#check r_cube zero_le_four (p,0.4)
+-/
+
+
+
+
+
+
+/-
+neuer Start: Ich fange von hinten an und schaue welche Funktionen ich genau brauche, um piecewise
+  continuous für CW complexe anzuwenden
+· f ist die Familie aller cellularen retractions
+· fD und fX sind die Identität
+
+PROBLEM: Ich muss meine Funktion auf (CW) × ℝ definieren und das ist anstrengend
+-/
+
+/- explizite Definition des retracts:
+-/
+
+open Classical in
+def r : X × ℝ → X × ℝ := fun (p,t) ↦
+  if hi : ∃ (i : cell X m), (p : Y) ∈ openCell m i then
+    (⟨(map m (Exists.choose hi)).toFun 0, by sorry⟩ , 0)
+    --((map m (Exists.choose hi)).toFun ∘ (map m (Exists.choose hi)).symm p,t)
+
+  else (p,t)
+
+
+lemma HEP_Dim (hX : X = ↑A ∪ ⋃ (j : cell X m), (map m j) '' (Metric.closedBall 0 1))
+    (hA : Nonempty (X ↓∩ ↑A)) (hm : m ≥ 0)
+     :
+    HEP' X A := by
+  apply (retraction_criterion_closed (by sorry) hA).2
+  have := (retraction_criterion_closed (by sorry) (by sorry)).1 (HEP_cube_boundary m hm)
+  sorry
+
+#check  ⋃ m, ⋃ (j : cell X m), openCell m j
+-/

@@ -4,6 +4,8 @@ import Mathlib.Topology.Constructions.SumProd
 import Mathlib.Analysis.InnerProductSpace.PiL2
 import Mathlib.Analysis.Convex.GaugeRescale
 import Mathlib.Data.Set.Subset
+import Mathlib.Topology.Basic
+
 
 noncomputable section
 
@@ -54,7 +56,7 @@ example : HEP X (@Set.univ X) := by
 
 -- The pair (X, ∅ ) has the HEP:
 
-example : HEP X ∅ := by
+lemma HEP_empty : HEP X ∅ := by
   intro Y hY rangeH' f H hf1 hf2 hH1 hH2 hAgree
   let H' : X × ℝ → Y := fun (x,t) ↦ f x
   use H'
@@ -145,7 +147,15 @@ lemma continuousOn_g (A : Set X) (hA : IsClosed A) (f : X → Y) (H : X × ℝ �
     rw[this]
     exact ContinuousOn.comp hH1 (by fun_prop) (Set.mapsTo_iff_subset_preimage.mpr fun a a_1 ↦ a_1)
   · refine IsClosed.and ?_ ?_
-    · rw[ show { x : X × ℝ | x.1 ∈ A} = {x : X | x ∈ A } ×ˢ { a : ℝ | true} by grind]
+    · have : { x : X × ℝ | x.1 ∈ A} = {x : X | x ∈ A } ×ˢ { a : ℝ | true} :=  by
+        -- das konnte vorher grind
+        refine Eq.symm (Set.eq_of_subset_of_subset ?_ ?_)
+        · intro x hx
+          exact Set.mem_of_mem_inter_left hx
+        · intro x hx
+          simp only [Set.setOf_mem_eq, Set.setOf_true, Set.mem_prod, Set.mem_univ, and_true]
+          exact Set.mem_preimage.mp hx
+      rw[this]
       exact IsClosed.prod (isClosed_coinduced.mpr hA) (isClosed_const)
     · exact IsClosed.and
         (isClosed_le continuous_const continuous_snd) (isClosed_le continuous_snd continuous_const)
@@ -255,18 +265,32 @@ lemma if_HEP_then_retraction {X : Type u} [TopologicalSpace X] {A : Set X} (hA :
   obtain ⟨G, hG⟩ := if_HEP_then_extension h_HEP Y C g hg_cont hg_mapsto
   use G
 
-lemma retraction_criterion_closed (hA1 : IsClosed A) (hA2 : Nonempty A) :
-    HEP X A ↔∃ r : X × ℝ → X × ℝ, IsRetractionOn r {p : X × ℝ | p.2 ∈ unitInterval}
+lemma retraction_criterion_closed (hA1 : IsClosed A) :
+    HEP X A ↔ ∃ r : X × ℝ → X × ℝ, IsRetractionOn r {p : X × ℝ | p.2 ∈ unitInterval}
     {p : X × ℝ | p.2 = 0 ∨ (p.1 ∈ A) ∧ p.2 ∈ unitInterval}:= by
-  have hX : Nonempty (X × ℝ ):=
-    (nonempty_prod.2 ⟨Set.Nonempty.to_type (Set.nonempty_coe_sort.mp hA2), instNonemptyOfInhabited⟩)
-  refine ⟨if_HEP_then_retraction hA2 , ?_ ⟩
-  intro h
-  apply if_extension_then_HEP hA1
-  intro Y hY C g hg1 hg2
-  obtain ⟨r, hr⟩ := h
-  obtain ⟨G, hG1, hG2, hG3⟩ := (retract_then_extension (by simp) hX) r hr Y C g hg1 hg2
-  use G
+  by_cases hA2 : Nonempty A
+  · have hX : Nonempty (X × ℝ ):=
+      (nonempty_prod.2 ⟨Set.Nonempty.to_type (Set.nonempty_coe_sort.mp hA2),
+      instNonemptyOfInhabited⟩)
+    refine ⟨if_HEP_then_retraction hA2 , ?_ ⟩
+    intro h
+    apply if_extension_then_HEP hA1
+    intro Y hY C g hg1 hg2
+    obtain ⟨r, hr⟩ := h
+    obtain ⟨G, hG1, hG2, hG3⟩ := (retract_then_extension (by simp) hX) r hr Y C g hg1 hg2
+    use G
+  · have : A = ∅ := by exact Set.not_nonempty_iff_eq_empty'.mp hA2
+    rw[this]
+    refine (iff_true_right ?_).mpr (HEP_empty)
+    use (fun x ↦ (x.1,0))
+    constructor
+    · fun_prop
+    · intro x hx
+      simp
+    · intro x hx
+      simp at hx
+      rw [Prod.ext_iff]
+      refine ⟨by rfl, hx.symm ⟩
 
 -- corollary:
 --lemma HEP_Discrete {X J : Type u} [TopologicalSpace X] [TopologicalSpace J] [DiscreteTopology J]
@@ -278,20 +302,18 @@ lemma retraction_criterion_closed (hA1 : IsClosed A) (hA2 : Nonempty A) :
 
 
 -- ToDo :
--- partial homeomorph -> Hannah
--- Definition rausziehen (Beweis kürzer machen)
+-- partial homeomorph
 
 lemma homeomorph_HEP {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
-    (f : X → Y) (A : Set X) (hA_closed : IsClosed A) (hA_nonempty : Nonempty A) :
+    (f : X → Y) (A : Set X) (hA_closed : IsClosed A) :
     HEP X A → IsHomeomorph f → HEP Y (f '' A) := by
   intro h_hep1 hf
-  rw[retraction_criterion_closed hA_closed hA_nonempty ] at h_hep1
+  rw[retraction_criterion_closed hA_closed] at h_hep1
   obtain ⟨r, hr⟩ := h_hep1
   obtain ⟨hf_cont, ⟨f_inv, hf1, hf2, hf_inv_cont⟩ ⟩ := isHomeomorph_iff_exists_inverse.1 hf
-  let r' : Y × ℝ → Y × ℝ := fun p ↦ ( f (r ((f_inv p.1), p.2 )).1, (r ((f_inv p.1), p.2 )).2)
+  let r' : Y × ℝ → Y × ℝ := fun p ↦ (f (r ((f_inv p.1), p.2 )).1, (r ((f_inv p.1), p.2 )).2)
   rw [retraction_criterion_closed (by
-    exact (Homeomorph.isClosed_image (IsHomeomorph.homeomorph f hf)).2 hA_closed)
-      (Set.instNonemptyElemImage f A)]
+    exact (Homeomorph.isClosed_image (IsHomeomorph.homeomorph f hf)).2 hA_closed)]
   use r'
   refine ⟨?_ , ?_ , ?_ ⟩
   · refine ContinuousOn.prodMk ?_ ?_
@@ -325,9 +347,47 @@ lemma homeomorph_HEP {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
 
 -- Partial Equiv, ... should be replaced by paritalHomeomorph
 lemma partialHomeomorph_HEP {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
-  (f : PartialEquiv X Y) {X1 X2 : Set X} {Y1 Y2 : Set Y} (hY : Y2 ⊆ Y1) (hX : X2 ⊆ X1)
-  (hs1 : f.source = X1) (ht : f.target = Y1) (hs2 : ContinuousOn f X1)
-(ht2 : ContinuousOn f.symm Y1) (h2 : f.toFun '' X2 = Y2)
-  (hHEP : HEP' X1 X2) : HEP' Y1 Y2 := by
+    {X1 : Set X} {X2 : Set X1} {Y1 : Set Y} {Y2 : Set Y1} (hHEP : HEP X1 X2)
+    (f : PartialHomeomorph X Y)
+    (hf_source : f.source = X1) (hf_target : f.target = Y1)
+    (h2 : f '' X2 = Y2) (hX2closed : IsClosed X2) : HEP Y1 Y2 := by
+  apply (retraction_criterion_closed hX2closed).mp at hHEP
+  obtain ⟨r, hr⟩ := hHEP
+  have finv_mem: ∀ (p : Y1), f.invFun p ∈ X1 := by sorry
+  let r_comp_fsymm : ↑Y1 × ℝ → X1 × ℝ := fun p ↦ (r (⟨ f.invFun p.1,
+    Set.mem_preimage.mp (finv_mem p.1)⟩, p.2))
+  have Continuous_r_comp_fsymm : ContinuousOn r_comp_fsymm {p | p.2 ∈ unitInterval} := by
+    sorry
+  let r' : Y1 × ℝ → Y1 × ℝ := fun p ↦ (⟨f (r_comp_fsymm p).1, by sorry⟩, (r_comp_fsymm p).2 )
+  apply (retraction_criterion_closed ?_ ).2
+  · use r'
+    constructor -- isRetractionOn
+    · refine ContinuousOn.prodMk ?_ ?_
+      · have int := Continuous.comp_continuousOn' continuous_fst  Continuous_r_comp_fsymm
+        have ext := f.continuousOn
+        have : ContinuousOn (fun p ↦ f ↑(r_comp_fsymm p).1) {p | p.2 ∈ unitInterval} := by
+          refine ContinuousOn.comp ext ?_ ?_
+          · exact Continuous.comp_continuousOn' continuous_subtype_val int
+          · sorry
+        rw [continuousOn_iff_continuous_restrict] at this ⊢
+        apply Continuous.subtype_mk (h := this)
+      · exact Continuous.comp_continuousOn' continuous_snd Continuous_r_comp_fsymm
+    · intro y hy
+      sorry
+    · intro a ha
+      unfold r' r_comp_fsymm
+      have := hr.3
+      sorry
+  · have : IsClosed (Subtype.val '' X2) := by
+      refine IsClosed.trans hX2closed ?_
+      sorry
+    sorry /-
+    rw[← h2]
+    have := f.continuousOn
+    rw [continuousOn_iff_continuous_restrict] at this
+    refine IsClosed.preimage_val ?_
+    sorry -/
 
-  sorry
+#check OpenPartialHomeomorph
+-- #check PartialHomeomorph
+-- #check LocalHomeomorph

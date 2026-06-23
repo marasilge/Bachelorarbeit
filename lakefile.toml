@@ -12,7 +12,7 @@ maxSynthPendingDepth = 3
 [[require]]
 name = "mathlib"
 scope = "leanprover-community"
-rev = "v4.29.0"
+rev = "8b94556e352c04a3d23faa327a71e911cde53774"
 
 [[lean_lib]]
 name = "Bachelorarbeit"

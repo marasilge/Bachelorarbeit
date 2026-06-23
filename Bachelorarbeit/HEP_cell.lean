@@ -7,7 +7,8 @@ import Mathlib.Data.Set.Subset
 import Mathlib.Topology.Defs.Filter
 import Mathlib.Data.PEquiv
 import Bachelorarbeit.HEP_definition
-import Bachelorarbeit.HEP_CW
+import Bachelorarbeit.HEP_ball_cube
+
 
 open Metric
 open Set.Notation
@@ -19,36 +20,17 @@ noncomputable section
 variable {Y : Type*} [TopologicalSpace Y] {X C : Set Y} [RelCWComplex X C]
   (A : Subcomplex X)
 
--- lemma sphereNonempty (hm : 0 < m):
-
-
 def r_cube {m : ℕ} (hm : 0 < m) : (closedBall (0 : Fin m → ℝ) 1) × ℝ → (closedBall (0 : Fin m → ℝ) 1) × ℝ :=
-  Exists.choose ((retraction_criterion_closed isClosed_sphere (by
-    have := (@NormedSpace.sphere_nonempty (Fin m → ℝ) _ _ ?_ 0 1).2 zero_le_one
-    · use ⟨this.choose, Metric.sphere_subset_closedBall this.choose_spec⟩
-      exact mem_sphere.mpr this.choose_spec
-    · refine nontrivialTopology_iff_exists_norm_ne_zero.mpr ?_
-      simp only [ne_eq, norm_eq_zero]
-      use Pi.single ⟨0, hm⟩ 1
-      exact Function.ne_iff.mpr ⟨⟨0, hm⟩, by simp⟩)).1
+  Exists.choose ((retraction_criterion_closed isClosed_sphere).1
     (HEP_cube_boundary m ))
 
 lemma r_cube_IsretractionOn {m : ℕ} (hm : 0 < m) : IsRetractionOn (r_cube hm ) {p | p.2 ∈ unitInterval}
     {p | p.2 = 0 ∨ p.1.1 ∈ sphere 0 1 ∧ p.2 ∈ unitInterval} :=
-  Exists.choose_spec ((retraction_criterion_closed isClosed_sphere (by
-    have := (@NormedSpace.sphere_nonempty (Fin m → ℝ) _ _ ?_ 0 1).2 zero_le_one
-    · use ⟨this.choose, Metric.sphere_subset_closedBall this.choose_spec⟩
-      exact mem_sphere.mpr this.choose_spec
-    · refine nontrivialTopology_iff_exists_norm_ne_zero.mpr ?_
-      simp only [ne_eq, norm_eq_zero]
-      use Pi.single ⟨0, hm⟩ 1
-      exact Function.ne_iff.mpr ⟨ ⟨0, hm⟩, by simp⟩)).1
+  Exists.choose_spec ((retraction_criterion_closed isClosed_sphere).1
   (HEP_cube_boundary m ))
 
 -- universal property of the quotient:
 #check Topology.IsQuotientMap.lift
--- iff für quotientmap
-#check Topology.isQuotientMap_iff'
 -- wann ist etwas im CW complex closed:
 #check RelCWComplex.closed
 
@@ -68,8 +50,10 @@ lemma QuotMap_isQuotient {m : ℕ} (i : cell X m) [T2Space Y] : IsQuotientMap (Q
   have Restrict_Surj : Function.Surjective (QuotMap i) :=
             (Set.MapsTo.restrict_surjective_iff (QuotMap._proof_1 i)).mpr (fun a a_1 ↦ a_1)
   constructor
-  · exact Restrict_Surj
-  · refine Eq.symm ((fun {X} {t₁ t₂} ↦ TopologicalSpace.ext_iff_isClosed.mpr) ?_)
+  · sorry --exact Restrict_Surj
+  · sorry -- seit Mathlib update
+    /-
+    refine Eq.symm ((fun {X} {t₁ t₂} ↦ TopologicalSpace.ext_iff_isClosed.mpr) ?_)
     intro S
     constructor
     · intro hs_map
@@ -87,7 +71,7 @@ lemma QuotMap_isQuotient {m : ℕ} (i : cell X m) [T2Space Y] : IsQuotientMap (Q
             exact this (QuotMap i ⁻¹' S) hs_map
           · refine IsClosed.inter ?_ (by exact isClosedBase X)
             have : IsClosedMap (Subtype.val ∘ QuotMap i) := by
-              refine IsClosedMap.comp ?_ (by exact QuotMap_isClosedMap i)
+              refine IsClosedMap.comp ?_ (QuotMap_isClosedMap i)
               exact IsClosed.isClosedMap_subtype_val isClosed_closedCell
             exact isClosed_coinduced.mpr (this (QuotMap i ⁻¹' S) hs_map)
         · refine Set.MapsTo.image_subset (Set.MapsTo.comp_right ?_ (QuotMap i))
@@ -113,7 +97,7 @@ lemma QuotMap_isQuotient {m : ℕ} (i : cell X m) [T2Space Y] : IsQuotientMap (Q
       refine isClosed_coinduced.mpr ?_
       refine IsClosed.preimage ?_ hs
       exact (ContinuousOn.mapsToRestrict (continuousOn m i) _ )
-
+-/
 def RetractBall {m : ℕ} (i : cell X m) (hm : 0 < m) :
     C(closedBall (0 : Fin m → ℝ) 1 × unitInterval , closedCell m i × ℝ ) where
   toFun := fun (p,t) ↦
@@ -134,11 +118,16 @@ def RetractBall {m : ℕ} (i : cell X m) (hm : 0 < m) :
         (by fun_prop) (fun x ↦ x.2.2))
 
 /- Beweis irgendwann später: -/
+-- Stetigkeit - gibt es schon :
+#check Topology.IsQuotientMap.continuous_lift_prod_left
 
 lemma QuotientProductIdentityOnLocallyCompact {X Y Z : Type*} [TopologicalSpace X] [TopologicalSpace Y]
     [TopologicalSpace Z] {f : X → Y} (hf : IsQuotientMap f) (hZ : LocallyCompactSpace Z) :
     IsQuotientMap (Prod.map f (@id Z)) := by
   sorry
+
+
+
 
 
 def C_QuotMapProd {m : ℕ} (i : cell X m) :
@@ -381,8 +370,7 @@ lemma nonemptyFront {m : ℕ} (hm : 0 < m) (j : cell X m) :  Nonempty ↑(closed
 
 lemma HEP_Cell [T2Space Y] {m : ℕ} (hm : 0 < m) (j : cell X m) :
     HEP' (closedCell m j) (cellFrontier m j) := by
-  apply (retraction_criterion_closed (IsClosed.preimage_val isClosed_cellFrontier)
-    (nonemptyFront hm j)).2
+  apply (retraction_criterion_closed (IsClosed.preimage_val isClosed_cellFrontier)).2
   let r : (closedCell m j) × ℝ → (closedCell m j) × ℝ := fun (x,t) ↦
     if ht : t ∈ unitInterval then RetractCellInt_Fun j hm (x, ⟨t, ht⟩)
     else (x,0)
@@ -424,14 +412,14 @@ lemma HEP_Cell [T2Space Y] {m : ℕ} (hm : 0 < m) (j : cell X m) :
       exact hi.1
 
 def r_cell [T2Space Y] {m : ℕ} (hm : 0 < m) (j : cell X m) :=
-  Exists.choose ((retraction_criterion_closed (IsClosed.preimage_val isClosed_cellFrontier)
-  (nonemptyFront hm j)).1 (HEP_Cell hm j))
+  Exists.choose ((retraction_criterion_closed (IsClosed.preimage_val isClosed_cellFrontier)).1
+  (HEP_Cell hm j))
 
 lemma r_cell_IsretractionOn [T2Space Y] {m : ℕ} (hm : 0 < m) (j : cell X m) :
     IsRetractionOn (r_cell hm j) {p | p.2 ∈ unitInterval}
     {p | p.2 = 0 ∨ p.1.1 ∈ cellFrontier m j ∧ p.2 ∈ unitInterval} :=
-  Exists.choose_spec ((retraction_criterion_closed (IsClosed.preimage_val isClosed_cellFrontier)
-  (nonemptyFront hm j)).1 (HEP_Cell hm j))
+  Exists.choose_spec ((retraction_criterion_closed (IsClosed.preimage_val isClosed_cellFrontier)).1
+  (HEP_Cell hm j))
 
 
 lemma uniqueOpenCell {m : ℕ} (p : Y) (hi : ∃ (i : cell X m), p ∈ openCell m i) :
@@ -485,7 +473,6 @@ def r_dimCW {m : ℕ} [T2Space Y] (hm : 0 < m) : X × ℝ → X × ℝ := fun (p
 lemma r_dimCW_applyCell {m : ℕ} [T2Space Y] (hm : 0 < m) (i : cell X m)
     (p : X) (hp : (p : Y) ∈ closedCell m i) (t : ℝ) (ht : t ∈ unitInterval) :
     r_dimCW hm (p, t) = (⟨ (r_cell hm i (⟨p, hp ⟩, t)).1.1 , by
-      have := (r_cell_IsretractionOn hm i ).2
       suffices h : ((r_cell hm i (⟨p, hp ⟩, t)).1 : Y ) ∈ closedCell m i by
         exact Topology.RelCWComplex.closedCell_subset_complex m i h
       exact Subtype.coe_prop (r_cell hm i (⟨↑p, hp⟩, t)).1
@@ -496,13 +483,13 @@ lemma r_dimCW_applyCell {m : ℕ} [T2Space Y] (hm : 0 < m) (i : cell X m)
     simp only [hj, ↓reduceDIte, Prod.mk.injEq, Subtype.mk.injEq]
     have heq : hj.choose = i := (uniqueOpenCell (p :Y) hj).unique hj.choose_spec h
     subst heq
-    refine ⟨rfl,rfl ⟩
+    refine ⟨rfl,rfl⟩
   · have hj : ¬ (∃ (j : cell X m), (p : Y) ∈ openCell m j) := by
       have pSkeleton: (p : Y) ∈ skeletonLT X m := by
         apply Topology.RelCWComplex.iUnion_cellFrontier_subset_skeletonLT
         refine Set.mem_iUnion.mpr ?_
         use i
-        rw [CellFroniterEqClosedWithoutOpen m i]
+        rw [CellFroniterEqClosedWithoutOpen m i] --!
         exact Set.mem_diff_of_mem hp h
       by_contra
       obtain ⟨j, hj⟩ := this
@@ -595,17 +582,17 @@ lemma r_dimCW_ContOn {m : ℕ} [T2Space Y] (hm : 0 < m) (hX : X = ↑A ∪ ⋃ (
 
 lemma HEP_Dim {m : ℕ} [T2Space Y] (hm : 0 < m) (hX : X = ↑A ∪ ⋃ (j : cell X m), openCell m j)
     (hA : Nonempty (X ↓∩ ↑A)) : HEP' X A := by
-  apply (retraction_criterion_closed  ((Subcomplex.closed A).preimage_val) hA).2
+  apply (retraction_criterion_closed  ((Subcomplex.closed A).preimage_val)).2
   use r_dimCW hm
   refine ⟨?_, ?_ , ?_ ⟩
   · exact r_dimCW_ContOn ↑A hm hX hA
   · intro (x,t) ht
     simp only [Set.mem_setOf_eq] at ht
     by_cases hcell : (∃ i : cell X m, (x : Y) ∈ openCell m i)
-    · simp only [Set.mem_preimage, SetLike.mem_coe, r_dimCW, hcell, ht, and_self,
-      ↓reduceDIte]
+    · simp only [Set.mem_preimage, SetLike.mem_coe, r_dimCW, hcell, ↓reduceDIte]
       obtain ⟨i, hi⟩ := hcell
-      have : {(p, t) : X × ℝ | t = 0 ∨ ↑p ∈ cellFrontier m i ∧ t ∈ unitInterval} ⊆ {p | p.2 = 0 ∨ p.1.1 ∈ A ∧ p.2 ∈ unitInterval} := by
+      have : {(p, t) : X × ℝ | t = 0 ∨ ↑p ∈ cellFrontier m i ∧ t ∈ unitInterval} ⊆
+        {p | p.2 = 0 ∨ p.1.1 ∈ A ∧ p.2 ∈ unitInterval} := by
         intro a ha
         simp only [Set.mem_setOf_eq] at ⊢ ha
         rcases ha with  ha | ha
@@ -640,8 +627,6 @@ lemma HEP_Dim {m : ℕ} [T2Space Y] (hm : 0 < m) (hX : X = ↑A ∪ ⋃ (j : cel
          -- have := uniqueOpenCell (x : Y) i z.choose hi sz
 
         sorry
-
-
 
       sorry
     · simp only [Set.mem_preimage, SetLike.mem_coe, r_dimCW, hcell, false_and, ↓reduceDIte,
