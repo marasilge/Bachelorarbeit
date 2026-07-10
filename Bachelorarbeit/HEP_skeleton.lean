@@ -17,12 +17,6 @@ open RelCWComplex
 
 noncomputable section
 
-#check r_cube
-#check r_cube_IsretractionOn
-#check Set.iUnion
-#check Topology.RelCWComplex.skeleton_mono
-#check Topology.RelCWComplex.closedCell_subset_skeletonLT
-
 def SkeletonProjection (m : ℕ) {Y : Type*} [TopologicalSpace Y] [T2Space Y] (X : Set Y) {C : Set Y}
   [RelCWComplex X C] :
     C ⊕ (Σ (n : Fin m) ( _ : cell X n), (closedBall (0 : Fin n → ℝ) 1)) → skeletonLT X m :=
@@ -37,17 +31,14 @@ def SkeletonProjection (m : ℕ) {Y : Type*} [TopologicalSpace Y] [T2Space Y] (X
     apply Topology.RelCWComplex.closedCell_subset_skeletonLT n i
     exact Set.mem_image_of_mem ↑(map (↑n) i) x.prop⟩)
 
-#check Fin.mk
-
 lemma SkeletonProjection_Surjective (m : ℕ) {Y : Type*} [hY : TopologicalSpace Y] [T2Space Y]
   (X : Set Y) {C : Set Y} [RelCWComplex X C] : Function.Surjective (SkeletonProjection m X) := by
-  intro y
-  have yprop := y.prop
+  intro ⟨y, yprop⟩
   rw [mem_skeletonLT_iff] at yprop
   rcases yprop with hyBasis | hyCell
   · refine Sum.exists.mpr ?_
     left
-    use ⟨y.1, hyBasis⟩
+    use ⟨y, hyBasis⟩
     simp [SkeletonProjection]
   · obtain ⟨n, hn1, ⟨i, hi⟩⟩ := hyCell
     rw [show (↑y ∈ openCell n i) = ∃ a ∈ ball 0 1, (map n i) a = ↑y from rfl] at hi
@@ -89,7 +80,7 @@ lemma SkeletonProjectionIsQuotientMap (m : ℕ) {Y : Type*} [hY : TopologicalSpa
     obtain ⟨hBase, hBall⟩ := hS
     set S' : Set Y := Subtype.val '' S with hS'def
     have hS'sub : S' ⊆ (skeletonLT X m):= by
-      rintro _ ⟨a, -, rfl⟩;
+      rintro _ ⟨a, _ , rfl⟩;
       exact a.2
     have hpre_base : (Sum.inl ⁻¹' (SkeletonProjection m X ⁻¹' S)) = S' ∩ C := by
       ext s
@@ -106,7 +97,7 @@ lemma SkeletonProjectionIsQuotientMap (m : ℕ) {Y : Type*} [hY : TopologicalSpa
     have hlow : ∀ (k : ℕ), k < m → ∀ (j : cell X k), IsClosed (S' ∩ closedCell k j) := by
       intro k hk j
       set g : (closedBall (0 : Fin k → ℝ) 1) → Y := fun p => map k j (p : Fin k → ℝ) with hg_def
-      have hg_closedMap: IsClosedMap g := (ContinuousOn.restrict (continuousOn k j)).isClosedMap
+      have hg_closedMap: IsClosedMap g := (continuousOn k j).restrict.isClosedMap
       have hrange : Set.range g = closedCell k j := by
         rw [show closedCell k j = map k j '' closedBall 0 1 by rfl, hg_def,
           show (fun p : ↥(closedBall (0 : Fin k → ℝ) 1) => map k j (p : Fin k → ℝ))
@@ -152,14 +143,80 @@ lemma SkeletonProjectionIsQuotientMap (m : ℕ) {Y : Type*} [hY : TopologicalSpa
 
 variable {Y : Type*} [TopologicalSpace Y] [T2Space Y] (X : Set Y) {C : Set Y} [RelCWComplex X C]
 
+#check r_cube
+#check r_cube_IsretractionOn
+#check Set.iUnion
+#check Topology.RelCWComplex.skeleton_mono
+#check Topology.RelCWComplex.closedCell_subset_skeletonLT
+
+
 #check Topology.IsQuotientMap.continuous_lift_prod_left
 
-def φ {m : ℕ} (n : Fin (m + 1)) (i : cell X n) : ℝ → (Fin n → ℝ) → (Fin n → ℝ) :=
-  fun t ↦ sorry
+def cubesretract (m : ℕ) (n : Fin (m + 1)) :
+    (closedBall (0 : Fin (n : ℕ) → ℝ) 1) × unitInterval →
+    (closedBall (0 : Fin (n : ℕ) → ℝ) 1) × unitInterval := fun p ↦
+  if (n : ℕ) = m then ((r_cube (n : ℕ) (p.1,p.2)).1, ⟨(r_cube (n : ℕ) (p.1,p.2)).2, by
+    have : (p.1, (p.2 : ℝ )) ∈ {p | p.2 ∈ unitInterval} := Set.mem_sep_iff.mpr p.2.2
+    have mapsto := (r_cube_IsretractionOn n).mapsTo this
+    rw [Set.mem_setOf] at mapsto
+    obtain h | h := mapsto
+    · rw[h]
+      exact unitInterval.zero_mem
+    · exact h.2 ⟩ )
+  else id p
+
+
+lemma cubesretract_of_eq {m : ℕ} {n : Fin (m + 1)} (h : (n : ℕ) = m) : true := by sorry
+--- dinge von r_cube beweisen (continuous, mapsto, fixedOn, ...)
+
+lemma cubesretract_of_ne {m : ℕ} {n : Fin (m + 1)} (h : (n : ℕ) ≠ m) :
+    cubesretract m n = id := by
+  unfold cubesretract
+  simp only [h, ↓reduceIte, id_eq]
+  exact Prod.id_prod
+
+def baseMap (m : ℕ) : C × unitInterval → ↥(skeletonLT X (m + 1)) × unitInterval := fun p ↦
+  (⟨p.1 , mem_skeleton_iff.mpr (Or.inl p.1.2)⟩, p.2)
+
+lemma cubesretract_mapsto (m : ℕ) (n : Fin (m + 1)) (i : cell X n) (p : (closedBall 0 1) × ↑unitInterval) :
+    (map (↑n) i) (cubesretract m n p).1 ∈ skeletonLT X (↑m + 1) := by
+  unfold cubesretract
+  have : (p.1, (p.2 : ℝ )) ∈ {p | p.2 ∈ unitInterval} := Set.mem_sep_iff.mpr p.2.2
+  have mapsto := (r_cube_IsretractionOn n).mapsTo this
+  by_cases h : m = n
+  · simp only [h, ↓reduceIte]
+    apply closedCell_subset_skeletonLT n i
+    apply Set.mem_image_of_mem
+    exact Subtype.coe_prop (r_cube ↑n (p.1, ↑p.2)).1
+  · rw[eq_comm] at h
+    simp only [h, ↓reduceIte, id_eq]
+    apply Topology.CWComplex.skeletonLT_mono (m := n + 1) ?_ ?_
+    · rw [le_iff_eq_or_lt, ← Nat.cast_add_one m]
+      simp only [Nat.cast_add, Nat.cast_one, ne_eq, ENat.one_ne_top, not_false_eq_true,
+        add_lt_add_iff_left_of_ne_top, Nat.cast_lt, Nat.lt_iff_le_and_ne ]
+      exact Or.inr ⟨Nat.le_iff_lt_add_one.2 n.prop, Ne.intro h⟩
+    · apply closedCell_subset_skeletonLT n i
+      apply Set.mem_image_of_mem
+      exact Subtype.coe_prop p.1
+
+def cubeMap (m : ℕ) (n : Fin (m + 1)) (i : cell X n) :
+    (closedBall (0 : Fin (n : ℕ) → ℝ) 1) × unitInterval → ↥(skeletonLT X (m + 1)) × unitInterval :=
+  fun p =>
+    (⟨map (n : ℕ) i (cubesretract m n p).1, cubesretract_mapsto X m n i p⟩, (cubesretract m n p).2)
+
+def sumMap (m : ℕ) :
+    (C ⊕ (Σ (n : Fin (m + 1)) ( _ : cell X n), (closedBall (0 : Fin n → ℝ) 1))) × unitInterval →
+    skeletonLT X (m+1) × unitInterval :=
+  fun p =>
+    match p.1 with
+    | .inl c => baseMap X m (c, p.2)
+    | .inr ⟨n, i, x⟩ => cubeMap X m n i (x, p.2)
 
 
 
 
+
+/-
 open Classical in
 def RetractIntervalSkeleton {m : ℕ} (hm : 0 < m) :
   skeletonLT X (m + 1) × unitInterval → skeletonLT X (m +1) × ℝ := fun (p,t) ↦
@@ -172,7 +229,7 @@ def RetractIntervalSkeleton {m : ℕ} (hm : 0 < m) :
       --have : ball (0 : Fin m → ℝ) 1 = (map (C := X) m i).target := by sorry
       --have := PartialEquiv.map_source (map m i)
       sorry
-    let valC := r_cube hm (⟨y, by
+    let valC := r_cube m (⟨y, by
       apply ball_subset_closedBall (mem_ball.mpr p_mem)⟩ , t)
     let val := (map m i valC.1, valC.2)
     let val1mem : map m i valC.1 ∈ closedCell m i := by
@@ -181,7 +238,7 @@ def RetractIntervalSkeleton {m : ℕ} (hm : 0 < m) :
     (⟨val.1, closedCell_subset_skeleton m i val1mem ⟩, val.2)
   else (p, t)
 
-/-
+
 lemma RetractIntervalSkeleton_applyCell {m : ℕ} (hm : 0 < m) {Y : Type*} [TopologicalSpace Y]
   [T2Space Y] (X : Set Y) {C : Set Y} [RelCWComplex X C] (i : cell X m)
     (p : skeletonLT X (m + 1)) (hp : (p : Y) ∈ closedCell m i) (t : unitInterval) :

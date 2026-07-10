@@ -20,11 +20,11 @@ noncomputable section
 variable {Y : Type*} [TopologicalSpace Y] {X C : Set Y} [RelCWComplex X C]
   (A : Subcomplex X)
 
-def r_cube {m : ℕ} (hm : 0 < m) : (closedBall (0 : Fin m → ℝ) 1) × ℝ → (closedBall (0 : Fin m → ℝ) 1) × ℝ :=
+def r_cube (m : ℕ) : (closedBall (0 : Fin m → ℝ) 1) × ℝ → (closedBall (0 : Fin m → ℝ) 1) × ℝ :=
   Exists.choose ((retraction_criterion_closed isClosed_sphere).1
     (HEP_cube_boundary m ))
 
-lemma r_cube_IsretractionOn {m : ℕ} (hm : 0 < m) : IsRetractionOn (r_cube hm ) {p | p.2 ∈ unitInterval}
+lemma r_cube_IsretractionOn (m : ℕ) : RetractionOn (r_cube m) {p | p.2 ∈ unitInterval}
     {p | p.2 = 0 ∨ p.1.1 ∈ sphere 0 1 ∧ p.2 ∈ unitInterval} :=
   Exists.choose_spec ((retraction_criterion_closed isClosed_sphere).1
   (HEP_cube_boundary m ))
@@ -101,20 +101,20 @@ lemma QuotMap_isQuotient {m : ℕ} (i : cell X m) [T2Space Y] : IsQuotientMap (Q
 def RetractBall {m : ℕ} (i : cell X m) (hm : 0 < m) :
     C(closedBall (0 : Fin m → ℝ) 1 × unitInterval , closedCell m i × ℝ ) where
   toFun := fun (p,t) ↦
-    (⟨map m i (r_cube hm (p,t)).1, Set.mem_image_of_mem (map m i)
-    (Subtype.coe_prop (r_cube hm (p, t)).1)⟩,
-    (r_cube hm (p,t)).2)
+    (⟨map m i (r_cube m (p,t)).1, Set.mem_image_of_mem (map m i)
+    (Subtype.coe_prop (r_cube m (p, t)).1)⟩,
+    (r_cube m (p,t)).2)
   continuous_toFun := by
     rw [continuous_prodMk]
     constructor
     · apply Continuous.subtype_mk
       apply ContinuousOn.comp_continuous (RelCWComplex.continuousOn m i)
       · apply continuous_subtype_val.comp
-        apply continuous_fst.comp ((r_cube_IsretractionOn hm).continuousOn.comp_continuous
+        apply continuous_fst.comp ((r_cube_IsretractionOn m).continuousOn.comp_continuous
           (by fun_prop) (fun x ↦ x.2.2))
       · intro (x,t)
         simp only [Subtype.coe_prop]
-    · exact continuous_snd.comp ((r_cube_IsretractionOn hm).continuousOn.comp_continuous
+    · exact continuous_snd.comp ((r_cube_IsretractionOn m).continuousOn.comp_continuous
         (by fun_prop) (fun x ↦ x.2.2))
 
 /- Beweis irgendwann später: -/
@@ -160,13 +160,13 @@ lemma DisjointCellFrontierOpenCell [T2Space Y] (n : ℕ) (i : cell X n) :
   left
   exact Nat.ne_of_lt hm
 
-lemma CellFroniterEqClosedWithoutOpen [T2Space Y] (n : ℕ) (i : cell X n) :
+lemma CellFrontierEqClosedWithoutOpen [T2Space Y] (n : ℕ) (i : cell X n) :
     cellFrontier n i = (closedCell n i \ openCell n i) := by
   refine Eq.symm (Set.eq_of_subset_of_subset ?_ ?_)
-  · apply Set.diff_subset_iff.2
+  · apply Set.sdiff_subset_iff.2
     rw [Set.union_comm (openCell n i) (cellFrontier n i)]
     exact subset_of_eq (Topology.RelCWComplex.cellFrontier_union_openCell_eq_closedCell n i).symm
-  · exact Set.subset_diff.mpr
+  · exact Set.subset_sdiff.mpr
       ⟨ cellFrontier_subset_closedCell n i , DisjointCellFrontierOpenCell n i ⟩
 
 lemma RetractBallFactors {m : ℕ} [T2Space Y] (i : cell X m) (hm : 0 < m) :
@@ -189,7 +189,7 @@ lemma RetractBallFactors {m : ℕ} [T2Space Y] (i : cell X m) (hm : 0 < m) :
       rw [source_eq m i]
       exact h1
     have yy: y.1.1 ∈ (map m i).source := by
-      rw [source_eq m i, ← closedBall_diff_sphere]
+      rw [source_eq m i, ← closedBall_sdiff_sphere]
       refine ⟨y.1.2, ?_ ⟩
       by_contra
       suffices yball : (map m i) y.1.1 ∈ openCell m i by
@@ -199,17 +199,17 @@ lemma RetractBallFactors {m : ℕ} [T2Space Y] (i : cell X m) (hm : 0 < m) :
       use x.1.1
     exact SetCoe.ext (mapInj xx yy heq1)
   · have x1sphere: x.1.1 ∈ sphere 0 1 := by
-      rw[← Metric.closedBall_diff_ball]
+      rw[← Metric.closedBall_sdiff_ball]
       exact ⟨x.1.2, h1⟩
     simp only [RetractBall, ContinuousMap.coe_mk, Prod.mk.injEq, Subtype.mk.injEq]
-    suffices r_id : r_cube hm (x.1, x.2.1) = (x.1, x.2.1) ∧ r_cube hm (y.1, y.2.1) = (y.1, y.2.1) by
+    suffices r_id : r_cube m (x.1, x.2.1) = (x.1, x.2.1) ∧ r_cube m (y.1, y.2.1) = (y.1, y.2.1) by
       simp only [r_id]
       exact ⟨heq1, congrArg Subtype.val heq2⟩
-    have r_idx := (r_cube_IsretractionOn hm).fixesOn (x.1,x.2) (by
+    have r_idx := (r_cube_IsretractionOn m).fixesOn (x.1,x.2) (by
       rw[ Set.mem_setOf_eq]
       right
       exact ⟨mem_sphere.mpr x1sphere , Subtype.coe_prop x.2 ⟩)
-    have r_idy := (r_cube_IsretractionOn hm).fixesOn (y.1,y.2) (by
+    have r_idy := (r_cube_IsretractionOn m).fixesOn (y.1,y.2) (by
       rw[ Set.mem_setOf_eq]
       right
       refine ⟨ ?_ , Subtype.coe_prop y.2 ⟩
@@ -217,7 +217,7 @@ lemma RetractBallFactors {m : ℕ} [T2Space Y] (i : cell X m) (hm : 0 < m) :
       suffices yfront : (map m i) y.1.1 ∈ cellFrontier m i by
         have yopen: map m i y.1.1 ∈ openCell m i := by
           have yball : y.1.1 ∈ ball 0 1 := by
-            rw[← Metric.closedBall_diff_sphere]
+            rw[← Metric.closedBall_sdiff_sphere]
             refine ⟨y.1.2,?_ ⟩
             intro h
             exact Ne.elim this h
@@ -237,7 +237,7 @@ lemma RetractCellInt_range {m : ℕ} [T2Space Y] (i : cell X m) (hm : 0 < m) :
     {(p,t) : closedCell m i × ℝ | t = 0 ∨ (p : Y) ∈ cellFrontier m i ∧
       t ∈ unitInterval} := by
   unfold RetractCellInt_Fun
-  rw [CellFroniterEqClosedWithoutOpen m i]
+  rw [CellFrontierEqClosedWithoutOpen m i]
   intro x hx
   obtain ⟨y, hy⟩ := hx
   have := (Topology.IsQuotientMap.lift_apply (quotient_QuotMapProd i) (RetractBall i hm)
@@ -250,20 +250,20 @@ lemma RetractCellInt_range {m : ℕ} [T2Space Y] (i : cell X m) (hm : 0 < m) :
     exact Set.mem_of_eq_of_mem this (Mapsto_gprod trivial)
   intro z hz
   unfold RetractBall
-  simp only [Set.mem_diff, Subtype.coe_prop, true_and, ContinuousMap.coe_mk,
+  simp only [Set.mem_sdiff, Subtype.coe_prop, true_and, ContinuousMap.coe_mk,
     Set.mem_setOf_eq]
-  by_cases h : ((r_cube hm) (z.1, z.2)).2 = 0
+  by_cases h : ((r_cube m) (z.1, z.2)).2 = 0
   · simp [h]
-  · have : (r_cube hm) (z.1, z.2) ∈ {p | p.1 ∈ (sphere ⟨ 0, by simp⟩  1) ∧ p.2 ∈ unitInterval} := by
+  · have : (r_cube m) (z.1, z.2) ∈ {p | p.1 ∈ (sphere ⟨ 0, by simp⟩  1) ∧ p.2 ∈ unitInterval} := by
       have mem : (z.1, z.2.1) ∈ {p : (closedBall 0 1) × ℝ | p.2 ∈ unitInterval } := by
         rw [Set.mem_setOf_eq]
         exact Subtype.coe_prop z.2
-      have := (r_cube_IsretractionOn hm).mapsTo mem
+      have := (r_cube_IsretractionOn m).mapsTo mem
       simp only [mem_sphere, Set.mem_Icc, Set.mem_setOf_eq, h, false_or] at this
       exact this
     right
     constructor
-    · suffices h : (map m i) (r_cube hm (z.1, ↑z.2)).1 ∈ cellFrontier m i  by
+    · suffices h : (map m i) (r_cube m (z.1, ↑z.2)).1 ∈ cellFrontier m i  by
         exact Disjoint.notMem_of_mem_left (DisjointCellFrontierOpenCell m i) h
       rw [Set.mem_setOf] at this
       apply Set.mem_image_of_mem
@@ -295,14 +295,14 @@ lemma RetractCellInt_fixesOn {m : ℕ} [T2Space Y] (i : cell X m) (hm : 0 < m) :
     rw [h] at id2
     constructor
     · simp only [RetractBall, ContinuousMap.coe_mk, id2, Set.Icc.coe_zero,
-        (r_cube_IsretractionOn hm).fixesOn ((Function.surjInv C_ProdSurj x).1, 0) (by simp),
+        (r_cube_IsretractionOn m).fixesOn ((Function.surjInv C_ProdSurj x).1, 0) (by simp),
         mapeqC_Prod, Subtype.coe_eta]
       specialize mapeqC_Prod (Function.surjInv C_ProdSurj x)
       exact SetCoe.ext (congrArg Subtype.val (congrArg Prod.fst (Function.surjInv_eq
         C_ProdSurj x)))
     · suffices h1 :(Function.surjInv C_ProdSurj x).2 = 0 by
         simp only [RetractBall, ContinuousMap.coe_mk, h1]
-        have r_id := (r_cube_IsretractionOn hm).fixesOn ((Function.surjInv
+        have r_id := (r_cube_IsretractionOn m).fixesOn ((Function.surjInv
           (IsQuotientMap.homeomorph._proof_1 (quotient_QuotMapProd i)) x).1, 0) (by simp)
         rw [Prod.ext_iff] at r_id
         exact r_id.2
@@ -313,7 +313,7 @@ lemma RetractCellInt_fixesOn {m : ℕ} [T2Space Y] (i : cell X m) (hm : 0 < m) :
     have : (Function.surjInv C_ProdSurj x).1.1 ∈ sphere (0 : Fin m → ℝ) 1 := by
       by_contra notsphere
       have xball : (Function.surjInv C_ProdSurj x).1 ∈ ball ⟨0, by simp⟩  1 := by
-        rw[← Metric.closedBall_diff_sphere]
+        rw[← Metric.closedBall_sdiff_sphere]
         refine ⟨mem_closedBall.mpr (Function.surjInv (IsQuotientMap.homeomorph._proof_1
           (quotient_QuotMapProd i)) x).1.2, ?_ ⟩
         intro hs
@@ -333,7 +333,7 @@ lemma RetractCellInt_fixesOn {m : ℕ} [T2Space Y] (i : cell X m) (hm : 0 < m) :
         exact Set.mem_image_of_mem (map m i) hy
       exact Disjoint.notMem_of_mem_left (DisjointCellFrontierOpenCell m i) hx1
         (Set.mem_of_mem_of_subset xopenCell this )
-    have r_id := (r_cube_IsretractionOn hm).fixesOn
+    have r_id := (r_cube_IsretractionOn m).fixesOn
       ((Function.surjInv (IsQuotientMap.homeomorph._proof_1 (quotient_QuotMapProd i)) x).1,
       (Function.surjInv (IsQuotientMap.homeomorph._proof_1 (quotient_QuotMapProd i)) x).2) (by
       simp only [Set.mem_setOf, Set.Icc.coe_eq_zero, Subtype.coe_prop, and_true]
@@ -416,7 +416,7 @@ def r_cell [T2Space Y] {m : ℕ} (hm : 0 < m) (j : cell X m) :=
   (HEP_Cell hm j))
 
 lemma r_cell_IsretractionOn [T2Space Y] {m : ℕ} (hm : 0 < m) (j : cell X m) :
-    IsRetractionOn (r_cell hm j) {p | p.2 ∈ unitInterval}
+    RetractionOn (r_cell hm j) {p | p.2 ∈ unitInterval}
     {p | p.2 = 0 ∨ p.1.1 ∈ cellFrontier m j ∧ p.2 ∈ unitInterval} :=
   Exists.choose_spec ((retraction_criterion_closed (IsClosed.preimage_val isClosed_cellFrontier)).1
   (HEP_Cell hm j))
@@ -489,8 +489,8 @@ lemma r_dimCW_applyCell {m : ℕ} [T2Space Y] (hm : 0 < m) (i : cell X m)
         apply Topology.RelCWComplex.iUnion_cellFrontier_subset_skeletonLT
         refine Set.mem_iUnion.mpr ?_
         use i
-        rw [CellFroniterEqClosedWithoutOpen m i] --!
-        exact Set.mem_diff_of_mem hp h
+        rw [CellFrontierEqClosedWithoutOpen m i] --!
+        exact Set.mem_sdiff_of_mem hp h
       by_contra
       obtain ⟨j, hj⟩ := this
       have mm : (m : ℕ∞ ) ≤ m := ENat.forall_natCast_le_iff_le.mp fun a a_1 ↦ a_1
@@ -502,8 +502,8 @@ lemma r_dimCW_applyCell {m : ℕ} [T2Space Y] (hm : 0 < m) (i : cell X m)
         p.2 ∈ unitInterval} := by
       right
       refine ⟨?_, unitInterval.mem_unitIntervalSubmonoid.mp ht⟩
-      rw [CellFroniterEqClosedWithoutOpen m i]
-      exact Set.mem_diff_of_mem hp h
+      rw [CellFrontierEqClosedWithoutOpen m i]
+      exact Set.mem_sdiff_of_mem hp h
     exact (r_cell_IsretractionOn hm i ).3 _ fixmem
 
 lemma r_dimCW_applyA {m : ℕ} [T2Space Y] (hm : 0 < m) (p : X) (hp : (p : Y) ∈ A) (t : ℝ) :

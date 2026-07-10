@@ -36,7 +36,7 @@ def aux_fun : EuclideanSpace ℝ (Fin m) → Y := fun p =>
 
 lemma aux_contOn_ring [TopologicalSpace Y]
     (hH_cont : ContinuousOn H {p | p.1 ∈ sphere ⟨0, by simp⟩ 1 ∧ p.2 ∈ Set.Icc 0 1})
-    (hAgree : agreeOn_A f H (sphere ⟨0, by simp⟩ 1)) :
+    (hAgree : agreeOn f H (sphere ⟨0, by simp⟩ 1)) :
     ContinuousOn (aux_fun f H) {p | 1 ≤ dist 0 p ∧ dist 0 p ≤ 2} := by
   rw [continuousOn_iff_continuous_restrict]
   apply Continuous.congr ?_ ?_
@@ -71,7 +71,7 @@ lemma aux_contOn_ring [TopologicalSpace Y]
 
 lemma aux_contOn [TopologicalSpace Y] (hf_cont : Continuous f)
     (hH_cont : ContinuousOn H {p | p.1 ∈ sphere ⟨0, by simp⟩ 1 ∧ p.2 ∈ Set.Icc 0 1})
-    (hAgree : agreeOn_A f H (Metric.sphere ⟨0, mem_closedBall_self zero_le_one⟩ 1)) :
+    (hAgree : agreeOn f H (Metric.sphere ⟨0, mem_closedBall_self zero_le_one⟩ 1)) :
     ContinuousOn (aux_fun f H) (closedBall 0 2) := by
   have domain_union : Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 2 =
     Metric.closedBall 0 1 ∪ {p : EuclideanSpace ℝ (Fin m) | 1 ≤ dist 0 p ∧ dist 0 p ≤ 2} := by
@@ -97,7 +97,7 @@ def H' : (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) × ℝ → Y :=
 
 lemma H'_ContinuousOn [TopologicalSpace Y] (hf_cont : Continuous f)
     (hH_cont : ContinuousOn H {p | p.1 ∈ sphere ⟨0, by simp⟩ 1 ∧ p.2 ∈ Set.Icc 0 1})
-    (hAgree : agreeOn_A f H (Metric.sphere ⟨0, by simp⟩ 1)) :
+    (hAgree : agreeOn f H (Metric.sphere ⟨0, by simp⟩ 1)) :
     ContinuousOn (H' f H) {p | p.2 ∈ unitInterval} := by
   unfold H'
   refine ContinuousOn.comp (aux_contOn f H hf_cont hH_cont hAgree) (by fun_prop ) ?_
@@ -146,7 +146,7 @@ lemma H'_MapsTo (hf_range : Set.range f ⊆ C)
 
 
 lemma H'_agreeH
-    (hAgree : agreeOn_A f H (Metric.sphere ⟨0, by simp⟩ 1)) :
+    (hAgree : agreeOn f H (Metric.sphere ⟨0, by simp⟩ 1)) :
     ∀ (a : (sphere ⟨0, by simp⟩ 1)) (t : unitInterval), H (a, t) = (H' f H) (a.1, t.1) := by
   unfold H' aux_fun
   intro a t
@@ -190,6 +190,10 @@ lemma HEP_disc_boundary : ∀ (m : ℕ),
     simp [H', aux_fun, mem_closedBall_zero_iff.mp x.prop]
   · exact H'_agreeH  f H hAgree
 
+lemma HEP_disc_boundary' : ∀ (m : ℕ),
+    HEP' (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) (Metric.sphere 0 1):= by
+  exact HEP_disc_boundary
+
 /-
 HEP for Cubes and boundary:
 -/
@@ -197,7 +201,7 @@ variable {m : ℕ}
 def fun_euclid_max : EuclideanSpace ℝ (Fin m) → (Fin m → ℝ) := fun p ↦ p
 def fun_max_euclid : (Fin m → ℝ) → EuclideanSpace ℝ (Fin m) := fun p ↦ { ofLp := p }
 
-def homeomorphic_euclid_max : EuclideanSpace ℝ (Fin m)  ≃ₜ(Fin m → ℝ) where
+def homeomorphic_euclid_max : EuclideanSpace ℝ (Fin m)  ≃ₜ (Fin m → ℝ) where
   toFun := @fun_euclid_max m
   invFun := @fun_max_euclid m
   left_inv := congrFun rfl
@@ -266,7 +270,7 @@ def comp_homeomorphic : EuclideanSpace ℝ (Fin m)  ≃ₜ(Fin m → ℝ) :=
   Homeomorph.trans homeomorphic_euclid_max G
 
 def comp_partialhomeomorphic : PartialHomeomorph (EuclideanSpace ℝ (Fin m)) (Fin m → ℝ) :=
-  Homeomorph.toPartialHomeomorphOfImageEq comp_homeomorphic (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1)
+  comp_homeomorphic.toPartialHomeomorphOfImageEq (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1)
   (closedBall (0 : (Fin m → ℝ)) 1) (by
     apply Set.BijOn.image_eq
     have trans_eq_comp: (homeomorphic_euclid_max.trans G : EuclideanSpace ℝ (Fin m) → Fin m → ℝ )
@@ -296,7 +300,7 @@ lemma HEP_cube_boundary : ∀ (m : ℕ),
     unfold comp_partialhomeomorphic
     rfl
   refine partialHomeomorph_HEP (HEP_disc_boundary m) comp_partialhomeomorphic hfs hft ?_
-    isClosed_sphere
+    (by sorry) (by sorry)
   simp only [comp_partialhomeomorphic, comp_homeomorphic, homeomorphic_euclid_max,
     Homeomorph.toPartialHomeomorphOfImageEq_apply, Homeomorph.trans_apply,
     Homeomorph.homeomorph_mk_coe, Equiv.coe_fn_mk]
