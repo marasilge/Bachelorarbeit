@@ -1,7 +1,0 @@
-
-\begin{thenomenclature} 
-\nomgroup{A}
-  \item [{$(I_n)$}]\begingroup The indexinset for cells of dimension $n$\nomeqref {2.0}\nompageref{9}
-  \item [{$X_n$}]\begingroup The \emph {$n$-skeleton} of a CW-complex X\nomeqref {2.0}\nompageref{9}
-
-\end{thenomenclature}

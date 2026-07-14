@@ -1,2 +1,23 @@
 /.lake
 /CWComplexes
+
+# LaTeX-Build-Artefakte (PDFs bleiben absichtlich versioniert)
+*.aux
+*.bbl
+*.bbl-SAVE-ERROR
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.nav
+*.nlo
+*.nls
+*.out
+*.run.xml
+*.snm
+*.synctex.gz
+*.toc
+*.vrb
+
+.DS_Store
