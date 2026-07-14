@@ -24,19 +24,36 @@ Definitions :
 
 def agreeOn (f : X → Y) (H : X × ℝ → Y) (A : Set X) : Prop := ∀ (a : A), f a = H (a,0)
 
-def IsHomotopyExtension (H' : X × ℝ → Y) (f : X → Y) (H : X × ℝ → Y) (A : Set X)
-  (rangeH' : Set Y := Set.univ) : Prop :=
+def HomotopyExtension (H' : X × ℝ → Y) (f : X → Y) (H : X × ℝ → Y) (A : Set X) :
+    Prop :=
   ContinuousOn H' { p : X × ℝ | p.2 ∈ unitInterval} ∧
-  { p : X × ℝ | p.2 ∈ unitInterval}.MapsTo H' rangeH'  ∧
-  (∀ (x : X), f x = H' (x, 0)) ∧ (∀ (a : A) (t :unitInterval), H (a,t) = H' (a, t))
+  (∀ (x : X), f x = H' (x, 0)) ∧ (∀ (a : A) (t : unitInterval), H (a,t) = H' (a, t))
 
 def HEP (X : Type u) [TopologicalSpace X] (A : Set X) : Prop :=
-  ∀ (Y : Type u) [TopologicalSpace Y] (rangeH' : Set Y ), ∀ (f : X → Y), ∀ (H : X × ℝ → Y),
-  Continuous f → Set.range f ⊆ rangeH' →
-  ContinuousOn H {p : X × ℝ | (p.1 ∈ A) ∧ (p.2 ∈ (unitInterval))} →
-  {p : X × ℝ | (p.1 ∈ A) ∧ (p.2 ∈ unitInterval)}.MapsTo H rangeH'  → agreeOn f H A
-  → ∃ (H' : X × ℝ → Y), IsHomotopyExtension H' f H A rangeH'
+  ∀ (Y : Type u) [TopologicalSpace Y], ∀ (f : X → Y), ∀ (H : X × ℝ → Y), Continuous f →
+  ContinuousOn H {p : X × ℝ | (p.1 ∈ A) ∧ (p.2 ∈ (unitInterval))} → agreeOn f H A
+  → ∃ (H' : X × ℝ → Y), HomotopyExtension H' f H A
+
+
 open Set.Notation
+def HEP' {Y : Type*} [TopologicalSpace Y] (X A : Set Y) : Prop := HEP X (X ↓∩ A)
+
+lemma HEP_HEP' {Y : Type*} [TopologicalSpace Y] (X : Set Y) (A : Set (Set.Elem X)) :
+    HEP (Set.Elem X) A ↔ HEP' X (Subtype.val '' A) := by
+  unfold HEP'
+  rw [Set.preimage_val_image_val_eq_self]
+
+
+def HomotopyExtension'' {Z : Type u} [TopologicalSpace Z] (f : Z → Y) (H : Z × ℝ → Y) (X A : Set Z)
+(H' : Z × ℝ → Y) : Prop :=
+ContinuousOn H' { p : Z × ℝ | p.1 ∈ X ∧ p.2 ∈ unitInterval} ∧
+(∀ (x : Z), x ∈ X →  f x = H' (x, 0)) ∧
+(∀ (a : Z × ℝ ), a.1 ∈ A → a.2 ∈ unitInterval → H a = H' a)
+
+def HEP'' {Z : Type u} [TopologicalSpace Z] (X A : Set Z) : Prop :=
+  ∀ (Y : Type u) [TopologicalSpace Y], ∀ (f : Z → Y), ∀ (H : Z × ℝ → Y), ContinuousOn f X →
+  ContinuousOn H {p : Z × ℝ | (p.1 ∈ A) ∧ (p.2 ∈ (unitInterval))} → agreeOn f H A
+  → ∃ (H' : Z × ℝ → Y), HomotopyExtension'' f H X A H'
 
 /-
   "Corollary 2.25" for closed:  Let A be a closed subset of a topological space X.
@@ -51,87 +68,79 @@ open Set.Notation
 -- The pair (X,X) has the HEP :
 
 example : HEP X (@Set.univ X) := by
-  intro Y hY rangeH' f H hf1 hf2 hH1 hH2 hAgree
+  intro Y hY f H hf hH hAgree
   use H
   refine ⟨?_, ?_ ,?_ ⟩
   · rw [← Set.sep_univ]
-    exact hH1
-  · intro x hx
-    apply hH2
-    simp [hx.2, hx.1]
-  · simp only [implies_true, and_true]
-    intro x
+    exact hH
+  · intro x
     exact hAgree ⟨x, by tauto⟩
+  · intro a t
+    rfl
 
 -- The pair (X, ∅ ) has the HEP:
 
 lemma HEP_empty : HEP X ∅ := by
-  intro Y hY rangeH' f H hf1 hf2 hH1 hH2 hAgree
+  intro Y hY f H hf hH hAgree
   let H' : X × ℝ → Y := fun (x,t) ↦ f x
   use H'
   refine ⟨?_, ?_ ,?_ ⟩
-  · exact Continuous.continuousOn (Continuous.fst' hf1)
-  · rw [← Set.mapsTo_univ_iff_range_subset] at hf2
-    apply Set.MapsTo.comp hf2 (by tauto)
-  · simp only [H', Subtype.forall, Set.mem_Icc, and_imp, IsEmpty.forall_iff, and_true]
-    intro x
-    tauto
+  · exact Continuous.continuousOn (Continuous.fst' hf)
+  · intro x
+    rfl
+  · simp only [H', Subtype.forall, IsEmpty.forall_iff,]
 
-lemma if_HEP_then_extension :
-    HEP X A →  ∀ (Y : Type u) [TopologicalSpace Y] (rangeH' : Set Y), ∀ (g :  X × ℝ → Y ),
-    ContinuousOn g {p : X × ℝ | p.2 = 0 ∨ (p.1 ∈ A) ∧ p.2 ∈ unitInterval} →
-    {p : X × ℝ | p.2 = 0 ∨ (p.1 ∈ A) ∧ p.2 ∈ unitInterval}.MapsTo g rangeH' →
-    ∃ (G :  X × ℝ → Y), ContinuousOn G {p : X × ℝ | p.2 ∈ unitInterval} ∧
-    {p : X × ℝ | p.2 ∈ unitInterval}.MapsTo G rangeH' ∧
-    ∀ (q : {p : X × ℝ | p.2 = 0 ∨ (p.1 ∈ A) ∧ p.2 ∈ unitInterval}), g q = G q.val := by
-  intro hHEP Y hY rangeH' g hg1 hg2
-  let f : X → Y := fun x ↦ g (x,0)
-  let H : X × ℝ → Y := fun p ↦ g p
-  have hf : Continuous f := ContinuousOn.comp_continuous hg1 (Continuous.prodMk_left 0) (by simp)
+variable {Z : Type u} [TopologicalSpace Z] {X A : Set Z}
+
+lemma if_HEP''_then_extension :
+    HEP'' X A →  ∀ (Y : Type u) [TopologicalSpace Y] , ∀ (g : Z × ℝ → Y ),
+    ContinuousOn g {p : Z × ℝ | (p.1 ∈ X) ∧ p.2 = 0 ∨ (p.1 ∈ A) ∧ p.2 ∈ unitInterval} →
+    ∃ (G : Z × ℝ → Y), ContinuousOn G {p : Z × ℝ | p.1 ∈ X ∧ p.2 ∈ unitInterval} ∧
+    ∀ (q : {p : Z × ℝ | p.1 ∈ X ∧ p.2 = 0 ∨ (p.1 ∈ A) ∧ p.2 ∈ unitInterval}), g q = G q.val := by
+  intro hHEP Y hY g hg
+  let f : Z → Y := fun x ↦ g (x,0)
+  let H : Z × ℝ → Y := fun p ↦ g p
+  have hf : ContinuousOn f X := by
+    unfold f
+    apply ContinuousOn.comp hg (by fun_prop) ?_
+    intro x hx
+    simp only [Set.mem_setOf_eq, and_true]
+    exact Or.inl hx
   have hH : ContinuousOn H {p | p.1 ∈ A ∧ p.2 ∈ unitInterval} := by
     unfold H
-    exact ContinuousOn.congr_mono hg1 (by simp [Set.EqOn]) (by grind)
+    exact ContinuousOn.congr_mono hg (by simp [Set.EqOn]) (by grind)
   have h_agree : agreeOn f H A := by
     intro a
     simp [f, H]
-  have hf_range : Set.range f ⊆ rangeH'  := by
-    refine Set.mapsTo_univ_iff_range_subset.mp ?_
-    intro x hx
-    exact hg2 (by simp)
-  have hH_mapsto : Set.MapsTo H {p | p.1 ∈ A ∧ p.2 ∈ unitInterval} rangeH' := by
-    intro x hx
-    simp only [H]
-    exact hg2 (by grind)
-  obtain ⟨G, ⟨hG_cont, hG⟩⟩ := hHEP Y rangeH' f H hf hf_range hH hH_mapsto h_agree
-  refine ⟨G, hG_cont , hG.1 , ?_ ⟩
+  obtain ⟨G, ⟨hG_cont, hG⟩⟩ := hHEP Y f H hf hH h_agree
+  refine ⟨G, hG_cont , ?_ ⟩
   intro q
   cases q.prop with
   | inl h0 => grind
-  | inr hA => exact hG.2.2 ⟨q.val.1, hA.1⟩ ⟨ q.val.2, hA.2⟩
+  | inr hA => exact hG.2 q.val hA.1 hA.2
 
-def g (f : X → Y) (H : X × ℝ → Y) : X × ℝ → Y := fun q =>
+def g (f : Z → Y) (H : Z × ℝ → Y) : Z × ℝ → Y := fun q =>
   if q.2 = 0 then f q.1
   else H q
 
-lemma continuousOn_g (A : Set X) (hA : IsClosed A) (f : X → Y) (H : X × ℝ → Y) (hf1 : Continuous f)
+lemma continuousOn_g (A : Set Z) (hA : IsClosed A) (hX : IsClosed X)(f : Z → Y) (H : Z × ℝ → Y) (hf1 : ContinuousOn f X)
   (hH1 : ContinuousOn H {p | p.1 ∈ A ∧ p.2 ∈ unitInterval}) (hAgree : agreeOn f H A) :
-    ContinuousOn (@g X Y f H)  { p : X × ℝ | p.2 = 0 ∨ (p.1 ∈ A ∧ p.2 ∈ unitInterval) } := by
-  refine ContinuousOn.union_of_isClosed ?_ ?_ (isClosed_eq continuous_snd continuous_const) ?_
-  · have h: ContinuousOn (fun q ↦ if q.2 = 0 then f q.1 else H q) {p | p.2 = 0} =
-        ContinuousOn (fun (q : X × ℝ ) ↦ f q.1) {p | p.2 = 0} := by
+    ContinuousOn (g f H)  { p : Z × ℝ | p.1 ∈ X ∧ p.2 = 0 ∨ (p.1 ∈ A ∧ p.2 ∈ unitInterval) } := by
+  refine ContinuousOn.union_of_isClosed ?_ ?_ ?_ ?_
+  · have h: ContinuousOn (fun q ↦ if q.2 = 0 then f q.1 else H q) {p : Z × ℝ | p.1 ∈ X ∧ p.2 = 0} =
+        ContinuousOn (fun (q : Z × ℝ ) ↦ f q.1) { p | p.1 ∈ X ∧ p.2 = 0} := by
       rw [eq_iff_iff]
       refine continuousOn_congr ?_
       intro p hp
-      exact if_pos hp
+      exact if_pos hp.2
     unfold g
-    rw [show ContinuousOn (fun q ↦ if q.2 = 0 then f q.1 else H q) fun p ↦ p.2 = 0 =
-      ContinuousOn (fun q ↦ if q.2 = 0 then f q.1 else H q) {p : X × ℝ | p.2 = 0} by rfl, h]
-    exact Continuous.comp_continuousOn' hf1 continuousOn_fst
-  · have : ContinuousOn (g f H) (fun p ↦ p.1 ∈ A ∧ p.2 ∈ unitInterval)
-      = ContinuousOn (g f H) { p : X × ℝ | p.1 ∈ A ∧ p.2 ∈ unitInterval} := rfl
-    rw [this]
-    have : ContinuousOn (g f H) {p | p.1 ∈ A ∧ p.2 ∈ unitInterval} =
-        ContinuousOn (fun (q : X × ℝ ) ↦ H q) {p | p.1 ∈ A ∧ p.2 ∈ unitInterval} := by
+    rw [show ContinuousOn (fun q ↦ if q.2 = 0 then f q.1 else H q) fun p ↦ p.1 ∈ X ∧ p.2 = 0 =
+      ContinuousOn (fun q ↦ if q.2 = 0 then f q.1 else H q) {p : Z × ℝ | p.1 ∈ X ∧ p.2 = 0} by rfl, h]
+    refine ContinuousOn.comp hf1 continuousOn_fst ?_
+    intro x hx
+    exact hx.1
+  · have : ContinuousOn (g f H) {p | p.1 ∈ A ∧ p.2 ∈ unitInterval} =
+      ContinuousOn (fun (q : Z × ℝ ) ↦ H q) {p | p.1 ∈ A ∧ p.2 ∈ unitInterval} := by
       unfold g
       rw [eq_iff_iff]
       refine continuousOn_congr ?_
@@ -142,10 +151,15 @@ lemma continuousOn_g (A : Set X) (hA : IsClosed A) (f : X → Y) (H : X × ℝ �
         intro h'
         exact (congrArg H ∘ congrArg (Prod.mk p.1)) (id (Eq.symm h))
       · exact if_neg h
-    rw[this]
+    rw[show ContinuousOn (g f H) (fun p ↦ p.1 ∈ A ∧ p.2 ∈ unitInterval)
+      = ContinuousOn (g f H) { p : Z × ℝ | p.1 ∈ A ∧ p.2 ∈ unitInterval} by rfl, this]
     exact ContinuousOn.comp hH1 (by fun_prop) (Set.mapsTo_iff_subset_preimage.mpr fun a a_1 ↦ a_1)
+  · rw [show IsClosed fun (p : Z × ℝ ) ↦ p.1 ∈ X ∧ p.2 = 0 = IsClosed {p : Z × ℝ | p.1 ∈ X ∧ p.2 = 0 } by rfl]
+    refine IsClosed.and ?_ ?_
+    · sorry
+    sorry
   · refine IsClosed.and ?_ ?_
-    · have : { x : X × ℝ | x.1 ∈ A} = {x : X | x ∈ A } ×ˢ { a : ℝ | true} :=  by
+    · have : { x : Z × ℝ | x.1 ∈ A} = {x : Z | x ∈ A } ×ˢ { a : ℝ | true} :=  by
         ext
         grind
       rw[this]
@@ -154,26 +168,31 @@ lemma continuousOn_g (A : Set X) (hA : IsClosed A) (f : X → Y) (H : X × ℝ �
         (isClosed_le continuous_const continuous_snd) (isClosed_le continuous_snd continuous_const)
 
 lemma if_extension_then_HEP (hA : IsClosed A) :
-    ( ∀ (Y : Type u) [TopologicalSpace Y] (rangeH' : Set Y),
-    ∀ (g :  X × ℝ → Y ), ContinuousOn g {p : X × ℝ | p.2 = 0 ∨ (p.1 ∈ A) ∧ p.2 ∈ unitInterval} →
-    {p : X × ℝ | p.2 = 0 ∨ (p.1 ∈ A) ∧ p.2 ∈ unitInterval}.MapsTo g rangeH' →
-    ∃ (G :  X × ℝ → Y), ContinuousOn G {p : X × ℝ | p.2 ∈ unitInterval} ∧
-    {p : X × ℝ | p.2 ∈ unitInterval}.MapsTo G rangeH' ∧
-    ∀ (q : {p : X × ℝ | p.2 = 0 ∨ (p.1 ∈ A) ∧ p.2 ∈ unitInterval}), g q = G q.val )
-    → HEP X A  := by
-  intro h_extend Y hY rangeH' f H hf1 hf2 hH1 hH2 hAgree
-  let g : X × ℝ → Y := fun q =>
+    ( ∀ (Y : Type u) [TopologicalSpace Y],
+    ∀ (g :  Z × ℝ → Y ), ContinuousOn g {p : Z × ℝ | p.1 ∈ X ∧ p.2 = 0 ∨ (p.1 ∈ A) ∧ p.2 ∈ unitInterval} →
+    ∃ (G :  Z × ℝ → Y), ContinuousOn G {p : Z × ℝ | p.1 ∈ X ∧ p.2 ∈ unitInterval} ∧
+    ∀ (q : {p : Z × ℝ | p.2 = 0 ∨ (p.1 ∈ A) ∧ p.2 ∈ unitInterval}), g q = G q.val )
+    → HEP'' X A  := by
+  intro h_extend Y hY f H hf hH hAgree
+  let g : Z × ℝ → Y := fun q =>
     if q.2 = 0 then f q.1
     else H q
-  obtain ⟨G, hG⟩ := h_extend Y rangeH' g (continuousOn_g A hA f H hf1 hH1 hAgree) (by
-    intro x hx
-    by_cases hx_case : x.2 = 0
-    · simp only [hx_case, reduceIte, g]
-      exact hf2 (by simp)
-    · simp only [hx_case, reduceIte, g]
-      simp only [Set.mem_Icc, Set.mem_setOf_eq, hx_case, false_or] at hx
-      exact hH2 (Set.mem_sep_iff.mpr hx))
-  refine ⟨G, hG.1, hG.2.1, ⟨ ?_, ?_ ⟩  ⟩
+  obtain ⟨G, hG⟩ := h_extend Y g (continuousOn_g A hA (by sorry) f H hf hH hAgree)
+  refine ⟨G, hG.1, ?_, ?_ ⟩
+  · intro x
+    grind [hG.2 ⟨(x,0), by simp⟩]
+  · intro a
+    by_cases h : (a.1 ∈ A ∧ a.2 = 0)
+    · obtain ⟨hG_cont, hG1 ⟩ := hG
+      specialize hG1 ⟨a, by simp [h]⟩
+      specialize hAgree ⟨a.1, h.1⟩
+      rw [show G a = f a.1 by grind, h.2]
+      intro x t
+      grind
+    · obtain ⟨hG_cont , hG1 ⟩ := hG
+      specialize hG1 ⟨a, by sorry⟩
+      grind
+  /-
   · intro x
     grind [hG.2.2 ⟨(x,0), by simp⟩]
   · intro a t
@@ -186,6 +205,7 @@ lemma if_extension_then_HEP (hA : IsClosed A) :
     · obtain ⟨hG_cont , ⟨hG1, hG2⟩⟩ := hG
       specialize hG2 ⟨(a,t), Set.mem_setOf.mpr (Or.inr ⟨Subtype.coe_prop a, Subtype.coe_prop t⟩)⟩
       grind
+      -/
 
 structure IsRetractionOn (r : X → X) (B A : Set X) : Prop where
   continuousOn : ContinuousOn r B
@@ -259,7 +279,7 @@ lemma if_HEP_then_retraction {X : Type u} [TopologicalSpace X] {A : Set X} (hA :
   use G
 
 lemma retraction_criterion_closed (hA1 : IsClosed A) :
-    HEP X A ↔ ∃ r : X × ℝ → X × ℝ, IsRetractionOn r {p : X × ℝ | p.2 ∈ unitInterval}
+    HEP'' X A ↔ ∃ r : X × ℝ → X × ℝ, IsRetractionOn r {p : X × ℝ | p.2 ∈ unitInterval}
     {p : X × ℝ | p.2 = 0 ∨ (p.1 ∈ A) ∧ p.2 ∈ unitInterval}:= by
   by_cases hA2 : Nonempty A
   · have hX : Nonempty (X × ℝ ):=

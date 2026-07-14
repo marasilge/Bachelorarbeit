@@ -1,0 +1,15 @@
+\frametitle{From the disc to the cube}
+\begin{center}
+\includegraphics[width=\textwidth]{image_homeo.png}
+\end{center}
+\begin{itemize}\footnotesize
+\item \texttt{EuclideanSpace} carries the $\ell^2$-norm, the plain function type $\mathrm{Fin}\ m \to \mathbb{R}$ the $\ell^\infty$-norm
+\item crucially, the above lemma matches closure with closure and frontier with frontier
+\end{itemize}
+\begin{lstlisting}
+def fun_euclid_max : EuclideanSpace ℝ (Fin m) → (Fin m → ℝ) := fun p ↦ p
+
+def G : (Fin m → ℝ) ≃ₜ (Fin m → ℝ):= (exists_homeomorph_image_interior_closure_frontier_eq_unitBall
+  convex_euclid_to_max_ball
+  nonempty_euclid_to_max_ball bounded_euclid_to_max_ball).choose
+\end{lstlisting}

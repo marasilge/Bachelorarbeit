@@ -6,8 +6,8 @@ import Mathlib.Analysis.Convex.GaugeRescale
 import Mathlib.Data.Set.Subset
 import Mathlib.Topology.Defs.Filter
 import Mathlib.Data.PEquiv
-import Bachelorarbeit.HEP_definition
-import Bachelorarbeit.HEP_ball_cube
+import BachelorarbeitLean.HEP_definition
+import BachelorarbeitLean.HEP_ball_cube
 
 
 open Metric
@@ -375,7 +375,8 @@ lemma HEP_Cell [T2Space Y] {m : ℕ} (hm : 0 < m) (j : cell X m) :
     if ht : t ∈ unitInterval then RetractCellInt_Fun j hm (x, ⟨t, ht⟩)
     else (x,0)
   use r
-  refine ⟨?_, ?_ ,?_⟩
+  refine ⟨?_, ?_ , ?_ , ?_⟩
+  · sorry
   · simp only [r]
     apply ContinuousOn.congr (f := fun x ↦ (RetractCellInt_Fun j hm) (x.1, Set.projIcc 0 1
       zero_le_one x.2))
@@ -504,7 +505,7 @@ lemma r_dimCW_applyCell {m : ℕ} [T2Space Y] (hm : 0 < m) (i : cell X m)
       refine ⟨?_, unitInterval.mem_unitIntervalSubmonoid.mp ht⟩
       rw [CellFrontierEqClosedWithoutOpen m i]
       exact Set.mem_sdiff_of_mem hp h
-    exact (r_cell_IsretractionOn hm i ).3 _ fixmem
+    exact (r_cell_IsretractionOn hm i ).4 _ fixmem
 
 lemma r_dimCW_applyA {m : ℕ} [T2Space Y] (hm : 0 < m) (p : X) (hp : (p : Y) ∈ A) (t : ℝ) :
     r_dimCW hm (p, t) = (p,t) := by
@@ -584,7 +585,13 @@ lemma HEP_Dim {m : ℕ} [T2Space Y] (hm : 0 < m) (hX : X = ↑A ∪ ⋃ (j : cel
     (hA : Nonempty (X ↓∩ ↑A)) : HEP' X A := by
   apply (retraction_criterion_closed  ((Subcomplex.closed A).preimage_val)).2
   use r_dimCW hm
-  refine ⟨?_, ?_ , ?_ ⟩
+  refine ⟨?_, ?_ , ?_ , ?_⟩
+  · intro x hx
+    simp only [Set.mem_setOf_eq]
+    obtain h1 | h2 := hx
+    · rw[h1]
+      exact unitInterval.zero_mem
+    · exact h2.2
   · exact r_dimCW_ContOn ↑A hm hX hA
   · intro (x,t) ht
     simp only [Set.mem_setOf_eq] at ht

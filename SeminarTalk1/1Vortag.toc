@@ -1,0 +1,3 @@
+\beamer@sectionintoc {1}{Motivation}{3}{0}{1}
+\beamer@sectionintoc {2}{Mathematics of the Homotopy Extension Property}{6}{0}{2}
+\beamer@sectionintoc {3}{Formalization in Lean}{13}{0}{3}

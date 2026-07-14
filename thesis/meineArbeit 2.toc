@@ -1,0 +1,32 @@
+\babel@toc {english}{}\relax 
+\contentsline {section}{\numberline {1}Vorbemerkung}{4}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Motivation}{4}{subsection.1.1}%
+\contentsline {section}{\numberline {2}Homotopy Extension Property}{5}{section.2}%
+\contentsline {subsection}{\numberline {2.1}The Homotopy Extension Property}{5}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}HEP for relative CW-complexes}{8}{subsection.2.2}%
+\contentsline {section}{\numberline {3}Lean and mathlib}{12}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Lean - }{12}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Junk Values}{12}{subsection.3.2}%
+\contentsline {section}{\numberline {4}Lean formalisation of the Homotopy Extension Property}{13}{section.4}%
+\contentsline {subsection}{\numberline {4.1}CW-complexes in Mathlib}{13}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}HEP}{13}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Retraction}{13}{subsection.4.3}%
+\contentsline {section}{\numberline {5}Einrichtung Ihres \TeX -Systems}{15}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Installation}{15}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Dokumentation}{15}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Editor}{15}{subsection.5.3}%
+\contentsline {section}{\numberline {6}Paketempfehlungen}{16}{section.6}%
+\contentsline {subsection}{\numberline {6.1}\texttt {amsmath}}{16}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}\texttt {amssymb}}{16}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}\texttt {amsthm}}{16}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}\texttt {fontenc}}{17}{subsection.6.4}%
+\contentsline {subsection}{\numberline {6.5}\texttt {inputenc}}{17}{subsection.6.5}%
+\contentsline {subsection}{\numberline {6.6}\texttt {hyperref}}{17}{subsection.6.6}%
+\contentsline {subsection}{\numberline {6.7}\texttt {biblatex}}{17}{subsection.6.7}%
+\contentsline {section}{\numberline {7}Optionale Pakete}{18}{section.7}%
+\contentsline {subsection}{\numberline {7.1}\texttt {mathtools}}{18}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}\texttt {tikz}}{18}{subsection.7.2}%
+\contentsline {subsection}{\numberline {7.3}\texttt {tikz-cd}}{18}{subsection.7.3}%
+\contentsline {subsection}{\numberline {7.4}\texttt {graphicx}}{18}{subsection.7.4}%
+\contentsline {subsection}{\numberline {7.5}\texttt {booktabs}}{18}{subsection.7.5}%
+\contentsline {section}{Literatur}{19}{subsection.7.5}%

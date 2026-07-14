@@ -3,9 +3,9 @@ import Mathlib.Topology.CWComplex.Classical.Subcomplex
 import Mathlib.Topology.Constructions.SumProd
 import Mathlib.Analysis.InnerProductSpace.PiL2
 import Mathlib.Analysis.Convex.GaugeRescale
-import Bachelorarbeit.HEP_definition
 import Mathlib.Data.Set.Subset
 import Mathlib.Topology.Defs.Filter
+import BachelorarbeitLean.HEP_definition
 
 noncomputable section
 
@@ -128,13 +128,10 @@ lemma H'_MapsTo (hf_range : Set.range f ⊆ C)
     constructor
     · simp only [mem_sphere, Subtype.dist_eq, dist_zero_right]
       refine norm_smul_inv_norm (smul_ne_zero_iff.2 ?_)
-      constructor
-      · intro h_neg
-        simp [h_neg] at hp
+      constructor <;>
       · intro h_neg
         simp [h_neg] at hp
     · simp only
-      rw [Set.mem_setOf_eq] at hx
       rw [not_le, ← sub_pos] at hp
       refine ⟨Std.le_of_lt hp , ?_ ⟩
       rw [norm_smul_of_nonneg (by positivity [hx.1])] at ⊢ hp
@@ -181,14 +178,10 @@ lemma H'_agreeH
 
 lemma HEP_disc_boundary : ∀ (m : ℕ),
     HEP (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) (Metric.sphere ⟨0, by simp⟩ 1):= by
-  intro m Y hY C f H hf_cont hf_range hH_cont hH_mapsto hAgree
-  use H'  f H
-  refine ⟨?_ , ?_ , ?_, ?_ ⟩
-  · exact H'_ContinuousOn f H hf_cont hH_cont hAgree
-  · exact H'_MapsTo C f H hf_range hH_mapsto
-  · intro x
-    simp [H', aux_fun, mem_closedBall_zero_iff.mp x.prop]
-  · exact H'_agreeH  f H hAgree
+  intro m Y hY f H hf_cont hH_cont hAgree
+  refine ⟨H' f H, H'_ContinuousOn f H hf_cont hH_cont hAgree , ?_ , H'_agreeH f H hAgree ⟩
+  intro x
+  simp [H', aux_fun, mem_closedBall_zero_iff.mp x.prop]
 
 lemma HEP_disc_boundary' : ∀ (m : ℕ),
     HEP' (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) (Metric.sphere 0 1):= by
@@ -212,20 +205,14 @@ def homeomorphic_euclid_max : EuclideanSpace ℝ (Fin m)  ≃ₜ (Fin m → ℝ)
     fun_prop
 
 lemma closed_embedding_euclid_max : Topology.IsClosedEmbedding (@fun_euclid_max m) := by
-  refine ⟨?_, ?_ ⟩
-  · refine ⟨ { eq_induced := rfl }, ?_⟩
-    refine Function.HasLeftInverse.injective ?_
-    use fun_max_euclid
-    exact congrFun rfl
-  · have : Set.range (@fun_euclid_max m) = ⊤ := by
-      ext x
-      constructor
-      · tauto
-      · intro hx
-        use WithLp.toLp 2 x
-        simp[fun_euclid_max]
-    rw[this]
+  refine ⟨homeomorphic_euclid_max.isEmbedding, ?_ ⟩
+  suffices h : Set.range (@fun_euclid_max m) = ⊤ by
+    rw[h]
     exact closure_subset_iff_isClosed.mp fun ⦃a⦄ a_1 ↦ trivial
+  refine Eq.symm (Set.Subset.antisymm ?_ fun ⦃a⦄ a_1 ↦ trivial)
+  intro x hx
+  use WithLp.toLp 2 x
+  simp[fun_euclid_max]
 
 lemma convex_euclid_to_max_ball : Convex ℝ (fun_euclid_max '' (closedBall
   (0 :EuclideanSpace ℝ (Fin m)) 1)) := by
@@ -263,10 +250,10 @@ lemma hG_front : G '' frontier (fun_euclid_max '' closedBall (0 : EuclideanSpace
 lemma closure_hG_cosed : closure (@fun_euclid_max m '' closedBall 0 1) = (fun_euclid_max ''
     closedBall 0 1) := by
   refine closure_eq_iff_isClosed.mpr ?_
-  exact  (Topology.IsClosedEmbedding.isClosed_iff_image_isClosed closed_embedding_euclid_max).mp
+  exact (Topology.IsClosedEmbedding.isClosed_iff_image_isClosed closed_embedding_euclid_max).mp
     isClosed_closedBall
 
-def comp_homeomorphic : EuclideanSpace ℝ (Fin m)  ≃ₜ(Fin m → ℝ) :=
+def comp_homeomorphic : EuclideanSpace ℝ (Fin m) ≃ₜ (Fin m → ℝ) :=
   Homeomorph.trans homeomorphic_euclid_max G
 
 def comp_partialhomeomorphic : PartialHomeomorph (EuclideanSpace ℝ (Fin m)) (Fin m → ℝ) :=
@@ -274,8 +261,7 @@ def comp_partialhomeomorphic : PartialHomeomorph (EuclideanSpace ℝ (Fin m)) (F
   (closedBall (0 : (Fin m → ℝ)) 1) (by
     apply Set.BijOn.image_eq
     have trans_eq_comp: (homeomorphic_euclid_max.trans G : EuclideanSpace ℝ (Fin m) → Fin m → ℝ )
-      = G.toFun.comp homeomorphic_euclid_max := by
-        exact List.map_inj.mp rfl
+      = G.toFun.comp homeomorphic_euclid_max := List.map_inj.mp rfl
     refine Set.BijOn.mk ?_ ?_ ?_
     · rw [comp_homeomorphic, trans_eq_comp]
       simp only [Equiv.toFun_as_coe, Homeomorph.coe_toEquiv, homeomorphic_euclid_max,
@@ -290,17 +276,29 @@ def comp_partialhomeomorphic : PartialHomeomorph (EuclideanSpace ℝ (Fin m)) (F
       rw[← closure_hG_cosed]
       apply (Set.image_eq_iff_surjOn_mapsTo.1 hG_closed).1 )
 
+lemma HEP_cube_boundary' : ∀ (m : ℕ),
+    HEP' (closedBall (0 : (Fin m → ℝ)) 1) (sphere 0 1) := by
+  -- exact HEP_cube_boundary
+  intro m
+  refine PartialHomeomorph_HEP' sphere_subset_closedBall sphere_subset_closedBall
+    (HEP_disc_boundary' m) comp_partialhomeomorphic (by rfl) (by rfl) ?_
+    isClosed_sphere isClosed_sphere
+  simp only [comp_partialhomeomorphic, comp_homeomorphic, homeomorphic_euclid_max,
+    Homeomorph.toPartialHomeomorphOfImageEq_apply, Homeomorph.trans_apply,
+    Homeomorph.homeomorph_mk_coe, Equiv.coe_fn_mk]
+  rw[← hG_front, ← Set.image_image]
+  refine (Set.image_eq_image G.injective).mpr ?_
+  have := (@homeomorphic_euclid_max m).image_frontier (closedBall 0 1)
+  simp only [homeomorphic_euclid_max, Homeomorph.homeomorph_mk_coe, Equiv.coe_fn_mk] at this
+  rw[← this, frontier_closedBall 0 one_ne_zero]
+
 lemma HEP_cube_boundary : ∀ (m : ℕ),
     HEP (closedBall (0 : (Fin m → ℝ)) 1) (sphere ⟨0, by simp⟩ 1) := by
+  --exact HEP_cube_boundary'
   intro m
-  have hfs : (@comp_partialhomeomorphic m).source = (closedBall 0 1) := by
-    unfold comp_partialhomeomorphic
-    rfl
-  have hft : comp_partialhomeomorphic.target = (closedBall (0 : (Fin m → ℝ)) 1) := by
-    unfold comp_partialhomeomorphic
-    rfl
-  refine partialHomeomorph_HEP (HEP_disc_boundary m) comp_partialhomeomorphic hfs hft ?_
-    (by sorry) (by sorry)
+  refine partialHomeomorph_HEP (HEP_disc_boundary m) comp_partialhomeomorphic (by rfl) (by rfl) ?_
+    (IsClosed.trans isClosed_sphere isClosed_closedBall)
+    (IsClosed.trans isClosed_sphere isClosed_closedBall)
   simp only [comp_partialhomeomorphic, comp_homeomorphic, homeomorphic_euclid_max,
     Homeomorph.toPartialHomeomorphOfImageEq_apply, Homeomorph.trans_apply,
     Homeomorph.homeomorph_mk_coe, Equiv.coe_fn_mk]
@@ -312,14 +310,14 @@ lemma HEP_cube_boundary : ∀ (m : ℕ),
       exists_and_right, exists_eq_right]
     use mem_closedBall_zero_iff.mp (sphere_subset_closedBall hf)
     exact mem_sphere.mp hf
-  have s_eucl: Subtype.val '' (sphere ⟨0, mem_closedBall_self zero_le_one⟩ 1 :
+  have s_eucl : Subtype.val '' (sphere ⟨0, mem_closedBall_self zero_le_one⟩ 1 :
       Set (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1)) = sphere 0 1 := by
     refine Set.SurjOn.image_eq_of_mapsTo ?_ fun ⦃x⦄ a ↦ a
-    intro e he
+    intro f hf
     simp only [Set.mem_image, mem_sphere, Subtype.exists, mem_closedBall, dist_zero_right,
       exists_and_right, exists_eq_right]
-    use mem_closedBall_zero_iff.mp (sphere_subset_closedBall he)
-    exact mem_sphere.mp he
+    use mem_closedBall_zero_iff.mp (sphere_subset_closedBall hf)
+    exact mem_sphere.mp hf
   rw[s_finm, s_eucl, ← hG_front, ← Set.image_image]
   refine (Set.image_eq_image G.injective).mpr ?_
   have := (@homeomorphic_euclid_max m).image_frontier (closedBall 0 1)

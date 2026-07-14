@@ -1,0 +1,17 @@
+\babel@toc {english}{}\relax 
+\contentsline {section}{\numberline {1}Vorbemerkung}{4}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Motivation}{4}{subsection.1.1}%
+\contentsline {section}{\numberline {2}Homotopy Extension Property}{5}{section.2}%
+\contentsline {subsection}{\numberline {2.1}The Homotopy Extension Property}{5}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}HEP for relative CW-complexes}{8}{subsection.2.2}%
+\contentsline {section}{\numberline {3}Lean and mathlib}{12}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Lean's Dependent Type Theory}{12}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Structures}{14}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Junk Values}{14}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}API lemma}{14}{subsection.3.4}%
+\contentsline {section}{\numberline {4}Lean formalisation of the Homotopy Extension Property}{15}{section.4}%
+\contentsline {subsection}{\numberline {4.1}CW-complexes in Mathlib}{15}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}HEP Definition}{15}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Retraction}{16}{subsection.4.3}%
+\contentsline {section}{\numberline {5}Methodes and Usage of AI}{18}{section.5}%
+\contentsline {section}{Literatur}{19}{section.5}%

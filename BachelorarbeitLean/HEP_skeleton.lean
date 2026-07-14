@@ -6,9 +6,9 @@ import Mathlib.Analysis.Convex.GaugeRescale
 import Mathlib.Data.Set.Subset
 import Mathlib.Topology.Defs.Filter
 import Mathlib.Data.PEquiv
-import Bachelorarbeit.HEP_definition
-import Bachelorarbeit.HEP_ball_cube
-import Bachelorarbeit.HEP_cell
+import BachelorarbeitLean.HEP_definition
+import BachelorarbeitLean.HEP_ball_cube
+import BachelorarbeitLean.HEP_cell
 
 open Metric
 open Set.Notation
