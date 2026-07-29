@@ -190,19 +190,17 @@ lemma HEP_disc_boundary' : ∀ (m : ℕ),
 /-
 HEP for Cubes and boundary:
 -/
+
 variable {m : ℕ}
 def fun_euclid_max : EuclideanSpace ℝ (Fin m) → (Fin m → ℝ) := fun p ↦ p
-def fun_max_euclid : (Fin m → ℝ) → EuclideanSpace ℝ (Fin m) := fun p ↦ { ofLp := p }
 
 def homeomorphic_euclid_max : EuclideanSpace ℝ (Fin m)  ≃ₜ (Fin m → ℝ) where
   toFun := @fun_euclid_max m
-  invFun := @fun_max_euclid m
+  invFun := fun p ↦ { ofLp := p }
   left_inv := congrFun rfl
   right_inv := congrFun rfl
   continuous_toFun := by fun_prop
-  continuous_invFun := by
-    unfold fun_max_euclid
-    fun_prop
+  continuous_invFun := by fun_prop
 
 lemma closed_embedding_euclid_max : Topology.IsClosedEmbedding (@fun_euclid_max m) := by
   refine ⟨homeomorphic_euclid_max.isEmbedding, ?_ ⟩

@@ -252,13 +252,13 @@ Strategy:
 \frametitle{HEP for discs/cubes relative boundary}
 \begin{theorem} [\cite{JHU}]
 The pair $(D^m, S^{m-1})$ has the \emph{HEP} for all $m \in \mathbb{N}$.
-\end{theorem}
+\end{theorem} \pause
 \begin{theorem}
     The \emph{HEP} is preserved under homeomorphisms: let $(X,A)$ and $(Y,B)$ be space pairs. If there exists a homeomorphism from $X$ to $Y$ that maps $A$ to $B$, and $(X,A)$ has the \emph{HEP}, then so does $(Y,B)$.
-\end{theorem}
+\end{theorem} \pause
 \begin{theorem}
 The pair $([0,1]^m, \partial ([0,1]^m))$ has the \emph{HEP} for all $m \in \mathbb{N}$.
-\end{theorem}
+\end{theorem} 
 \end{frame}
 
 
@@ -345,11 +345,12 @@ lemma retraction_criterion_closed' {Y : Type u} [TopologicalSpace Y] (A X : Set 
 \item subspaces have to be closed to apply the retraction criterion
 \end{itemize}
 \begin{lstlisting}
-lemma PartialHomeomorph_HEP' {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
-    {X1 X2 : Set X} (hX : X2 ⊆ X1) {Y1 Y2 : Set Y} (hY : Y2 ⊆ Y1) (hHEP : HEP' X1 X2)
-    (f : PartialHomeomorph X Y) (hf_source : f.source = X1) (hf_target : f.target = Y1)
-    (h2 : f '' X2 = Y2) (hX2closed : IsClosed (X2 : Set X)) (hY2closed : IsClosed (Y2 : Set Y)) :
-    HEP' Y1 Y2
+lemma PartialHomeomorph_HEP' {X Y : Type*} [TopologicalSpace X] 
+  [TopologicalSpace Y] {X1 X2 : Set X} (hX : X2 ⊆ X1) {Y1 Y2 : Set Y} 
+  (hY : Y2 ⊆ Y1) (hHEP : HEP' X1 X2) (f : PartialHomeomorph X Y) 
+  (hf_source : f.source = X1) (hf_target : f.target = Y1)
+  (h2 : f '' X2 = Y2) (hX2closed : IsClosed (X2 : Set X)) 
+  (hY2closed : IsClosed (Y2 : Set Y)) : HEP' Y1 Y2
 \end{lstlisting}
 \end{frame}
 
@@ -377,15 +378,14 @@ lemma HEP_disc_boundary' : ∀ (m : ℕ),
 \end{frame}
 
 
-
-\begin{frame}[fragile,shrink=10]
+\begin{frame}[fragile, shrink = 5]
 \frametitle{From the disc to the cube}
 \begin{center}
 \includegraphics[width=\textwidth]{image_homeo.png}
 \end{center}
 \begin{itemize}\footnotesize
-\item \texttt{EuclideanSpace} carries the $\ell^2$-norm, the plain function type $\mathrm{Fin}\ m \to \mathbb{R}$ the $\ell^\infty$-norm
-\item crucially, the above lemma matches closure with closure and frontier with frontier
+\item \texttt{EuclideanSpace} carries the $\ell^2$-norm, the type $\mathrm{Fin}\ m \to \mathbb{R}$ the $\ell^\infty$-norm
+\item the above lemma matches closure with closure and frontier with frontier
 \end{itemize}
 \begin{lstlisting}
 def fun_euclid_max : EuclideanSpace ℝ (Fin m) → (Fin m → ℝ) := fun p ↦ p
@@ -402,6 +402,11 @@ def G : (Fin m → ℝ) ≃ₜ (Fin m → ℝ):= (exists_homeomorph_image_interi
 \begin{frame}[allowframebreaks]
 \frametitle{References}
 \printbibliography[heading=none]
+
+\vfill
+\footnotesize
+Formalisation and slides:
+\url{https://github.com/marasilge/Bachelorarbeit}
 \end{frame}
 
 

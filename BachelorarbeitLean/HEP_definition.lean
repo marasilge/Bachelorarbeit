@@ -23,10 +23,10 @@ Definitions :
 
 def agreeOn (f : X → Y) (H : X × ℝ → Y) (A : Set X) : Prop := ∀ (a : A), f a = H (a,0)
 
-def HomotopyExtension (H' : X × ℝ → Y) (f : X → Y) (H : X × ℝ → Y) (A : Set X) :
-    Prop :=
-  ContinuousOn H' { p : X × ℝ | p.2 ∈ unitInterval} ∧
-  (∀ (x : X), f x = H' (x, 0)) ∧ (∀ (a : A) (t : unitInterval), H (a,t) = H' (a, t))
+structure HomotopyExtension (H' : X × ℝ → Y) (f : X → Y) (H : X × ℝ → Y) (A : Set X) where
+  ContinuousOn : ContinuousOn H' { p : X × ℝ | p.2 ∈ unitInterval}
+  agreef : ∀ (x : X), f x = H' (x, 0)
+  agreeH : ∀ (a : A) (t : unitInterval), H (a,t) = H' (a, t)
 
 def HEP (X : Type u) [TopologicalSpace X] (A : Set X) : Prop :=
   ∀ (Y : Type u) [TopologicalSpace Y], ∀ (f : X → Y), ∀ (H : X × ℝ → Y), Continuous f →
@@ -79,14 +79,14 @@ def HomotopyExtensionY (H' : X × ℝ → Y) (f : X → Y) (H : X × ℝ → Y) 
     Prop :=
   ContinuousOn H' { p : X × ℝ | p.2 ∈ unitInterval} ∧
   { p : X × ℝ | p.2 ∈ unitInterval}.MapsTo H' rangeH'  ∧
-  (∀ (x : X), f x = H' (x, 0)) ∧ (∀ (a : A) (t :unitInterval), H (a,t) = H' (a, t))
+  (∀ (x : X), f x = H' (x, 0)) ∧ (∀ (a : A) (t : unitInterval), H (a,t) = H' (a, t))
 
 def HEPY (X : Type u) [TopologicalSpace X] (A : Set X) : Prop :=
   ∀ (Y : Type u) [TopologicalSpace Y] (rangeH' : Set Y), ∀ (f : X → Y), ∀ (H : X × ℝ → Y),
   Continuous f → Set.range f ⊆ rangeH' →
-  ContinuousOn H {p : X × ℝ | (p.1 ∈ A) ∧ (p.2 ∈ (unitInterval))} →
-  {p : X × ℝ | (p.1 ∈ A) ∧ (p.2 ∈ unitInterval)}.MapsTo H rangeH' → agreeOn f H A
-  → ∃ (H' : X × ℝ → Y), HomotopyExtensionY H' f H A rangeH'
+  ContinuousOn H {p : X × ℝ | p.1 ∈ A ∧ p.2 ∈ unitInterval} →
+  {p : X × ℝ | p.1 ∈ A ∧ p.2 ∈ unitInterval}.MapsTo H rangeH' → agreeOn f H A
+  → ∃ H' : X × ℝ → Y, HomotopyExtensionY H' f H A rangeH'
 
 open Classical in
 lemma HEP_iff_HEPY (X : Type u) [TopologicalSpace X] (A : Set X) : HEPY X A ↔ HEP X A := by
