@@ -255,6 +255,8 @@ lemma SkeletonProj_inj_top {Y : Type*} [TopologicalSpace Y] [T2Space Y] (X : Set
       rw[hY] at map_y'_skelLT
       exact (map_x'_not_skelLT map_y'_skelLT).elim
 
+-- brauche ich nicht
+/-
 lemma SkeletonProj_not_top {Y : Type*} [TopologicalSpace Y] [T2Space Y] (X : Set Y)
     {C : Set Y} [RelCWComplex X C] (m : ℕ) (y : skeletonLT X m) (hy : ¬ ( ∃ (j : cell X m),
     y.1 ∈ openCell m j)) (x : C ⊕ (Σ (n : Fin m) (_ : cell X n), (closedBall (0 : Fin n → ℝ) 1))) :
@@ -263,9 +265,9 @@ lemma SkeletonProj_not_top {Y : Type*} [TopologicalSpace Y] [T2Space Y] (X : Set
   simp at hy
   have : y.1 ∈ C ∨ (∃ (n : Fin m) (j : cell X n),  y.1 ∈ openCell n j) := by sorry
   --obtain ⟨ ⟩
-  sorry
+  sorry-/
 
-variable {Y : Type*} [TopologicalSpace Y] [T2Space Y] (X : Set Y) {C : Set Y} [RelCWComplex X C]
+variable {Y : Type*} [TopologicalSpace Y] [T2Space Y] {X : Set Y} {C : Set Y} [RelCWComplex X C]
 
 #check r_cube
 #check r_cube_IsretractionOn
@@ -277,7 +279,7 @@ def R_I : ℝ → unitInterval := fun p ↦
   if h : p ∈ unitInterval then ⟨p, h⟩
   else Classical.choice Zero.instNonempty
 
-lemma id_R_I (t : unitInterval) : R_I t.1 = t := by simp [R_I]
+@[simp] lemma id_R_I (t : unitInterval) : R_I t.1 = t := by simp [R_I]
 
 lemma cts_R_I : ContinuousOn R_I unitInterval := by
   refine continuousOn_iff_continuous_restrict.mpr ?_
@@ -308,8 +310,34 @@ def cubesretract {m : ℕ} (n : Fin (m + 1)) :
   if n = m then ((r_cube (n : ℕ) (p.1,p.2)).1, R_I (r_cube (n : ℕ) (p.1,p.2)).2)
   else id p
 
-lemma cubesretract_of_eq {m : ℕ} {n : Fin (m + 1)} (h : (n : ℕ) = m) : true := by sorry
---- dinge von r_cube beweisen (continuous, mapsto, fixedOn, ...)
+lemma cubesretract_continuous {m : ℕ} (n : Fin (m + 1)) : Continuous (cubesretract n) := by
+  unfold cubesretract
+  by_cases hnm : n = m
+  · simp only [hnm, ↓reduceIte, continuous_prodMk]
+    refine ⟨ ?_ , ?_⟩
+    · apply Continuous.comp continuous_fst ?_
+      exact (r_cube_IsretractionOn n).continuousOn.comp_continuous (by fun_prop) (fun x ↦ x.2.2)
+    · have hs : ∀ (x : ↑(closedBall (0 : Fin n → ℝ) 1) × ↑unitInterval),
+        (fun z ↦ (r_cube ↑n (z.1, ↑z.2)).2) x ∈ unitInterval := by
+        intro x
+        have mapstoI: Set.MapsTo (r_cube ↑n) {p | p.2 ∈ unitInterval} {p | p.2 ∈ unitInterval}:= by
+          intro x hx
+          have sub : {p : (closedBall (0: Fin n → ℝ) 1) × ℝ | p.2 = 0 ∨
+              p.1 ∈ sphere (⟨0, by simp⟩) 1 ∧ p.2 ∈ unitInterval} ⊆ {p | p.2 ∈ unitInterval} := by
+            intro p ph
+            obtain h0 | hI := ph
+            · simp [h0]
+            · exact hI.2
+          exact sub ((r_cube_IsretractionOn n).mapsTo hx)
+        apply mapstoI
+        rw [Set.mem_setOf_eq]
+        exact x.2.prop
+      refine ContinuousOn.comp_continuous cts_R_I ?_ hs
+      apply Continuous.comp continuous_snd ?_
+      exact (r_cube_IsretractionOn n).continuousOn.comp_continuous (by fun_prop) (fun x ↦ x.2.2)
+  · simp only [hnm, ↓reduceIte, id_eq, continuous_prodMk]
+    refine ⟨ by fun_prop, by fun_prop⟩
+
 
 #check r_cube
 #check (r_cube_IsretractionOn 2).fixesOn
@@ -335,14 +363,53 @@ lemma cubesretract_of_ne {m : ℕ} {n : Fin (m + 1)} (h : (n : ℕ) ≠ m) :
   simp only [h, ↓reduceIte, id_eq]
   exact Prod.id_prod
 
-def baseMap (m : ℕ) : C × unitInterval → ↥(skeletonLT X (m + 1)) × unitInterval := fun p ↦
-  (⟨p.1 , mem_skeleton_iff.mpr (Or.inl p.1.2)⟩, p.2)
+lemma cubesretract_mapsto_lt {m : ℕ} (n : Fin (m + 1)) (i : cell X n)
+    (p : (closedBall 0 1) × ↑unitInterval) (hn : n < m) :
+    (map n i) (cubesretract n p).1 ∈ skeletonLT X m := by
+  unfold cubesretract
+  have : (p.1, (p.2 : ℝ)) ∈ {p | p.2 ∈ unitInterval} := Set.mem_setOf.mpr p.2.2
+  have mapsto := (r_cube_IsretractionOn n).mapsTo this
+  simp only [Nat.ne_of_lt hn, ↓reduceIte, id_eq]
+  apply Topology.CWComplex.skeletonLT_mono (m := n + 1) ?_ ?_
+  · rw [ENat.add_one_le_iff (ENat.coe_ne_top ↑n)]
+    exact ENat.coe_lt_coe.mpr hn
+  · apply closedCell_subset_skeletonLT n i
+    apply Set.mem_image_of_mem
+    exact Subtype.coe_prop p.1
 
-lemma cubesretract_mapsto {m : ℕ} (n : Fin (m + 1)) (i : cell X n)
+lemma cubesretract_mapsto_top {m : ℕ} (n : Fin (m + 1)) (i : cell X n)
+    (p : (closedBall 0 1) × ↑unitInterval) (hn : n = m) :
+    (cubesretract n p).2 = 0 ∨ (map n i) (cubesretract n p).1 ∈ skeletonLT X m := by
+  unfold cubesretract
+  have : (p.1, (p.2 : ℝ)) ∈ {p | p.2 ∈ unitInterval} := Set.mem_setOf.mpr p.2.2
+  have mapsto := (r_cube_IsretractionOn n).mapsTo this
+  simp only [hn, ↓reduceIte]
+  rcases mapsto with h0 | h1
+  · simp [h0, R_I]
+  · right
+    apply Set.Subset.trans (cellFrontier_subset_skeletonLT n i)
+        (skeletonLT_mono (Std.le_of_eq (congrArg Nat.cast hn)))
+    apply Set.mem_image_of_mem
+    exact h1.1
+
+lemma cubesretract_mapsto_weak {m : ℕ} (n : Fin (m + 1)) (i : cell X n)
     (p : (closedBall 0 1) × ↑unitInterval) :
     (map n i) (cubesretract n p).1 ∈ skeletonLT X (m + 1) := by
+  by_cases hn : n = m
+  · obtain h0 | h1 := cubesretract_mapsto_top n i p hn
+    · have : (map n i) (cubesretract n p).1 ∈ skeletonLT X (n + 1) := by
+        apply closedCell_subset_skeletonLT n i
+        apply Set.mem_image_of_mem
+        exact Subtype.coe_prop (cubesretract n p).1
+      refine Set.mem_of_mem_of_subset this (skeletonLT_mono ?_)
+      simp only [hn, Std.le_refl]
+    · exact skeletonLT_mono le_self_add h1
+  · have := cubesretract_mapsto_lt n i p (lt_of_le_of_ne (Fin.is_le n) hn)
+    apply skeletonLT_mono le_self_add this
+
+  /-
   unfold cubesretract
-  have : (p.1, (p.2 : ℝ )) ∈ {p | p.2 ∈ unitInterval} := Set.mem_sep_iff.mpr p.2.2
+  have : (p.1, (p.2 : ℝ )) ∈ {p | p.2 ∈ unitInterval} := Set.mem_setOf.mpr p.2.2
   have mapsto := (r_cube_IsretractionOn n).mapsTo this
   by_cases h : m = n
   · simp only [h, ↓reduceIte]
@@ -358,16 +425,19 @@ lemma cubesretract_mapsto {m : ℕ} (n : Fin (m + 1)) (i : cell X n)
       exact Or.inr ⟨Nat.le_iff_lt_add_one.2 n.prop, Ne.intro h⟩
     · apply closedCell_subset_skeletonLT n i
       apply Set.mem_image_of_mem
-      exact Subtype.coe_prop p.1
+      exact Subtype.coe_prop p.1 -/
+
+def baseMap (m : ℕ) : C × unitInterval → ↥(skeletonLT X (m + 1)) × unitInterval := fun p ↦
+  (⟨p.1 , mem_skeleton_iff.mpr (Or.inl p.1.2)⟩, p.2)
 
 def cubeMap (m : ℕ) (n : Fin (m + 1)) (i : cell X n) :
     (closedBall (0 : Fin (n : ℕ) → ℝ) 1) × unitInterval → ↥(skeletonLT X (m + 1)) × unitInterval :=
   fun p =>
-    (⟨map (n : ℕ) i (cubesretract n p).1, cubesretract_mapsto X n i p⟩, (cubesretract n p).2)
+    (⟨map (n : ℕ) i (cubesretract n p).1, cubesretract_mapsto_weak n i p⟩, (cubesretract n p).2)
 
 lemma cubeMap_cell_lt_apply {m : ℕ} (n : Fin (m + 1)) (hn : n < m) (i : cell X n)
     (x : (closedBall (0 : Fin (n : ℕ) → ℝ) 1) × unitInterval) :
-    cubeMap X m n i x = (SkeletonProjection X (m + 1) (Sum.inr ⟨n,i,x.1⟩), x.2) := by
+    cubeMap m n i x = (SkeletonProjection X (m + 1) (Sum.inr ⟨n,i,x.1⟩), x.2) := by
   simp[cubeMap, SkeletonProjection, cubesretract, ( Nat.ne_of_lt hn)]
   rfl
 
@@ -375,47 +445,50 @@ def sumMap (m : ℕ) :
     (C ⊕ (Σ (n : Fin (m + 1)) (_ : cell X n), closedBall (0 : Fin n → ℝ) 1)) × unitInterval →
     skeletonLT X (m+1) × unitInterval := fun p ↦
     p.1.elim
-      (fun c => baseMap X m (c, p.2))
-      (fun ⟨n, i, x⟩ => cubeMap X m n i (x, p.2))
+      (fun c => baseMap m (c, p.2))
+      (fun ⟨n, i, x⟩ => cubeMap m n i (x, p.2))
 
 #check Sum.elim
 
 -- für eine der versionen entscheiden:
 lemma sumMap_C_apply (m : ℕ)
     (x : C) (t : unitInterval) :
-    sumMap X m (Sum.inl x, t) = (SkeletonProjection X (m + 1) (Sum.inl x), t) := by
+    sumMap m (Sum.inl x, t) = (SkeletonProjection X (m + 1) (Sum.inl x), t) := by
   simp [sumMap, SkeletonProjection, baseMap]
   rfl
 
+/-
 lemma sumMap_C_apply_fun {m : ℕ} :
-    ((fun p ↦ sumMap X m (Sum.inl p.1, p.2))) =
+    ((fun p ↦ sumMap m (Sum.inl p.1, p.2))) =
     Prod.map (SkeletonProjection X (m + 1) ∘ (fun p ↦ Sum.inl p)) id := by
   simp [SkeletonProjection]
   rfl
+-/
 
 lemma sumMap_lt_sphere_apply {m : ℕ}
     (n : Fin (m + 1)) (i : cell X n) (x' : closedBall (0 : Fin n → ℝ) 1) (t : unitInterval)
     (hx : n < m ∨ n = m ∧ x' ∈ sphere ⟨0, by simp⟩ 1) :
-    sumMap X m (Sum.inr ⟨n, ⟨i, x'⟩⟩, t) =
+    sumMap m (Sum.inr ⟨n, ⟨i, x'⟩⟩, t) =
     Prod.map (SkeletonProjection X (m + 1)) id (Sum.inr ⟨n, ⟨i, x'⟩⟩, t) := by
   obtain hx_lt | ⟨ hx_eq, hx_sphere⟩ := hx
-  · have := cubeMap_cell_lt_apply X n (Nat.lt_of_succ_le hx_lt) i (x',t)
+  · have := cubeMap_cell_lt_apply n (Nat.lt_of_succ_le hx_lt) i (x',t)
     simp [sumMap, Sum.elim_inr, this]
   · have := (cubesretract_fixedOn (x', t)).2 hx_eq (Or.inr hx_sphere)
     simp[sumMap, cubeMap, this, SkeletonProjection]
     rfl
-
+/-
 -- eventuell unnötig, weil kaum erkennisse -- möchte man vielleicht sinnvoller abändern
 lemma sumMap_top_open_apply (m : ℕ)
     (n : Fin (m + 1)) (i : cell X n) (x' : closedBall (0 : Fin n → ℝ) 1) (t : unitInterval)
    -- (hnm : n = m) (hx : x' ∉ sphere ⟨0, by simp⟩ 1)
     :
-    sumMap X m ((Sum.inr ⟨n, ⟨i, x'⟩⟩, t)) = (⟨map n i (cubesretract n (x',t)).1,
-    cubesretract_mapsto X n i (x',t)⟩, (cubesretract n (x',t)).2) := by simp[sumMap, cubeMap]
+    sumMap m ((Sum.inr ⟨n, ⟨i, x'⟩⟩, t)) = (⟨map n i (cubesretract n (x',t)).1,
+    cubesretract_mapsto n i (x',t)⟩, (cubesretract n (x',t)).2) := by simp[sumMap, cubeMap]
+-/
 
 #check Topology.IsQuotientMap.continuous_lift_prod_left
 
-lemma factors (m : ℕ) : Function.FactorsThrough (sumMap X m)
+lemma factors (m : ℕ) : Function.FactorsThrough (sumMap m)
     (fun p ↦ ((SkeletonProjection X (m + 1) p.1), p.2)) := by
   intro x y hxy
   rw [Prod.mk_inj] at hxy
@@ -424,11 +497,11 @@ lemma factors (m : ℕ) : Function.FactorsThrough (sumMap X m)
   · rw [sumMap_C_apply, heq1]
     obtain ⟨y1, t⟩ := y
     obtain c_y | ⟨n_y, i_y, y'⟩ := y1
-    · rw [← sumMap_C_apply X]
+    · rw [← sumMap_C_apply]
       congr
     · simp only at heq2
       suffices h_nottop : ↑n_y < m ∨ ↑n_y = m ∧ y' ∈ sphere ⟨0, by simp⟩ 1 by
-        rw [sumMap_lt_sphere_apply X n_y i_y y' t h_nottop, heq2, Prod.map_apply, id_eq]
+        rw [sumMap_lt_sphere_apply n_y i_y y' t h_nottop, heq2, Prod.map_apply, id_eq]
       by_contra h
       have top_open : n_y = m ∧ y' ∈ ball ⟨0, by simp⟩ 1 := by
         simp only [not_or, not_lt, not_and] at h
@@ -448,13 +521,13 @@ lemma factors (m : ℕ) : Function.FactorsThrough (sumMap X m)
       exact h_mem_false h_mem
   · by_cases hnm : n < m ∨ n = m ∧ x' ∈ sphere ⟨0, by simp⟩ 1
     · simp only at heq2
-      rw [sumMap_lt_sphere_apply X n i x' tx hnm, Prod.map_apply, id_eq, heq1]
+      rw [sumMap_lt_sphere_apply n i x' tx hnm, Prod.map_apply, id_eq, heq1]
       obtain ⟨y1, t⟩ := y
       obtain c | ⟨n_y, i_y, y'⟩ := y1
-      · rw [← sumMap_C_apply X]
+      · rw [← sumMap_C_apply]
         congr
       · suffices h_nottop : ↑n_y < m ∨ ↑n_y = m ∧ y' ∈ sphere ⟨0, by simp⟩ 1 by
-          rw [sumMap_lt_sphere_apply X n_y i_y y' t h_nottop, heq2, Prod.map_apply, id_eq]
+          rw [sumMap_lt_sphere_apply n_y i_y y' t h_nottop, heq2, Prod.map_apply, id_eq]
         by_contra h
         have top_open : n_y = m ∧ y' ∈ ball ⟨0, by simp⟩ 1 := by
           simp only [not_or, not_lt, not_and] at h
@@ -462,7 +535,8 @@ lemma factors (m : ℕ) : Function.FactorsThrough (sumMap X m)
           refine ⟨ny_eq_m , ?_ ⟩
           rw [← Metric.closedBall_sdiff_sphere]
           exact ⟨y'.prop , h.2 ny_eq_m⟩
-        have h_mem : (SkeletonProjection X (m + 1) (Sum.inr ⟨n_y, ⟨i_y, y'⟩⟩)).1 ∈ (skeletonLT X m) := by
+        have h_mem : (SkeletonProjection X (m + 1) (Sum.inr ⟨n_y, ⟨i_y, y'⟩⟩)).1 ∈ skeletonLT X m :=
+          by
           rw[← heq1, SkeletonProjection, Sum.elim_inr]
           rcases hnm with hnm | hsphere
           · have : (map (↑n) i) ↑x' ∈ (skeletonLT X (n + 1)) := by
@@ -491,74 +565,252 @@ lemma factors (m : ℕ) : Function.FactorsThrough (sumMap X m)
       rw[← Metric.closedBall_sdiff_sphere]
       exact ⟨x'.prop, hnm.2 n_eq_m⟩
 
-/-
-      have lemmaoben: Sum.elim (fun _ ↦ false) (fun (p : (n : Fin (m + 1)) × (_ : cell X ↑n) × ↑(closedBall 0 1)) ↦ p.1 = m) y.1 := by
-        refine SkeletonProj_inj_top X (m + 1) xskel ?_ y.1 x1_eq_y1.symm
-        simp only [Nat.add_one_sub_one]
-        grind only
-      simp at lemmaoben
-      obtain ⟨a | ⟨k, c, z⟩, t⟩ := y
-      · exact lemmaoben.elim
-      simp at lemmaoben
-      simp only [Sum.inr.injEq, Sigma.mk.injEq]
-      refine ⟨ by grind only, ?_ ⟩
-      have := SkeletonProj_inj_top X (m + 1) xskel
-
-      -- (y : skeletonLT X m) (hy : ∃ (j : cell X (m - 1)), y.1 ∈ openCell (m - 1) j)
-      sorry
--/
-
-  /-
-  unfold sumMap
-  cases x.1 with
-    | inl c =>
-      simp [baseMap]
-      sorry
-    | inr s => sorry
-  -/
-
 def r (m : ℕ) : skeletonLT X (m + 1) × unitInterval → skeletonLT X (m + 1) × unitInterval :=
-  Function.extend (fun p ↦ ((SkeletonProjection X (m + 1) p.1), p.2)) (sumMap X m) id
+  Function.extend (fun p ↦ ((SkeletonProjection X (m + 1) p.1), p.2)) (sumMap m) id
 
-lemma r_rw (m : ℕ) :
-  sumMap X m = r X m ∘ (fun q ↦ ((SkeletonProjection X (m +1) q.1), q.2)) := by
-  apply funext_iff.2
-  intro x
-  rw [← Function.FactorsThrough.extend_apply (factors X m) id x]
-  rfl
-  
 lemma r_apply (m : ℕ) (p : skeletonLT X (m + 1) × unitInterval) :
     ∃ (s : (↑C ⊕ (n : Fin (m + 1)) × (_ : cell X ↑n) × ↑(closedBall 0 1)) × ↑unitInterval),
-    SkeletonProjection X (m+1) s.1 = p.1 ∧ r X m p = sumMap X m s := by
+    SkeletonProjection X (m+1) s.1 = p.1 ∧ s.2 = p.2 ∧ r m p = sumMap m s := by
   set s := Function.surjInv (SkeletonProjection_Surjective (m + 1) X) p.1
   use (s, p.2)
   have inv :  p = (SkeletonProjection X (m + 1) s, p.2) := Prod.fst_eq_iff.mp
     (Function.surjInv_eq (SkeletonProjection_Surjective (m + 1) X) p.1).symm
-  refine ⟨?_ , ?_ ⟩
+  refine ⟨?_ , ?_, ?_ ⟩
   · rw [Prod.ext_iff] at inv
     exact inv.1.symm
-  · rw[inv, ← Function.FactorsThrough.extend_apply (factors X m) id (s, p.2)]
+  · rfl
+  · rw[inv, ← Function.FactorsThrough.extend_apply (factors m) id (s, p.2)]
     rfl
 
-lemma cts' (m : ℕ) : Continuous (Sum.elim
-    (fun (q : C × unitInterval) ↦ r X m (SkeletonProjection X (m + 1) (Sum.inl q.1), q.2))
-    (fun (q : Σ (n : Fin (m + 1)) (_ : cell X n), (closedBall (0 : Fin n → ℝ) 1 × unitInterval)) ↦
-    r X m (SkeletonProjection X (m + 1) (Sum.inr ⟨q.1 , ⟨q.2.1, q.2.2.1⟩⟩), q.2.2.2))) := by
-  apply Continuous.sumElim ?_ ?_
-  · unfold SkeletonProjection
-    simp only [Sum.elim_inl]
-    simp only [r]
-    sorry
-  · sorry
+#check r_cube_IsretractionOn
+
+
+-- the next two defintions and two of the four simp-lemma are written by claude (Opus 5)
+-- (I made smal changes)
+def Homeomorph.sigmaCongrRight' {ι : Type*} {σ τ : ι → Type*} [∀ i, TopologicalSpace (σ i)]
+  [∀ i, TopologicalSpace (τ i)] (F : ∀ i, σ i ≃ₜ τ i) : (Σ i, σ i) ≃ₜ Σ i, τ i where
+  toEquiv := Equiv.sigmaCongrRight (fun i ↦ F i)
+  continuous_toFun := by
+    rw [continuous_sigma_iff]
+    exact fun i ↦ continuous_sigmaMk.comp (F i).continuous
+  continuous_invFun := by
+    rw [continuous_sigma_iff]
+    exact fun i ↦ continuous_sigmaMk.comp (F i).symm.continuous
+
+def homeoProd (m : ℕ) :
+  (C ⊕ (Σ (n : Fin (m + 1)) (_ : cell X n), closedBall (0 : Fin n → ℝ) 1)) × unitInterval ≃ₜ
+  (C × unitInterval) ⊕ (Σ (n : Fin (m + 1)) (_ : cell X n),
+    (closedBall (0 : Fin n → ℝ) 1) × unitInterval) :=
+  Homeomorph.sumProdDistrib.trans
+  ((Homeomorph.refl _ ).sumCongr (Homeomorph.sigmaProdDistrib.trans
+    (Homeomorph.sigmaCongrRight' fun _ ↦ Homeomorph.sigmaProdDistrib)))
+
+set_option linter.unusedSectionVars false
+@[simp] lemma homeoProd_inl (m : ℕ) (c : C) (t : unitInterval) :
+    homeoProd (X := X) m (Sum.inl c, t) = Sum.inl (c, t) := rfl
+
+@[simp] lemma homeoProd_inl_symm (m : ℕ) (c : C) (t : unitInterval) :
+    (homeoProd (X := X) m).symm (Sum.inl (c, t)) =  (Sum.inl c, t) := rfl
+
+@[simp] lemma homeoProd_inr (m : ℕ) (n : Fin (m + 1)) (i : cell X n)
+    (x : closedBall (0 : Fin n → ℝ) 1) (t : unitInterval) :
+    homeoProd (X := X) m (Sum.inr ⟨n, i, x⟩, t) = Sum.inr ⟨n, i, (x, t)⟩ := rfl
+
+@[simp] lemma homeoProd_inr_symm (m : ℕ) (n : Fin (m + 1)) (i : cell X n)
+    (x : closedBall (0 : Fin n → ℝ) 1) (t : unitInterval) :
+    (homeoProd (X := X) m).symm (Sum.inr ⟨n, i, (x, t)⟩) = (Sum.inr ⟨n, i, x⟩, t) := rfl
+
 #check Homeomorph.sumProdDistrib
+#check Homeomorph.sigmaProdDistrib
 
-lemma cts (m : ℕ) : Continuous fun (q : (C ⊕ (Σ (n : Fin (m + 1)) (_ : cell X n),
-    (closedBall (0 : Fin n → ℝ) 1))) × unitInterval) ↦ r X m ((SkeletonProjection X (m +1) q.1), q.2) := by
+lemma cts_sumMap_prehomeo (m : ℕ) : Continuous ((sumMap m) ∘ (homeoProd (X := X) m).symm)  := by
+  have rww : (Sum.elim
+    (fun (q : C × unitInterval) ↦ sumMap m ((Sum.inl q.1), q.2))
+    (fun (q : Σ (n : Fin (m + 1)) (_ : cell X n), (closedBall (0 : Fin n → ℝ) 1 × unitInterval)) ↦
+    sumMap m ((Sum.inr ⟨q.1 , ⟨q.2.1, q.2.2.1⟩⟩), q.2.2.2))) = (sumMap m) ∘ (homeoProd m).symm := by
+    ext x <;>
+    · obtain ⟨_ ,_ ⟩ | ⟨_ ,_ ,_ ,_ ⟩  := x
+      · simp only [Sum.elim_inl, Function.comp_apply, homeoProd_inl_symm]
+      · simp only [Sum.elim_inr, Function.comp_apply, homeoProd_inr_symm]
+  rw[← rww]
+  apply Continuous.sumElim ?_ ?_
+  · simp only [sumMap, baseMap, Sum.elim_inl, continuous_prodMk]
+    refine ⟨by fun_prop , continuous_snd⟩
+  · simp only [sumMap, Sum.elim_inr, Prod.mk.eta, continuous_sigma_iff]
+    intro n i
+    simp only [cubeMap, continuous_prodMk]
+    constructor
+    · refine Continuous.subtype_mk ?_ (cubesretract_mapsto_weak n i)
+      apply (continuousOn n i).comp_continuous ?_ ?_
+      · apply continuous_subtype_val.comp
+        exact continuous_fst.comp (cubesretract_continuous n)
+      · intro x
+        exact Subtype.coe_prop (cubesretract n x).1
+    · exact continuous_snd.comp (cubesretract_continuous n)
 
-  sorry
+-- nicht benutzt:
+lemma r_rw (m : ℕ) :
+  sumMap m = fun q ↦ r m (SkeletonProjection X (m +1) q.1, q.2) := by
+  apply funext_iff.2
+  intro x
+  rw [← Function.FactorsThrough.extend_apply (factors m) id x]
+  rfl
 
-lemma continuousRetract (m : ℕ) : Continuous (r X m) := by
-  exact (SkeletonProjectionIsQuotientMap (m +1) X).continuous_lift_prod_left (cts X m)
+lemma continuousRetract (m : ℕ) : Continuous (r (X := X) m) := by
+  refine (SkeletonProjectionIsQuotientMap (m +1) X).continuous_lift_prod_left ?_
+  have cts_sumMap : Continuous (sumMap (X := X) m) :=
+    (Homeomorph.comp_continuous_iff' (homeoProd m).symm).1 (cts_sumMap_prehomeo m)
+  apply cts_sumMap.congr ?_
+  intro x
+  rw [← Function.FactorsThrough.extend_apply (factors m) id x]
+  rfl
+
+/-
+r ist now almost the retraction, we need for the retraction criterion. Only we have to extend the
+second coordinate onto all of ℝ and then proof, it satisfies all conditions of a retraction:
+-/
+
+def retr_skeleton (m : ℕ) : (skeletonLT X (m + 1)) × ℝ → (skeletonLT X (m + 1)) × ℝ := fun p ↦
+  ((Function.comp (r (X := X) m) (Prod.map id R_I) p).1,
+  Subtype.val (Function.comp (r (X := X) m) (Prod.map id R_I) p).2)
+
+lemma skel_ctsOn (m : ℕ) : ContinuousOn (retr_skeleton (X := X) m) {p | p.2 ∈ unitInterval} := by
+  unfold retr_skeleton
+  have : ContinuousOn (fun p ↦ (Function.comp (r (X := X) m) (Prod.map id R_I) p))
+    {p | p.2 ∈ unitInterval} := by
+    apply (continuousRetract m).comp_continuousOn  ?_
+    have : ContinuousOn (@id (skeletonLT X (↑m + 1))) Set.univ := continuousOn_id
+    apply (this.prodMap cts_R_I).mono
+    intro x hx
+    exact Set.mem_prod.mpr ⟨by tauto, Set.mem_setOf.mp hx⟩
+  refine ContinuousOn.prodMk ?_ ?_
+  · exact continuous_fst.comp_continuousOn this
+  · apply continuous_subtype_val.comp_continuousOn  ?_
+    exact continuous_snd.comp_continuousOn this
+
+lemma sumMap_mapsTo (m : ℕ) (x : (↑C ⊕ (n : Fin (m + 1)) × (_ : cell X ↑n) × ↑(closedBall 0 1)) × ↑unitInterval) :
+  (sumMap m x).2 = 0 ∨ ↑(sumMap m x).1 ∈ skeletonLT X ↑m ∧ ↑(sumMap m x).2 ∈ unitInterval := by
+  obtain ⟨x1, t⟩ := x
+  obtain c |⟨n, i, x'⟩ := x1
+  · simp only [sumMap, baseMap, Sum.elim_inl, Subtype.coe_prop, and_true]
+    exact Or.inr (mem_skeletonLT_iff.mpr (Or.inl c.prop))
+  · simp only [sumMap, cubeMap, Sum.elim_inr, Subtype.coe_prop, and_true]
+    by_cases hn : n = m
+    · exact cubesretract_mapsto_top n i (x',t) hn
+    · exact Or.inr (cubesretract_mapsto_lt n i (x',t) (lt_of_le_of_ne (Fin.is_le n) hn))
+
+lemma skel_mapsTo (m : ℕ) : Set.MapsTo (retr_skeleton m) {p | p.2 ∈ unitInterval}
+  {p | p.2 = 0 ∨ p.1 ∈ (skeletonLT X (m + 1)).carrier ↓∩ ↑(skeletonLT X m) ∧ p.2 ∈ unitInterval} := by
+  intro s hs
+  unfold retr_skeleton
+  obtain ⟨x, hxproj1, _ , hxsum⟩ := r_apply (X := X) m (s.1, ⟨s.2, hs⟩)
+  simp only [Set.mem_preimage, SetLike.mem_coe, Function.comp_apply, Set.mem_setOf_eq,
+    Set.Icc.coe_eq_zero]
+  have : (Prod.map id R_I s) = (s.1, ⟨s.2, hs⟩) := by
+    refine Prod.snd_eq_iff.mp ?_
+    simp only [Prod.map_snd, R_I, Set.mem_setOf.mp hs, ↓reduceDIte]
+  rw[this, hxsum]
+  exact sumMap_mapsTo m x
+
+/- dieses Lemma ist sehr kurz und daher nicht nötig, aber änliche formulierungen könnten den
+  darauf folgenden Beweis deutlich verkürzen
+
+lemma fixed_C (m : ℕ) (c : C) (t : unitInterval) (ht : t = 0):
+    sumMap m (Sum.inl c, t) = (SkeletonProjection X (m + 1) (Sum.inl c), t) := by
+  simp[sumMap, baseMap, SkeletonProjection]
+  rfl
+-/
+
+lemma skel_fixedOn (m : ℕ) : ∀ a ∈ {p | p.2 = 0 ∨ p.1 ∈ (skeletonLT X (↑m + 1)).carrier ↓∩
+  ↑(skeletonLT X ↑m) ∧ p.2 ∈ unitInterval}, retr_skeleton m a = a := by
+  intro s hs
+  unfold retr_skeleton
+  have hs2 : s.2 ∈ unitInterval := by
+    rcases hs with h0 | hI
+    · rw[h0]
+      exact unitInterval.zero_mem
+    · exact hI.2
+  obtain ⟨x, hxproj1, hproj2, hxsum⟩ := r_apply (X := X) m (s.1, ⟨s.2, hs2⟩)
+  have simpProd : (Prod.map id R_I s) = (s.1, ⟨s.2, hs2⟩) := by
+    refine Prod.snd_eq_iff.mp ?_
+    simp only [Prod.map_snd, R_I, hs2, ↓reduceDIte]
+  simp only [Function.comp_apply, simpProd, hxsum]
+  obtain ⟨x1, t⟩ := x
+  obtain c |⟨n, i, x'⟩ := x1
+  · rcases hs with h0 | h1
+    · have ht : t = 0 := by simp only [h0, Set.Icc.mk_zero] at hproj2; exact hproj2
+      refine Prod.ext hxproj1 ?_
+      rw[ht]
+      exact h0.symm
+    · simp only [sumMap, baseMap, Sum.elim_inl]
+      refine Prod.ext hxproj1 ?_
+      apply SetCoe.ext_iff.2 hproj2
+  · rcases hs with h0 | h1
+    · have ht : t = 0 := by simp only [h0, Set.Icc.mk_zero] at hproj2; exact hproj2
+      unfold sumMap cubeMap cubesretract
+      by_cases hn : n = m
+      · simp only [id_eq, Sum.elim_inr, hn, ↓reduceIte]
+        have : (r_cube n (x', t)) = (x', t.1) := by
+          apply (r_cube_IsretractionOn n).fixesOn (x', ↑t) ?_
+          exact Or.inl (Set.Icc.coe_eq_zero.mpr ht)
+        simp only [this, id_R_I]
+        refine Prod.ext hxproj1 ?_
+        simp only [ht, Set.Icc.coe_zero]
+        exact h0.symm
+      · simp only [id_eq, Sum.elim_inr, hn, ↓reduceIte]
+        refine Prod.ext hxproj1 ?_
+        rw [ht]
+        exact h0.symm
+    · unfold sumMap cubeMap cubesretract
+      by_cases hn : n = m
+      · simp only [id_eq, Sum.elim_inr, hn, ↓reduceIte]
+        suffices h : r_cube ↑n (x', ↑t) = (x', ↑t) by
+          simp only [h, id_R_I]
+          simp only [SkeletonProjection, Sum.elim_inr] at hxproj1
+          refine Prod.ext hxproj1 ?_
+          rw [← SetCoe.ext_iff] at hproj2
+          exact hproj2
+        apply (r_cube_IsretractionOn n).fixesOn (x',t)
+        refine Or.inr ⟨?_ ,Subtype.coe_prop t⟩
+        by_contra x'notsphere
+        have x'ball : x'.1 ∈ ball (0 : Fin n → ℝ ) 1 := by
+          rw [← Metric.closedBall_sdiff_sphere]
+          refine ⟨x'.prop , x'notsphere⟩
+        have notmem: (SkeletonProjection X (m + 1) (Sum.inr ⟨n, ⟨i, x'⟩⟩)).1 ∉ (skeletonLT X m) := by
+          intro h
+          have disjoint : Disjoint (openCell n i) (skeletonLT X n) :=
+            (Topology.RelCWComplex.disjoint_skeletonLT_openCell (by rfl)).symm
+          have nottmem: ((SkeletonProjection X (m + 1) (Sum.inr ⟨n, ⟨i, x'⟩⟩))).1 ∉ skeletonLT X n := by
+            apply Disjoint.notMem_of_mem_left disjoint ?_
+            simp only [SkeletonProjection, Sum.elim_inr]
+            apply Set.mem_image_of_mem
+            exact x'ball
+          have subset : (skeletonLT X m).carrier ⊆ skeletonLT X n := by
+            apply skeletonLT_mono (Std.le_of_eq (congrArg Nat.cast (id (Eq.symm hn))))
+          exact nottmem (subset h)
+        rw[hxproj1] at notmem
+        exact notmem h1.1
+      · simp only [id_eq, Sum.elim_inr, hn, ↓reduceIte]
+        simp only [SkeletonProjection, Sum.elim_inr] at hxproj1
+        refine Prod.ext hxproj1 ?_
+        rw [← SetCoe.ext_iff] at hproj2
+        exact hproj2
+
+
+lemma HEP_skeleton (m : ℕ) : HEP' (skeletonLT X (m + 1)).carrier (skeletonLT X m).carrier := by
+/-
+  apply (retraction_criterion_closed' (skeletonLT X m).carrier (skeletonLT X (m + 1))
+  (Topology.RelCWComplex.skeletonLT_mono le_self_add) (skeletonLT X m).closed').mpr
+  use retr_skeleton m
+-/
+  apply (retraction_criterion_closed (IsClosed.preimage_val (skeletonLT X ↑m).closed') ).2
+  use retr_skeleton m
+  constructor
+  · simp only [Set.mem_preimage, Set.mem_Icc, Set.setOf_subset_setOf, Prod.forall,
+    forall_eq_or_imp, Std.le_refl, zero_le_one, and_self, and_imp, imp_self, implies_true]
+  · exact skel_ctsOn m
+  · exact skel_mapsTo m
+  · exact skel_fixedOn m
 
 
 /-
@@ -641,4 +893,33 @@ lemma RetractionSkeletonContinuous (m : ℕ) (hm : 0 < m) {Y : Type*} [Topologic
     (closedBall 0 1))) (skeletonLT X (m + 1)) unitInterval ((skeletonLT X (m + 1)) × ℝ)
     _ _ _ _ _ (SkeletonProjection (m+1) X) (SkeletonProjectionIsQuotientMap (m +1) X)
   sorry
+-/
+
+/-
+  -- have h1 : (C ⊕ (Σ (n : Fin (m + 1)) (_ : cell X n), (closedBall (0 : Fin n → ℝ) 1)))
+  --   × unitInterval ≃ₜ C × ↑unitInterval ⊕ (Σ (n : Fin (m + 1)) (_ : cell X n),
+  --   (closedBall (0 : Fin n → ℝ) 1)) × ↑unitInterval := Homeomorph.sumProdDistrib
+  -- have h2 : (Σ (n : Fin (m + 1)) (_ : cell X n), (closedBall (0 : Fin n → ℝ) 1)) × ↑unitInterval ≃ₜ
+  --   (Σ (n : Fin (m + 1)), (Σ (_ : cell X n), (closedBall (0 : Fin n → ℝ) 1))) × ↑unitInterval := by
+  --   exact Homeomorph.refl (((n : Fin (m + 1)) × (_ : cell X n) × (closedBall 0 1)) × unitInterval)
+  -- have h3 : (Σ (n : Fin (m + 1)), (Σ (_ : cell X n), (closedBall (0 : Fin n → ℝ) 1)))
+  --   × ↑unitInterval ≃ₜ Σ (n : Fin (m + 1)), (Σ (_ : cell X n), (closedBall (0 : Fin n → ℝ) 1))
+  --   × ↑unitInterval := Homeomorph.sigmaProdDistrib
+  -- have h4 : (C ⊕ (Σ (n : Fin (m + 1)) (_: cell X n), (closedBall (0 : Fin n → ℝ) 1))) × unitInterval ≃ₜ
+  --   C × ↑unitInterval ⊕ (Σ (n : Fin (m + 1)), (Σ (_ : cell X n), (closedBall (0 : Fin n → ℝ) 1))) × ↑unitInterval := by
+  --   apply Homeomorph.sumProdDistrib
+  have h5 : (C ⊕ (Σ (n : Fin (m + 1)) (_: cell X n), (closedBall (0 : Fin n → ℝ) 1))) × unitInterval ≃ₜ
+     C × ↑unitInterval ⊕ (Σ (n : Fin (m + 1)), (Σ (_ : cell X n), (closedBall (0 : Fin n → ℝ) 1))
+    × ↑unitInterval ) := by
+    apply Homeomorph.trans Homeomorph.sumProdDistrib ?_
+    apply Homeomorph.sumCongr (Homeomorph.refl _ ) Homeomorph.sigmaProdDistrib
+  have h6 (n : Fin (m+1)) : (Σ (_ : cell X n), (closedBall (0 : Fin n → ℝ) 1)) × unitInterval ≃ₜ
+    Σ (_ : cell X n), (closedBall (0 : Fin n → ℝ) 1) × unitInterval := Homeomorph.sigmaProdDistrib
+  have h7 : (C ⊕ (Σ (n : Fin (m + 1)) (_: cell X n), (closedBall (0 : Fin n → ℝ) 1))) × unitInterval ≃ₜ
+    C × ↑unitInterval ⊕ (Σ (n : Fin (m + 1)), Σ (_ : cell X n), ((closedBall (0 : Fin n → ℝ) 1) × unitInterval)) := by
+    apply Homeomorph.trans h5 ?_
+    apply Homeomorph.sumCongr (Homeomorph.refl _) ?_
+
+    sorry
+
 -/
