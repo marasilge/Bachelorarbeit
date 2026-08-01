@@ -575,10 +575,9 @@ lemma r_apply (m : ℕ) (p : skeletonLT X (m + 1) × unitInterval) :
   use (s, p.2)
   have inv :  p = (SkeletonProjection X (m + 1) s, p.2) := Prod.fst_eq_iff.mp
     (Function.surjInv_eq (SkeletonProjection_Surjective (m + 1) X) p.1).symm
-  refine ⟨?_ , ?_, ?_ ⟩
+  refine ⟨?_ , by rfl, ?_ ⟩
   · rw [Prod.ext_iff] at inv
     exact inv.1.symm
-  · rfl
   · rw[inv, ← Function.FactorsThrough.extend_apply (factors m) id (s, p.2)]
     rfl
 
