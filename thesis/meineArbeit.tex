@@ -561,20 +561,48 @@ At first glance this may seem concerning, since such values have no mathematical
 \end{enumerate}
 
 \subsection{HEP Definition}
-Already in the mathematical section, the definition of the \emph{homotopy extension propert} was quite long and technical. The same is true for its formalization. Currently I have two versions of the definition in my project, since we decided within the work progress, that a different phrasing might be more applicable. I will later on discuss the pros and cons for each decission. The first version of the definition is the following:
+Already in the mathematical section, the definition of the \emph{homotopy extension propert} was quite long and technical. The same is true for its formalization. Currently I have three versions of the definition in my project, since we decided within the work progress, that different phrasings might be more applicable. I will later on discuss the pros and cons for each of the version. The first definition is the following, called \lean{HEP}:
 \begin{lstlisting}
-agreeOn.{u} {X Y : Type u} (f : X → Y) (H : X × ℝ → Y) (A : Set X) : Prop := 
-    ∀ (a : A), f a = H (a,0)
 
-HomotopyExtension.{u} {X Y : Type u} [TopologicalSpace X] [TopologicalSpace Y] (H' : X × ℝ → Y) (f : X → Y) (H : X × ℝ → Y) (A : Set X) : Prop := 
-    ContinuousOn H' { p : X × ℝ | p.2 ∈ unitInterval} ∧ { p : X × ℝ | p.2 ∈ unitInterval}.MapsTo H' rangeH'  ∧ (∀ (x : X), f x = H' (x, 0)) ∧ (∀ (a : A) (t :unitInterval), H (a,t) = H' (a, t))
+def agreeOn.{u} {X Y : Type u} (f : X → Y) (H : X × ℝ → Y) (A : Set X) : Prop :=
+    ∀ (a : X), a ∈ A →  f a = H (a, 0)
 
-HEP.{u} (X : Type u) [TopologicalSpace X] (A : Set X) : Prop := 
-    ∀ (Y : Type u) [TopologicalSpace Y], ∀ (f : X → Y), ∀ (H : X × ℝ → Y), Continuous f → ContinuousOn H {p : X × ℝ | (p.1 ∈ A) ∧ (p.2 ∈ (unitInterval))} → agreeOn f H A → ∃ (H' : X × ℝ → Y), HomotopyExtension H' f H A
+structure HomotopyExtension.{u} {X Y : Type u} [TopologicalSpace X] [TopologicalSpace Y] (H' : X × ℝ → Y) (f : X → Y)
+  (H : X × ℝ → Y) (A : Set X) (rangeH' : Set Y) : Prop where
+  ContinuousOn : ContinuousOn H' { p : X × ℝ | p.2 ∈ unitInterval}
+  range : { p : X × ℝ | p.2 ∈ unitInterval}.MapsTo H' rangeH'
+  agreef : (∀ (x : X), f x = H' (x, 0))
+  agreeH : (∀ (a : A) (t : unitInterval), H (a,t) = H' (a, t))
+  
+def HEP.{u} (X : Type u) [TopologicalSpace X] (A : Set X) : Prop := 
+  ∀ (Y : Type u) [TopologicalSpace Y] (rangeH' : Set Y), ∀ (f : X → Y), ∀ (H : X × ℝ → Y),
+  Continuous f → Set.range f ⊆ rangeH' →
+  ContinuousOn H {p : X × ℝ | p.1 ∈ A ∧ p.2 ∈ unitInterval} →
+  {p : X × ℝ | p.1 ∈ A ∧ p.2 ∈ unitInterval}.MapsTo H rangeH' → agreeOn f H A
+  → ∃ H' : X × ℝ → Y, HomotopyExtension H' f H A rangeH'
+
 \end{lstlisting}
 
-To shorten the definition a little and in order to make it more readable, I first defined \lean{agreeOn}. This tells, that the function \lean{f} and the homotopy \lean{H}, which we want to extend, have the same values on the subset \lean{A} respectively \lean{A × {0}}. The second "predefinition" I made, is called \lean{HomotopyExtension} and combines all the properties, our desired homotopy should have. Namely, continuity and that it agrees with the two functions given in the begin. While the benefit of the first predefinition might be discussed, the second clearly shortens our definition.\\
-If we now take a closer look at the definition of the homotopy extension property, it is pretty similar to the mathematical definition \cref{def:HEPDef} of the \emph{HEP}. Still, there is one point, I want to discuss. Defining the homotopies as a map on \lean{X × ℝ} instead of \lean{A × unitInterval} or \lean{X × unitInterval} makes it easier to work with the functions. We can apply any real number in the second argument to it, without the need to provide a prove that this real number lies between zero and one. Still, this does not change anything about the defined object. \lstinline[language=Lean]!ContinuousOn H' { p : X × ℝ | p.2 ∈ unitInterval}! and \lean{$\forall$ (a : A) (t : unitInterval), H (a,t) = H' (a, t)} make it irrelevant, what happens outside of the compact interval, but instead put precise focus on what we need for our definition. 
+To shorten the definition a little and in order to make it more readable, I first defined \lean{agreeOn}. This tells, that the function \lean{f} and the homotopy \lean{H}, which we want to extend, have the same values on the subset \lean{A} respectively \lean{A × {0}}. So it ensures, that the two maps are compatible and it makes sence to ask for an extension. Secondly I constructed the structure called \lean{HomotopyExtension}, which combines all the properties, our desired homotopy should have. Namely, continuity, that its image lies in the right space and that it agrees with the two functions given in the begin. Making this a structure, instead of a simple definition has the advantage, that it comes with the projection maps for each property.\\
+If we now take a closer look at the definition of the homotopy extension property, it is pretty similar to the mathematical definition \cref{def:HEPDef} of the \emph{HEP}. Still, there is one point, I want to discuss. Defining the homotopies as a map on \lean{X × ℝ} instead of \lean{X × unitInterval} or \lean{A × unitInterval}, makes it easier to work with it. For instance consider the definition \lean{agreeOn}. Assume, the homotopy \lean{H} was defined as a map on \lean{A × unitInterval}, then one had to provide a proof of \lean{a ∈ A}, every time one wants to apply a point \lean{(a : X)} to the function. Also in the second argument, we can apply any real number to it, without the need to provide a prove that this real number lies between zero and one. \\ 
+Still, this does not change anything about the defined object. \lstinline[language=Lean]!ContinuousOn H' { p : X × ℝ | p.2 ∈ unitInterval}! and \lean{$\forall$ (a : A) (t : unitInterval), H (a,t) = H' (a, t)} make it irrelevant, what happens outside of the compact interval, but instead put precise focus on what we need for our definition. \\
+Moreover, the set \lean{rangeH'} has no equivalent in the informal definition, but is a result of formalisation. \lean{rangeH'} is a set of the codomain-type \lean{Y} and as the name indicates, the image of the extendet homotopy \lean{H'} is contained in it. Together with adding this set to the definition, there are two hypotheseses, which we need to add. \lean{H'} cannot have image in \lean{rangeH'}, if not \lean{f} and \lean{H} already have image in there. \\
+The win of adding \lean{rangeH'} to the definition is again, that we can avoid working with subtypes. If we want to construct an extended homotopy, which has image in a subtype, we now get a map between types together with the result, that the image lies in the required subset. Neverthless, in most cases, one wants to choose \lean{rangeH'} to be all of Y. In Lean this can be expressed as \lean{@ Set.univ Y}. The two additional assumptions are then statements, which can be easily prooven by \lean{tauto}. Since this extra work is very manageable, I prefere this definition of \lean{HEP} over the following version called \lean{HEPY}, where \lean{rangeH'} is set to be the entire codomain \lean{Y}. Even tough this one is shorter and closer to the informal version. The \lean{leamm HEP_iff_HEPY} proofs, that those two definitions are equivalent
+
+\begin{lstlisting}
+structure HomotopyExtensionY.{u} {X Y : Type u} [TopologicalSpace X] [TopologicalSpace Y] (H' : X × ℝ → Y) (f : X → Y)
+  (H : X × ℝ → Y) (A : Set X) : Prop where
+  ContinuousOn : ContinuousOn H' { p : X × ℝ | p.2 ∈ unitInterval}
+  agreef : ∀ (x : X), f x = H' (x, 0)
+  agreeH : ∀ (a : A) (t : unitInterval), H (a,t) = H' (a, t)
+  
+def HEPY (X : Type u) [TopologicalSpace X] (A : Set X) : Prop :=
+  ∀ (Y : Type u) [TopologicalSpace Y], ∀ (f : X → Y), ∀ (H : X × ℝ → Y), Continuous f →
+  ContinuousOn H {p : X × ℝ | (p.1 ∈ A) ∧ (p.2 ∈ (unitInterval))} → agreeOn f H A
+  → ∃ (H' : X × ℝ → Y), HomotopyExtensionY H' f H A
+\end{lstlisting}
+
+The last aspect, I want to elucidate, before progressing to the final third version of the definition is, that I fixed the Type of \lean{X} and \lean{Y} to be the same, namely bothe are \lean{Type u}, for some arbitrary universe \lean{u}. This was needed, in order to .... -- ToDo \\
 Let us now compare this definition with the later version. \lean{HEP'} $\colon$
 
 \begin{lstlisting}
@@ -582,23 +610,33 @@ open Set.Notation
 def HEP' {Y : Type*} [TopologicalSpace Y] (X A : Set Y) : Prop := HEP X (X ↓∩ A)   
 \end{lstlisting}
 
-The difference to the first version of the definition is, that in our definition \lean{HEP X A}, \lean{A} is a subset of the type \lean{X}. That means that the pair of spaces does not live in an ambient space. Wherelse, in the definition \lean{HEP'}, both sets $X$ and $A$ are sets of the same type \lean{Y}. 
-We decided to go for the second version of the definition, when we wanted to 
+The notion \lean{(X ↓∩ A)} means, consider \lean{(X ∩ A)} as a set of Type \lean{Set X}. Then \lean{HEP'}, is defined in terms of \lean{HEP} for the pair \lean{X} and \lean{(X ↓∩ A)}. The difference to the previous versions of the definition is, that in the definition \lean{HEP}, \lean{A} is a subset of the type \lean{X}. That means that the pair of spaces does not live in an ambient space. Wherelse, in the definition \lean{HEP'}, both sets $X$ and $A$ are sets of the same type \lean{Y}.\\
+We decided to go for the second version of the definition, when we wanted to phrase the \emph{homotopy extension property} for pairs of consecutive skeletons. A skeleton of a relative CW complex in Lean is a subcomplex, whose carrier is a subset of an ambient space. Also it turned out to be the nicer way, to prove lemmas about closed balls and spheres, because I do not have to concider the sphere as a subset of "Type closedBall" anymore, but just as the points with distance one to the origin in a metric space. \\
+Note, that in this definition the functions \lean{f} and \lean{H}, which we want to extend are defined on the subtype \lean{$\uparrow$X}, respectively \lean{$\uparrow$X $\times \mathbb{R}$}. Working with those subtypes caused some extra work in the proof of \lean{retraction_criterion_closed'} and also \lean{HEP_trans'}. One could avoid this by modifying the definition \lean{HEP'} in a away, that it is not defined unsing \lean{HEP}, but constructed explicitly with functions defined on \lean{Y}, respectively \lean{Y $\times \mathbb{R}$}. The definition in that case would be longer, since for example continuity of f would cange to a \lean{ContinuousOn}-statement. Also, it would be more work to proove equivalence between \lean{HEP} and this newer version, that it was now, where we basically got it for free. Nevertheleess I am convinced, it would impoove the formalisation of the definition. \\
+To sum up, I value the primed version \lean{HEP'} to be the most usfull one to work with. Optimally with the discussed change, to write the definition explicitly with functions defined on the entire space instead of subspaces. Still, I dont think this outdoes the definition \lean{HEP}, in all accounts. Since the statements become longer and also the proof of the retraction criterion would have been longer and more tedious. 
 
-\subsection{Retraction}
-Even though defining a retraction $r$ from $B$ to $A$ via the construction in \cref{retraction} is the convenient approach, I chose a different phrasing for the formalization. Instead of working directly with the classical definition, I introduced a structure that bundles a map with two sets and three defining properties. Concretely, I defined the following structure:
+
+\section{Retraction Criterion}
+Before elucidating the retraction criterion its formalisation, we look at the definition of a retraction. 
+The classical way to define a retraction $r$ from $B$ to $A$ is, as in \cref{retraction}, via precomposition with the inclusion $A \hookrightarrow B$. As already in the formalisation of the definition \emph{HEP}, we again want to avoid working with subtypes. So insetad of defining a map from $B$ to $A$, for the formalisation, the retraction map is defined from an ambient type $X$ to itself. The structure \lean{RetractionOn}, all properties, which make this map a retraction, are bundled. 
+%  is the convenient approach, I chose a different phrasing for the formalization. Instead of working directly with the classical definition, I introduced a structure that bundles a map with two sets and three defining properties. Concretely, I defined the following structure:
 
 \begin{lstlisting}
-structure RetractionOn {X : Type*} [TopologicalSpace X] (r : X $\to$ X) (B A : Set X) : Prop where
+structure RetractionOn.{u_1} {X : Type u_1} [TopologicalSpace X] (r : X → X) (B A : Set X) : Prop where
+  subset : A ⊆ B
   continuousOn : ContinuousOn r B
   mapsTo : B.MapsTo r A
-  fixesOn : $\forall$ a $\in$ A, r a = a
+  fixesOn : ∀ a ∈ A, r a = a
 \end{lstlisting}
 
-The first thing to notice is, that the map \lean{r} is a map from a Type $X$ into itself and it is not a retraction on all of its domain. As the name \lean{RetractionOn} implies, it just "retracts" a subset \lean{B} to a subset \lean{A} of the \lean{Type X}. The first property \lean{continuousOn} ensures, it is a continuous Map on the relevant subset $B$. The codomain of the retraction is supposed to be $A$, so the property \lean{mapsTo} ensures, that \lean{r} maps all elements of \lean{B} to an element in \lean{A}. Furthermore the classical definition states, that precomposition with the inclusion $A \hookrightarrow B$ should give the identity $id_A$. In our case there is not really an inclusion map, since both - image and preimage of \lean{r} - are already elements in the same \lean{Type X}. So in our setting this condition implies, that each element in A needs to be fixed by applying $r$. This property is called \lean{fixedOn}. \\
-Note, that the classical definition requires $A$ to be a subset of $B$, since otherwise there would not be an inclusion map $A \hookrightarrow B$. This condition never occures in the formalized version of the definition. But only if it is satisfied, the structure actually gives that the map $r$ is a retraction from $B$ to $A$ in the classical sence. You can see, that leaving out this condition actually yields a more general structure. If we additional assumed the subset condition, we would also get, that $r(B) = A$, which is a straight forward observation from the standard definition. But this is not in general true for the structure defined above. \\
-So why did I leave out this condition? First of all it makes the definition itself but also proofs using it shorter. When we work with a retraction, the instance $A \subset B$ usually is true. Therefore it sufficed for all proofs in my thesis. For example, prooving the retraction criterion only requires exactly those three properties. When one wants to proof more general theorems about retractions it might be necessary to add $A \subset B$ as an additional assumption. \\
-One can say, that the defined structure takes a \emph{junk value} as explained in the section \ref{junk values}. In the case that $A \not\subset B$ we still obtain an object of the defined structure, same as the division by zero still returns the number zero. 
+
+As mentioned before, the first thing to notice is, that the map \lean{r} is a map from a Type $X$ into itself and it is not a retraction on all of its domain. As the name \lean{RetractionOn} implies, it just "retracts" a subset \lean{B} to a subset \lean{A} of the \lean{Type X}. First of all \lean{subset} states, that \lean{A} is a subset of \lean{B}. This fact is not explicitly mentioned in the mathematical definition, but rather follows fom the existence of an inclusion map $A \hookrightarrow B$. Note, that leaving out this property in our structure would define a more general class of selfmaps, which does not necessarily sattisfy $r(B) = A$ anymore. The property \lean{continuousOn} ensures, it is a continuous Map on the relevant subset $B$. The codomain of the retraction is supposed to be $A$, so the property \lean{mapsTo} ensures, that \lean{r} maps all elements of \lean{B} to an element in \lean{A}. Furthermore the classical definition states, that precomposition with the inclusion $A \hookrightarrow B$ should give the identity $id_A$. In our case there is not really an inclusion map, since both - image and preimage of \lean{r} - are already elements in the same \lean{Type X}. So in our setting this condition implies, that each element in A needs to be fixed by applying $r$. This property is called \lean{fixedOn}. \\
+% Note, that the classical definition requires $A$ to be a subset of $B$, since otherwise there would not be an inclusion map $A \hookrightarrow B$. This condition never occures in the formalized version of the definition. But only if it is satisfied, the structure actually gives that the map $r$ is a retraction from $B$ to $A$ in the classical sence. You can see, that leaving out this condition actually yields a more general structure. If we additional assumed the subset condition, we would also get, that $r(B) = A$, which is a straight forward observation from the standard definition. But this is not in general true for the structure defined above. \\
+% So why did I leave out this condition? First of all it makes the definition itself but also proofs using it shorter. When we work with a retraction, the instance $A \subset B$ usually is true. Therefore it sufficed for all proofs in my thesis. For example, prooving the retraction criterion only requires exactly those three properties. When one wants to proof more general theorems about retractions it might be necessary to add $A \subset B$ as an additional assumption. \\
+% One can say, that the defined structure takes a \emph{junk value} as explained in the section \ref{junk values}. In the case that $A \not\subset B$ we still obtain an object of the defined structure, same as the division by zero still returns the number zero. 
+
+
+I think the interplay and relevance of both definitions is well illustrated in the the proof, that the pair of two consequitive skeletons satisfies the \emph{HEP}. I constructed a retraction \lean{r: skeletonLT X m $\times \mathbb{R} \to $ skeletonLT X m $\times \mathbb{R}$}. The key theorem for the construction of this continuous map was the lemma \lean{Topology.IsQuotientMap.continuous_lift_prod_left}, which is a formalisation of Whitehead's Theorem about products of quotient maps with a locally compact factor. If I worked with ambient spaces, I would have lost the surjectivity of my maps and would not have been able to apply this therem, the way it can be found in mathlib. 
 
 \clearpage
 \section{Methodes and Usage of AI}

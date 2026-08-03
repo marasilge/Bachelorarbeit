@@ -674,7 +674,6 @@ def retr_skeleton (m : ℕ) : (skeletonLT X (m + 1)) × ℝ → (skeletonLT X (m
   Subtype.val (Function.comp (r (X := X) m) (Prod.map id R_I) p).2)
 
 lemma skel_ctsOn (m : ℕ) : ContinuousOn (retr_skeleton (X := X) m) {p | p.2 ∈ unitInterval} := by
-  unfold retr_skeleton
   have : ContinuousOn (fun p ↦ (Function.comp (r (X := X) m) (Prod.map id R_I) p))
     {p | p.2 ∈ unitInterval} := by
     apply (continuousRetract m).comp_continuousOn  ?_
@@ -684,13 +683,12 @@ lemma skel_ctsOn (m : ℕ) : ContinuousOn (retr_skeleton (X := X) m) {p | p.2 �
     exact Set.mem_prod.mpr ⟨by tauto, Set.mem_setOf.mp hx⟩
   refine ContinuousOn.prodMk ?_ ?_
   · exact continuous_fst.comp_continuousOn this
-  · apply continuous_subtype_val.comp_continuousOn  ?_
+  · apply continuous_subtype_val.comp_continuousOn ?_
     exact continuous_snd.comp_continuousOn this
 
 lemma sumMap_mapsTo (m : ℕ) (x : (↑C ⊕ (n : Fin (m + 1)) × (_ : cell X ↑n) × ↑(closedBall 0 1)) × ↑unitInterval) :
   (sumMap m x).2 = 0 ∨ ↑(sumMap m x).1 ∈ skeletonLT X ↑m ∧ ↑(sumMap m x).2 ∈ unitInterval := by
-  obtain ⟨x1, t⟩ := x
-  obtain c |⟨n, i, x'⟩ := x1
+  obtain ⟨c |⟨n, i, x'⟩, t⟩ := x
   · simp only [sumMap, baseMap, Sum.elim_inl, Subtype.coe_prop, and_true]
     exact Or.inr (mem_skeletonLT_iff.mpr (Or.inl c.prop))
   · simp only [sumMap, cubeMap, Sum.elim_inr, Subtype.coe_prop, and_true]
@@ -796,7 +794,7 @@ lemma skel_fixedOn (m : ℕ) : ∀ a ∈ {p | p.2 = 0 ∨ p.1 ∈ (skeletonLT X 
         exact hproj2
 
 
-lemma HEP_skeleton (m : ℕ) : HEP' (skeletonLT X (m + 1)).carrier (skeletonLT X m).carrier := by
+lemma HEP'_skeleton (m : ℕ) : HEP' (skeletonLT X (m + 1)).carrier (skeletonLT X m).carrier := by
 /-
   apply (retraction_criterion_closed' (skeletonLT X m).carrier (skeletonLT X (m + 1))
   (Topology.RelCWComplex.skeletonLT_mono le_self_add) (skeletonLT X m).closed').mpr

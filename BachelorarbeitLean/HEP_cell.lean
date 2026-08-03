@@ -22,12 +22,12 @@ variable {Y : Type*} [TopologicalSpace Y] {X C : Set Y} [RelCWComplex X C]
 
 def r_cube (m : ℕ) : (closedBall (0 : Fin m → ℝ) 1) × ℝ → (closedBall (0 : Fin m → ℝ) 1) × ℝ :=
   Exists.choose ((retraction_criterion_closed isClosed_sphere).1
-    (HEP_cube_boundary m ))
+  (HEP_cube_boundary m ))
 
 lemma r_cube_IsretractionOn (m : ℕ) : RetractionOn (r_cube m) {p | p.2 ∈ unitInterval}
     {p | p.2 = 0 ∨ p.1.1 ∈ sphere 0 1 ∧ p.2 ∈ unitInterval} :=
   Exists.choose_spec ((retraction_criterion_closed isClosed_sphere).1
-  (HEP_cube_boundary m ))
+  (HEP_cube_boundary m))
 
 -- universal property of the quotient:
 #check Topology.IsQuotientMap.lift
@@ -98,7 +98,7 @@ lemma QuotMap_isQuotient {m : ℕ} (i : cell X m) [T2Space Y] : IsQuotientMap (Q
       refine IsClosed.preimage ?_ hs
       exact (ContinuousOn.mapsToRestrict (continuousOn m i) _ )
 -/
-def RetractBall {m : ℕ} (i : cell X m) (hm : 0 < m) :
+def RetractBall {m : ℕ} (i : cell X m):
     C(closedBall (0 : Fin m → ℝ) 1 × unitInterval , closedCell m i × ℝ ) where
   toFun := fun (p,t) ↦
     (⟨map m i (r_cube m (p,t)).1, Set.mem_image_of_mem (map m i)
@@ -169,8 +169,8 @@ lemma CellFrontierEqClosedWithoutOpen [T2Space Y] (n : ℕ) (i : cell X n) :
   · exact Set.subset_sdiff.mpr
       ⟨ cellFrontier_subset_closedCell n i , DisjointCellFrontierOpenCell n i ⟩
 
-lemma RetractBallFactors {m : ℕ} [T2Space Y] (i : cell X m) (hm : 0 < m) :
-    Function.FactorsThrough (RetractBall i hm) (C_QuotMapProd i):= by
+lemma RetractBallFactors {m : ℕ} [T2Space Y] (i : cell X m) :
+    Function.FactorsThrough (RetractBall i) (C_QuotMapProd i):= by
   intro x y heq
   simp only [Prod.ext_iff] at heq
   obtain ⟨heq1, heq2⟩ := heq
@@ -230,7 +230,7 @@ lemma RetractBallFactors {m : ℕ} [T2Space Y] (i : cell X m) (hm : 0 < m) :
 
 def RetractCellInt_Fun {m : ℕ} [T2Space Y] (i : cell X m) (hm : 0 < m) :
   C(closedCell m i × unitInterval, closedCell m i × ℝ) :=
-  (quotient_QuotMapProd i).lift (RetractBall i hm) (RetractBallFactors i hm)
+  (quotient_QuotMapProd i).lift (RetractBall i ) (RetractBallFactors i )
 
 lemma RetractCellInt_range {m : ℕ} [T2Space Y] (i : cell X m) (hm : 0 < m) :
     Set.range (RetractCellInt_Fun i hm) ⊆
@@ -240,12 +240,12 @@ lemma RetractCellInt_range {m : ℕ} [T2Space Y] (i : cell X m) (hm : 0 < m) :
   rw [CellFrontierEqClosedWithoutOpen m i]
   intro x hx
   obtain ⟨y, hy⟩ := hx
-  have := (Topology.IsQuotientMap.lift_apply (quotient_QuotMapProd i) (RetractBall i hm)
-    (RetractBallFactors i hm)) y
+  have := (Topology.IsQuotientMap.lift_apply (quotient_QuotMapProd i) (RetractBall i )
+    (RetractBallFactors i )) y
   rw[hy] at this
   simp only [Function.comp_apply, IsQuotientMap.homeomorph_symm_apply, Quotient.liftOn'_mk'',
     IsQuotientMap.lift_apply] at this hy
-  suffices Mapsto_gprod : Set.MapsTo (RetractBall i hm) ⊤ {(p,t) : closedCell m i × ℝ | t = 0 ∨
+  suffices Mapsto_gprod : Set.MapsTo (RetractBall i ) ⊤ {(p,t) : closedCell m i × ℝ | t = 0 ∨
       (p : Y) ∈ (closedCell m i \ openCell m i) ∧ t ∈ unitInterval} by
     exact Set.mem_of_eq_of_mem this (Mapsto_gprod trivial)
   intro z hz
@@ -277,7 +277,7 @@ lemma RetractCellInt_fixesOn {m : ℕ} [T2Space Y] (i : cell X m) (hm : 0 < m) :
   intro x hx
   have C_ProdSurj := IsQuotientMap.homeomorph._proof_1 (quotient_QuotMapProd i)
   have QuotientApply := (Topology.IsQuotientMap.lift_apply (quotient_QuotMapProd i)
-    (RetractBall i hm) (RetractBallFactors i hm)) x
+    (RetractBall i ) (RetractBallFactors i )) x
   unfold RetractCellInt_Fun
   rw[QuotientApply]
   simp only [Function.comp_apply, IsQuotientMap.homeomorph_symm_apply, Quotient.liftOn'_mk'']

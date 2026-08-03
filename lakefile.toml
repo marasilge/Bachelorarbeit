@@ -1,0 +1,19 @@
+name = "Bachelorarbeit"
+version = "0.1.0"
+keywords = ["math"]
+defaultTargets = ["BachelorarbeitLean"]
+
+[leanOptions]
+pp.unicode.fun = true # pretty-prints `fun a ↦ b`
+relaxedAutoImplicit = false
+weak.linter.mathlibStandardSet = true
+maxSynthPendingDepth = 3
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+rev = "8b94556e352c04a3d23faa327a71e911cde53774"
+
+[[lean_lib]]
+name = "BachelorarbeitLean"
+globs = ["BachelorarbeitLean.+"]

@@ -60,7 +60,7 @@ lemma aux_contOn_ring [TopologicalSpace Y]
         exact ⟨h1, h2⟩
   · intro x
     by_cases hx : norm x.val = 1
-    · specialize hAgree ⟨⟨x.val, by simp[hx]⟩, mem_sphere.mpr (mem_sphere_zero_iff_norm.2 hx)⟩
+    · specialize hAgree  ⟨x.val, by simp[hx]⟩ (mem_sphere.mpr (mem_sphere_zero_iff_norm.2 hx))
       simp only [Set.mem_setOf_eq, hx, inv_one, one_smul, sub_self, Set.restrict_apply, aux_fun,
         Std.le_refl, reduceDIte]
       exact hAgree.symm
@@ -150,7 +150,7 @@ lemma H'_agreeH
   have norm_a: ‖a.1.1‖ = 1 := mem_sphere_zero_iff_norm.mp (mem_sphere.1 a.2)
   by_cases ht : ‖(1 + t.1) • a.1.val‖ = 1
   · simp [ht]
-    have Hf := (hAgree ⟨a.1, by rw [mem_sphere, Subtype.dist_eq, dist_zero_right, norm_a]⟩).symm
+    have Hf := (hAgree a.1 (by rw [mem_sphere, Subtype.dist_eq, dist_zero_right, norm_a])).symm
     have : t = 0 := by
       simp only [norm_smul_of_nonneg (add_nonneg zero_le_one t.2.1), norm_a, mul_one, add_eq_left,
         Set.Icc.coe_eq_zero] at ht
@@ -177,11 +177,13 @@ lemma H'_agreeH
       norm_num
 
 lemma HEP_disc_boundary : ∀ (m : ℕ),
-    HEP (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) (Metric.sphere ⟨0, by simp⟩ 1):= by
-  intro m Y hY f H hf_cont hH_cont hAgree
-  refine ⟨H' f H, H'_ContinuousOn f H hf_cont hH_cont hAgree , ?_ , H'_agreeH f H hAgree ⟩
-  intro x
-  simp [H', aux_fun, mem_closedBall_zero_iff.mp x.prop]
+    HEP (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) (Metric.sphere ⟨0, by simp⟩ 1) := by
+  intro m Y hY rangeH' f H hf_cont hf_range hH_cont hH_range hAgree
+  refine ⟨H' f H, H'_ContinuousOn f H hf_cont hH_cont hAgree, ?_ , ?_ , H'_agreeH f H hAgree ⟩
+  · intro x hx
+    exact H'_MapsTo rangeH' f H hf_range hH_range hx
+  · intro x
+    simp [H', aux_fun, mem_closedBall_zero_iff.mp x.prop]
 
 lemma HEP_disc_boundary' : ∀ (m : ℕ),
     HEP' (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) (Metric.sphere 0 1):= by
