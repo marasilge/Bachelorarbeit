@@ -131,12 +131,10 @@ lemma SkeletonProjectionIsQuotientMap (m : ℕ) {Y : Type*} [hY : TopologicalSpa
     refine isClosed_of_isClosed_inter_openCell_or_isClosed_inter_closedCell hS'sub hbaseClosed ?_
     intro n hn j
     by_cases h : n < m
-    · right
-      apply (hlow n h)
-    · left
-      suffices hempty : S' ∩ openCell n j = ∅ by
+    · exact Or.inr (hlow n h _)
+    · suffices hempty : S' ∩ openCell n j = ∅ by
         rw[hempty]
-        exact isClosed_empty
+        exact Or.inl isClosed_empty
       rw [Nat.not_lt] at h
       apply Disjoint.inter_eq
       exact Set.disjoint_of_subset_left hS'sub
@@ -290,40 +288,32 @@ lemma cts_R_I : ContinuousOn R_I unitInterval := by
   rw [this]
   exact continuous_id
 
--- ursprüngliche Version, kann hier später den Beweis, dass R_I nichts verändert, klauen, wenn ich
--- was über cubesretract beweisen will
-def cubesretract' (m : ℕ) (n : Fin (m + 1)) :
-    (closedBall (0 : Fin (n : ℕ) → ℝ) 1) × unitInterval →
-    (closedBall (0 : Fin (n : ℕ) → ℝ) 1) × unitInterval := fun p ↦
-  if n = m then ((r_cube (n : ℕ) (p.1,p.2)).1, ⟨(r_cube (n : ℕ) (p.1,p.2)).2, by
-    have : (p.1, (p.2 : ℝ)) ∈ {p | p.2 ∈ unitInterval} := Set.mem_sep_iff.mpr p.2.2
-    obtain h | h := (r_cube_IsretractionOn n).mapsTo this
-    · rw[h]
-      exact unitInterval.zero_mem
-    · exact h.2 ⟩)
-  else id p
--- bis hier
-
 def cubesretract {m : ℕ} (n : Fin (m + 1)) :
     (closedBall (0 : Fin (n : ℕ) → ℝ) 1) × unitInterval →
     (closedBall (0 : Fin (n : ℕ) → ℝ) 1) × unitInterval := fun p ↦
   if n = m then ((r_cube (n : ℕ) (p.1,p.2)).1, R_I (r_cube (n : ℕ) (p.1,p.2)).2)
   else id p
 
+def cubesretractR {m : ℕ} (n : Fin (m + 1)) :
+    (closedBall (0 : Fin (n : ℕ) → ℝ) 1) × unitInterval →
+    (closedBall (0 : Fin (n : ℕ) → ℝ) 1) × ℝ := fun p ↦
+  if n = m then ((r_cube (n : ℕ) (p.1,p.2)).1, R_I (r_cube (n : ℕ) (p.1,p.2)).2)
+  else (p.1, Subtype.val p.2)
+-- real:
 lemma cubesretract_continuous {m : ℕ} (n : Fin (m + 1)) : Continuous (cubesretract n) := by
   unfold cubesretract
   by_cases hnm : n = m
   · simp only [hnm, ↓reduceIte, continuous_prodMk]
     refine ⟨ ?_ , ?_⟩
-    · apply Continuous.comp continuous_fst ?_
+    · apply continuous_fst.comp  ?_
       exact (r_cube_IsretractionOn n).continuousOn.comp_continuous (by fun_prop) (fun x ↦ x.2.2)
     · have hs : ∀ (x : ↑(closedBall (0 : Fin n → ℝ) 1) × ↑unitInterval),
         (fun z ↦ (r_cube ↑n (z.1, ↑z.2)).2) x ∈ unitInterval := by
         intro x
-        have mapstoI: Set.MapsTo (r_cube ↑n) {p | p.2 ∈ unitInterval} {p | p.2 ∈ unitInterval}:= by
+        have mapstoI: Set.MapsTo (r_cube ↑n) (bigcyl _) (bigcyl _):= by
           intro x hx
-          have sub : {p : (closedBall (0: Fin n → ℝ) 1) × ℝ | p.2 = 0 ∨
-              p.1 ∈ sphere (⟨0, by simp⟩) 1 ∧ p.2 ∈ unitInterval} ⊆ {p | p.2 ∈ unitInterval} := by
+          have sub : (anchor (sphere (⟨0, by simp⟩ : closedBall (0 : Fin n → ℝ) 1) 1)) ⊆
+              (bigcyl _) := by
             intro p ph
             obtain h0 | hI := ph
             · simp [h0]
@@ -338,6 +328,20 @@ lemma cubesretract_continuous {m : ℕ} (n : Fin (m + 1)) : Continuous (cubesret
   · simp only [hnm, ↓reduceIte, id_eq, continuous_prodMk]
     refine ⟨ by fun_prop, by fun_prop⟩
 
+lemma cubesretract_continuousR {m : ℕ} (n : Fin (m + 1)) : Continuous (cubesretractR n) := by
+  unfold cubesretractR
+  by_cases hnm : n = m
+  · simp only [hnm, ↓reduceIte, continuous_prodMk]
+    refine ⟨ ?_ , ?_⟩
+    · apply continuous_fst.comp  ?_
+      exact (r_cube_IsretractionOn n).continuousOn.comp_continuous (by fun_prop) (fun x ↦ x.2.2)
+    · apply continuous_subtype_val.comp ?_
+      
+
+      apply Continuous.comp continuous_snd ?_
+      exact (r_cube_IsretractionOn n).continuousOn.comp_continuous (by fun_prop) (fun x ↦ x.2.2)
+  · simp only [hnm, ↓reduceIte, id_eq, continuous_prodMk]
+    refine ⟨ by fun_prop, by fun_prop⟩
 
 #check r_cube
 #check (r_cube_IsretractionOn 2).fixesOn
@@ -367,7 +371,7 @@ lemma cubesretract_mapsto_lt {m : ℕ} (n : Fin (m + 1)) (i : cell X n)
     (p : (closedBall 0 1) × ↑unitInterval) (hn : n < m) :
     (map n i) (cubesretract n p).1 ∈ skeletonLT X m := by
   unfold cubesretract
-  have : (p.1, (p.2 : ℝ)) ∈ {p | p.2 ∈ unitInterval} := Set.mem_setOf.mpr p.2.2
+  have : (p.1, (p.2 : ℝ)) ∈ (bigcyl _) := Set.mem_setOf.mpr p.2.2
   have mapsto := (r_cube_IsretractionOn n).mapsTo this
   simp only [Nat.ne_of_lt hn, ↓reduceIte, id_eq]
   apply Topology.CWComplex.skeletonLT_mono (m := n + 1) ?_ ?_
@@ -381,7 +385,7 @@ lemma cubesretract_mapsto_top {m : ℕ} (n : Fin (m + 1)) (i : cell X n)
     (p : (closedBall 0 1) × ↑unitInterval) (hn : n = m) :
     (cubesretract n p).2 = 0 ∨ (map n i) (cubesretract n p).1 ∈ skeletonLT X m := by
   unfold cubesretract
-  have : (p.1, (p.2 : ℝ)) ∈ {p | p.2 ∈ unitInterval} := Set.mem_setOf.mpr p.2.2
+  have : (p.1, (p.2 : ℝ)) ∈ (bigcyl _) := Set.mem_setOf.mpr p.2.2
   have mapsto := (r_cube_IsretractionOn n).mapsTo this
   simp only [hn, ↓reduceIte]
   rcases mapsto with h0 | h1
@@ -409,7 +413,7 @@ lemma cubesretract_mapsto_weak {m : ℕ} (n : Fin (m + 1)) (i : cell X n)
 
   /-
   unfold cubesretract
-  have : (p.1, (p.2 : ℝ )) ∈ {p | p.2 ∈ unitInterval} := Set.mem_setOf.mpr p.2.2
+  have : (p.1, (p.2 : ℝ )) ∈ (bigcyl _) := Set.mem_setOf.mpr p.2.2
   have mapsto := (r_cube_IsretractionOn n).mapsTo this
   by_cases h : m = n
   · simp only [h, ↓reduceIte]
@@ -673,9 +677,9 @@ def retr_skeleton (m : ℕ) : (skeletonLT X (m + 1)) × ℝ → (skeletonLT X (m
   ((Function.comp (r (X := X) m) (Prod.map id R_I) p).1,
   Subtype.val (Function.comp (r (X := X) m) (Prod.map id R_I) p).2)
 
-lemma skel_ctsOn (m : ℕ) : ContinuousOn (retr_skeleton (X := X) m) {p | p.2 ∈ unitInterval} := by
+lemma skel_ctsOn (m : ℕ) : ContinuousOn (retr_skeleton (X := X) m) (bigcyl _) := by
   have : ContinuousOn (fun p ↦ (Function.comp (r (X := X) m) (Prod.map id R_I) p))
-    {p | p.2 ∈ unitInterval} := by
+    (bigcyl _) := by
     apply (continuousRetract m).comp_continuousOn  ?_
     have : ContinuousOn (@id (skeletonLT X (↑m + 1))) Set.univ := continuousOn_id
     apply (this.prodMap cts_R_I).mono
@@ -696,8 +700,8 @@ lemma sumMap_mapsTo (m : ℕ) (x : (↑C ⊕ (n : Fin (m + 1)) × (_ : cell X �
     · exact cubesretract_mapsto_top n i (x',t) hn
     · exact Or.inr (cubesretract_mapsto_lt n i (x',t) (lt_of_le_of_ne (Fin.is_le n) hn))
 
-lemma skel_mapsTo (m : ℕ) : Set.MapsTo (retr_skeleton m) {p | p.2 ∈ unitInterval}
-  {p | p.2 = 0 ∨ p.1 ∈ (skeletonLT X (m + 1)).carrier ↓∩ ↑(skeletonLT X m) ∧ p.2 ∈ unitInterval} := by
+lemma skel_mapsTo (m : ℕ) : Set.MapsTo (retr_skeleton m) (bigcyl _)
+  (anchor ((skeletonLT X (m + 1)).carrier ↓∩ ↑(skeletonLT X m))) := by
   intro s hs
   unfold retr_skeleton
   obtain ⟨x, hxproj1, _ , hxsum⟩ := r_apply (X := X) m (s.1, ⟨s.2, hs⟩)
@@ -718,8 +722,7 @@ lemma fixed_C (m : ℕ) (c : C) (t : unitInterval) (ht : t = 0):
   rfl
 -/
 
-lemma skel_fixedOn (m : ℕ) : ∀ a ∈ {p | p.2 = 0 ∨ p.1 ∈ (skeletonLT X (↑m + 1)).carrier ↓∩
-  ↑(skeletonLT X ↑m) ∧ p.2 ∈ unitInterval}, retr_skeleton m a = a := by
+lemma skel_fixedOn (m : ℕ) : ∀ a ∈ (anchor ((skeletonLT X (↑m + 1)).carrier ↓∩ ↑(skeletonLT X ↑m))), retr_skeleton m a = a := by
   intro s hs
   unfold retr_skeleton
   have hs2 : s.2 ∈ unitInterval := by
@@ -792,7 +795,6 @@ lemma skel_fixedOn (m : ℕ) : ∀ a ∈ {p | p.2 = 0 ∨ p.1 ∈ (skeletonLT X 
         refine Prod.ext hxproj1 ?_
         rw [← SetCoe.ext_iff] at hproj2
         exact hproj2
-
 
 lemma HEP'_skeleton (m : ℕ) : HEP' (skeletonLT X (m + 1)).carrier (skeletonLT X m).carrier := by
 /-
@@ -875,8 +877,7 @@ lemma RetractIntervalSkeleton_applyCell {m : ℕ} (hm : 0 < m) {Y : Type*} [Topo
         Y _ X C _ _ _ m j mm) pSkeleton hj
     simp only [hj, ↓reduceDIte, Prod.mk.injEq]
     suffices h : r_cell hm i (⟨↑p, hp⟩, t) = (⟨↑p, hp⟩,t) by simp[h]
-    have fixmem : (⟨p, hp⟩,t) ∈ {p : closedCell m i × ℝ | p.2 = 0 ∨ ↑p.1 ∈ cellFrontier m i ∧
-        p.2 ∈ unitInterval} := by
+    have fixmem : (⟨p, hp⟩,t) ∈ (anchor (closedCell m i ↓∩ cellFrontier m i)) := by
       right
       refine ⟨?_, unitInterval.mem_unitIntervalSubmonoid.mp ht⟩
       rw [CellFroniterEqClosedWithoutOpen m i]

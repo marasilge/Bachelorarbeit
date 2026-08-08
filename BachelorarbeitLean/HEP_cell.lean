@@ -24,8 +24,8 @@ def r_cube (m : ℕ) : (closedBall (0 : Fin m → ℝ) 1) × ℝ → (closedBall
   Exists.choose ((retraction_criterion_closed isClosed_sphere).1
   (HEP_cube_boundary m ))
 
-lemma r_cube_IsretractionOn (m : ℕ) : RetractionOn (r_cube m) {p | p.2 ∈ unitInterval}
-    {p | p.2 = 0 ∨ p.1.1 ∈ sphere 0 1 ∧ p.2 ∈ unitInterval} :=
+lemma r_cube_IsretractionOn (m : ℕ) : RetractionOn (r_cube m) (bigcyl _)
+    (anchor (closedBall (0 : Fin m → ℝ) 1 ↓∩ sphere 0 1)) :=
   Exists.choose_spec ((retraction_criterion_closed isClosed_sphere).1
   (HEP_cube_boundary m))
 
@@ -254,8 +254,8 @@ lemma RetractCellInt_range {m : ℕ} [T2Space Y] (i : cell X m) (hm : 0 < m) :
     Set.mem_setOf_eq]
   by_cases h : ((r_cube m) (z.1, z.2)).2 = 0
   · simp [h]
-  · have : (r_cube m) (z.1, z.2) ∈ {p | p.1 ∈ (sphere ⟨ 0, by simp⟩  1) ∧ p.2 ∈ unitInterval} := by
-      have mem : (z.1, z.2.1) ∈ {p : (closedBall 0 1) × ℝ | p.2 ∈ unitInterval } := by
+  · have : (r_cube m) (z.1, z.2) ∈ (smalcyl (sphere ⟨0, by simp⟩ 1)) := by
+      have mem : (z.1, z.2.1) ∈ (bigcyl _) := by
         rw [Set.mem_setOf_eq]
         exact Subtype.coe_prop z.2
       have := (r_cube_IsretractionOn m).mapsTo mem
@@ -386,8 +386,7 @@ lemma HEP_Cell [T2Space Y] {m : ℕ} (hm : 0 < m) (j : cell X m) :
       simp only [Set.mem_setOf_eq] at hx
       dsimp only
       rw [dif_pos hx, Set.projIcc_of_mem _ hx]
-  · simp only [Set.mem_preimage]
-    intro ⟨x,t⟩ ht
+  · intro ⟨x,t⟩ ht
     simp only [Set.mem_setOf_eq] at ht
     have : (RetractCellInt_Fun j hm) (x, ⟨t, ht⟩)  = r (x, t) := by
       simp only [ r, ht, dite_true]
@@ -417,8 +416,8 @@ def r_cell [T2Space Y] {m : ℕ} (hm : 0 < m) (j : cell X m) :=
   (HEP_Cell hm j))
 
 lemma r_cell_IsretractionOn [T2Space Y] {m : ℕ} (hm : 0 < m) (j : cell X m) :
-    RetractionOn (r_cell hm j) {p | p.2 ∈ unitInterval}
-    {p | p.2 = 0 ∨ p.1.1 ∈ cellFrontier m j ∧ p.2 ∈ unitInterval} :=
+    RetractionOn (r_cell hm j) (bigcyl _)
+    (anchor (closedCell m j ↓∩ cellFrontier m j)) :=
   Exists.choose_spec ((retraction_criterion_closed (IsClosed.preimage_val isClosed_cellFrontier)).1
   (HEP_Cell hm j))
 
@@ -499,8 +498,7 @@ lemma r_dimCW_applyCell {m : ℕ} [T2Space Y] (hm : 0 < m) (i : cell X m)
         Y _ X C _ _ _ m j mm) pSkeleton hj
     simp only [hj, ↓reduceDIte, Prod.mk.injEq]
     suffices h : r_cell hm i (⟨↑p, hp⟩, t) = (⟨↑p, hp⟩,t) by simp[h]
-    have fixmem : (⟨p, hp⟩,t) ∈ {p : closedCell m i × ℝ | p.2 = 0 ∨ ↑p.1 ∈ cellFrontier m i ∧
-        p.2 ∈ unitInterval} := by
+    have fixmem : (⟨p, hp⟩,t) ∈ (anchor (closedCell m i ↓∩ cellFrontier m i)) := by
       right
       refine ⟨?_, unitInterval.mem_unitIntervalSubmonoid.mp ht⟩
       rw [CellFrontierEqClosedWithoutOpen m i]
@@ -527,9 +525,9 @@ lemma r_dimCW_applyA {m : ℕ} [T2Space Y] (hm : 0 < m) (p : X) (hp : (p : Y) �
 #check ContinuousOn.union_of_isClosed
 
 lemma r_dimCW_ContOn {m : ℕ} [T2Space Y] (hm : 0 < m) (hX : X = ↑A ∪ ⋃ (j : cell X m), openCell m j)
-    (hA : Nonempty (X ↓∩ ↑A)) : ContinuousOn (r_dimCW hm) {p : X × ℝ | p.2 ∈ unitInterval} := by
+    (hA : Nonempty (X ↓∩ ↑A)) : ContinuousOn (r_dimCW hm) (bigcyl X) := by
   --apply ContinuousOn.if
-  have union : {p : X × ℝ | p.2 ∈ unitInterval} = {p | p.1 ∈ A ∧ p.2 ∈ unitInterval} ∪
+  have union : (bigcyl X) = {p | p.1 ∈ A ∧ p.2 ∈ unitInterval} ∪
       closure {p | p.1 ∈ (⋃ (j : cell X m), openCell m j) ∧ p.2 ∈ unitInterval} := by
     sorry
   rw[union]
