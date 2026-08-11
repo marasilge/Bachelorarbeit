@@ -45,6 +45,7 @@
       {≅}{{$\cong$}}1
       {ₜ}{{$_{\text{t}}$}}1
       {↑}{{$\uparrow$}}1
+      {↥}{{$\uparrow$}}1
       {→}{{$\rightarrow$}}1
       {↔}{{$\leftrightarrow$}}1
       {ℝ}{{$\mathbb{R}$}}1
@@ -64,6 +65,7 @@
       {⊂}{{$\subset$}}1
       {∪}{{$\cup$}}1
       {∩}{{$\cap$}}1
+      {⊕}{{$\oplus$}}1
       {↦}{{$\mapsto$}}1
       {⟶}{{$\longrightarrow$}}1
       {⟨}{{$\langle$}}1
@@ -74,6 +76,7 @@
       {↓}{{$\downarrow$}}1
       {α}{{$\alpha$}}1
       {β}{{$\beta$}}1
+      {Σ}{{$\Sigma$}}1
       {•}{{$\cdot$}}1
       {⁻¹}{{$^{-1}$}}2
       {₀}{{$_0$}}1
@@ -115,6 +118,7 @@
 \usepackage{amssymb}
 \usepackage{amsthm}
 \usepackage{mathtools}
+\usepackage{tikz-cd}
 \usepackage{microtype}
 \usepackage{nomencl}
 \makenomenclature
@@ -141,6 +145,8 @@
 \newcommand{\closedCell}[2]{\overline{e}^{#1}_{#2}}
 \newcommand{\cellFrontier}[2]{\partial e^{#1}_{#2}}
 \newcommand{\lean}[1]{\lstinline[language=Lean]|#1|}
+\newcommand{\gleichrot}{\rotatebox[origin=c]{90}{$=$}}
+\newcommand{\lowroman}[1]{\romannumeral#1\relax}
 % Ausgabe eines Lean-Checks im Listing anzeigen (grau, mit Marker).
 % Verwendung im lstlisting dank mathescape: $\leanout{ Ergebnis }$
 % WICHTIG: im Argument KEIN $...$ verwenden (beendet mathescape zu frueh).
@@ -207,18 +213,10 @@ Motivation: Whitehead theorem oder so?
 
 \newpage 
 \section {Homotopy Extension Property}
+There is not really one singel source, which my formalisation is based on. But for the overall structure I used my lecture notes from the topology I couse, thaught by Markus Hausmann in the winter semester 2025/26 at the university of Bonn. They are not publically available, but especially the relevant chapter about the homotopy extension property comes close to the lecture notes "Algebraische Topologie" of F. Waldhausen from the university in Bielefeld. This source is in German. % Quelle hinzufuegen
+% https://www.math.uni-bielefeld.de/~fw/at.pdf
 
 \subsection{The Homotopy Extension Property}
-
-% \begin{definition}
-%     Let $X$ be a topological space and $A \subseteq X$ a subspace. The pair $(X,A)$ has the \emph{homotopy extension property (HEP)}, if the following holds. Given
-%     \begin{enumerate}
-%         \renewcommand{\labelenumi}{(\roman{enumi})}
-%         \item a map defined on $X$,
-%         \item a homotopy on $A$,
-%     \end{enumerate}
-%     then there exists a homotopy on $X$, which extends the homotopy given on $A$. 
-% \end{definition}
 
 There are several equivalent ways to define the homotopy extension property, which will be discussed in this first chapter. This fist definition is closest to what I formalized in Lean. 
 
@@ -238,12 +236,6 @@ $H' \colon X \times [0,1] \to Y$ such that
 \begin{remark}
     Note, that for any space $X$, the pair $(X,X)$ and the pair $(X ,\emptyset)$ have the \emph{HEP}.
 \end{remark}
-
-
--- unsauber, gute Quelle finden
-\begin{definition}
-    A pair of two maps $(f,H)$, which agree on the space $A$ respectively $A\times \{ 0\} $, same as in the previous definition, is an \emph{extension problem}. 
-\end{definition}
 
 \begin{remark} \label{rm:HepDef}
     Another equivalent way of phrasing this definition is to say that $(X,A)$ has the \emph{HEP} if and only if every map defined on $X \cup_A (A \times [0,1])$ extends to a map on $X \times [0,1]$. Note that this is, in general, not the same as requiring that every map defined on $X \times \{0\} \cup (A \times [0,1])$ extends to a map on $X \times [0,1]$. This is because the natural map
@@ -342,7 +334,7 @@ It follows from the retraction criterion, that the \emph{HEP} is preserved under
     is a retract.
 \end{proof}
 
-\begin{theorem}
+\begin{theorem}\label{HEP_homeo}
     The \emph{HEP} is preserved under homeomorphisms, i.e. given two space pairs $(X,A) \text{and} (Y, B)$. If there exists a homeomorphism from $X$ to $Y$, that maps  $A$ to $B$, and $(X,A)$ has the \emph{HEP}, then so does $(Y,B)$.
 \end{theorem}
 
@@ -361,6 +353,14 @@ It follows from the retraction criterion, that the \emph{HEP} is preserved under
 \end{proof}
 
 
+\begin{theorem}\label{HEP_trans}
+    Let $(A,B)$ and $(B,C)$ be pairs of topological spaces, that both have the \emph{HEP}. Then also $(A,C)$ has the \emph{HEP}.
+\end{theorem}
+
+\begin{proof}
+    We will prove this, by checking the definition of \emph{HEP}. So we are given a topological space $Y$, a map $f \colon A \to Y$ and a homotopy $H \colon C \times [0,1] \to Y$. Using the \emph{homotopy extention property} of $(B,C)$ for $\restrict{f}{B}$ and $H$, we obtain a homotopy $H' \colon B \times [0,1] \to Y$, that extends the given maps. Next, we repeat the same with the \emph{HEP} of $(A,B)$ for the maps $f$ and $H'$, to obtain the desired homotopy $H'' \colon A \times [0,1] \to Y$. It is obvious, that $H''$ indeed extends $f$ and $H$.
+\end{proof}
+
 \subsection{HEP for relative CW-complexes}
 
 To proof the \emph{HEP} for relative CW-complexes, we will generalize the space pair in three steps and proof the \emph{HEP} for each of these pairs. The general strategy is as follows. 
@@ -370,61 +370,44 @@ To proof the \emph{HEP} for relative CW-complexes, we will generalize the space 
     \item Any relative CW-comples has the \emph{HEP}.
 \end{enumerate}
 
-Before we start proofing the \emph{HEP} for any space pair, I will give some definitinons, introduce notation for CW-complexes and proof some basic properties for them, which are not yet in mathlib. \\
-I copied the following definition of CW-complexes from the bachelor thesis of Hannah Scholz \cite{SCH01}. Her formalisation of CW complexes, which can be found as the "classical CW-complex" in mathlib, is explained in this thesis. She chose the historical definition of CW-complexes, presented by Whithead in \cite{WH}. 
+Before we start proofing the \emph{HEP} for any space pair, I will give some definitinons and introduce notation for CW-complexes. \\
+The follwoing definition of relative CW complexes is a modified version of the definition of CW-complexes from the bachelor thesis of Hannah Scholz \cite{SCH01}. She chose to formalise the historical definition of CW-complexes, presented by Whithead in \cite{WH} and explains her work in this thesis.   This definition is the basis of her formalisation of CW complexes, which can be found as the "classical CW-complex" in mathlib. I want to present this definition here, because it has all the structures, I used in the my formalised proofs. 
 
-\begin{definition}\label{defi:CWComplex2}
-    Let $X$ be a Hausdorff space.
-    A \emph{CW-complex} on $X$ consists of a family of indexing sets $(I_n)_{n \in \mathbb{N}}$ and a family of maps $(Q_i^n\colon D_i^n\rightarrow X)_{n \ge 0, i \in I_n}$ s.t.
+\begin{definition}
+We call $D^n := \{ x \in \mathbb{R}^n \mid \norm{x} \le 1 \}$ $n-$dimensional closed ball.
+Its boundary $\partial D^n = S^{n-1} := \{ x \in \mathbb{R}^n \mid \norm{x} = 1\} $ is the $(n-1)-$dimensional sphere.
+\end{definition}
+
+\begin{definition}\label{def:CWComplex}
+Let $X$ be a Hausdorff space. A \emph{relative CW-complex} on $(X,C)$ consists of a family of indexing sets $(I_n)_{n \in \mathbb{N}}$ and a family of maps $(Q_i^n\colon D_i^n\rightarrow X)_{n \ge 0, i \in I_n}$ s.t.
     \begin{enumerate}
-        \item $\restrict{Q_i^n}{\interior{D_i^n}}\colon \interior{D_i^n} \rightarrow Q_i^n(\interior{D_i^n})$ is a homeomorphism. We call $\openCell{n}{i} \coloneq Q_i^n(\interior{D_i^n})$ an \emph{(open) $n$-cell} (or a cell of dimension $n$)
-        and $\closedCell{n}{i} \coloneq Q_i^n(D_i^n)$ a \emph{closed $n$-cell}.
+        \item $\restrict{Q_i^n}{\interior{D_i^n}}\colon \interior{D_i^n} \rightarrow Q_i^n(\interior{D_i^n})$ is a homeomorphism. We call $\openCell{n}{i} \coloneq Q_i^n(\interior{D_i^n})$ an \emph{(open) $n$-cell} (or a cell of dimension $n$) and $\closedCell{n}{i} \coloneq Q_i^n(D_i^n)$ a \emph{closed $n$-cell}.
         \item For all $n, m \in \mathbb{N}$, $i \in I_n$ and $j \in I_m$ where $(n, i) \ne (m, j)$ the cells $\openCell{n}{i}$ and $\openCell{m}{j}$ are disjoint.
-        \item For each $n \in \mathbb{N}$, $i \in I_n$, $Q_i^n(\boundary D_i^n)$ is contained in the union of a finite number of closed cells of dimension less than $n$.
-        \item $A \subseteq X$ is closed iff $Q_i^n(D_i^n) \cap A$ is closed for all $n \in \mathbb{N}$ and $i \in I_n$.
-        \item $\bigcup_{n \ge 0}\bigcup_{i \in I_n} Q_i^n(D_i^n) = X$.
+        \item For each $n \in \mathbb{N}$, $i \in I_n$, $Q_i^n(\boundary D_i^n)$ is contained in the union of $C$ and a finite number of closed cells of dimension less than $n$.
+        \item $A \subseteq X$ is closed iff $C \cap A$ is closed and $Q_i^n(D_i^n) \cap A$ is closed for all $n \in \mathbb{N}$ and $i \in I_n$.
+        \item $X \cup \bigcup_{n \ge 0}\bigcup_{i \in I_n} Q_i^n(D_i^n) = X$.
     \end{enumerate}
-    We call $Q_i^n$ a \emph{characteristic map} and $\cellFrontier{n}{i} \coloneq Q_i^n(\boundary D_i^n)$ the \emph{frontier of the $n$-cell} for any $i$ and $n$.
-    Additionally we define $X_n \coloneq \bigcup_{m < n + 1} \bigcup_{i \in I_m} \closedCell{m}{i}$ and call it the \emph{$n$-skeleton} of $X$ for $-1 \le n \le \infty$
+    We call $Q_i^n$ a \emph{characteristic map} and $\cellFrontier{n}{i} \coloneq Q_i^n(\boundary D_i^n)$ the \emph{frontier of the $n$-cell} for any $i$ and $n$. Additionally we define $X_n \coloneq \bigcup_{m < n + 1} \bigcup_{i \in I_m} \closedCell{m}{i}$ and call it the \emph{$n$-skeleton} of $X$ for $-1 \le n \le \infty$
+\end{definition}
+
+\begin{definition}
+    If $C = \emptyset$, we call $(X,\emptyset)$ or just $X$, an (absolute) CW complex.
+\end{definition}
+
+\begin{definition}
+    A relative CW complex $(X,A)$ is called finite dimensional, if there exists a $n \in n$, such that $I_m = \emptyset$ for all $ m \ge n$.
 \end{definition}
 
 \symbolindex {$X_n$}{}{The \emph{$n$-skeleton} of a CW-complex X}{}
 \symbolindex{$(I_n)$}{}{The indexinset for cells of dimension $n$}{}
 
-\begin{definition}
-    CW-complex Hanna -- ToDo
-\end{definition}
-
--- Charakteristic map 
-
-The more modern way to think about CW-complexes is the following: -- ToDo
-
-The modern definition yields quotientmaps from every $D^n$ to a corresponding cell of dimension $n$. The weak topology on a CW complex agrees with the quotient-topology induced by those quotientmaps. -- ToDo : Könnte man auch als Theorem mit reinnehmen, aber brauche ich im Finalen Beiweis vermutlich nicht -- Furthermore, we can define a quotient map onto all of the $n$-skeleton of a relative CW complex in the following way : is a quotientspace of the disjoint union of the base space together with all $D^k$ in dimension $k \le n$. We will proof, that the week topology of the relative CW complex indeed is the same as the topology induced by this quotientmap onto the skeleton. 
-
-\begin{lemma}
-    Let $(X,C)$ be a relative CW-complex with skeleton $X_n$. There exists a quotient map $ C \dot\cup \coprod_{n \le m} \coprod_{i\in J_n}  D^n \to X_m $ for every $m \in \mathbb{N}$.
-\end{lemma}
-
-\begin{proof}
-    We define the map 
-    \begin{align*} 
-        Q : C \dot\cup \coprod_{n \le m} \coprod_{i\in J_n} D^n \to X_m \\
-        x \mapsto \begin{cases}
-        Q_i^n (x), & \text{if } x \in \text{the } i \text{th copy of } D^n, \\
-        x, & \text{else } (x \in C)
-        \end{cases}
-    \end{align*}
-    Surjectivity of $Q$ follows directly from the modern definition, and it is also already a theorem in mathlib, which writes the $m$-skeleton as the union of the base-space $C$ together with all cells in dimension up to dimension $m$. To prove, $Q$ defines a quotient map, it remains to prove that the topologies agree. \\
-    For $A \subset X_m$ closed in the weak topology of a relative CW complex, we get by definition, that $Q_i^n (D^n) \cap C$ is closed for all $n \in \mathbb{N}$ and $i \in J_n$ and $A \cap C$ closed. Together with the charakteristic maps and the identity beeing continuous, this is all we need, for $Q^{-1} (A)$ to be closed aswell. \\  
-    Assume $A \subset X_m$ closed in the topology, which is induced by $Q$. 
-\end{proof}
-
+\subsubsection{HEP for balls}
 \begin{theorem}
 \label{thm:HepDisc}
     $\forall n \in \mathbb{N} \colon (D^m, \partial D^m) $ has the \emph{HEP}. 
 \end{theorem}
 
-There are two different attempts to prove this theorem. One is quite visual via the retraction criterion and the other one constructs the extended homotopy explicitly. Here, I will give the constructive proof, because that one was easier to formalize in LEAN.
+There are two different attempts to prove this theorem. One is quite visual via the retraction criterion and the other one constructs the extended homotopy explicitly. Here, I will give the constructive proof, because that one was easier to formalize in Lean.
 
 \begin{proof}
     Given a homotopy $H : \partial D^m \times [0,1] \rightarrow Y $ and a map $f \colon D^m \rightarrow Y $, which agree on $ \partial D^m \times \{ 0\} $ identifyed with $\partial D^m  $. We assemble these to a map $ h \colon D_2^m \to Y $, where $D_2^m $ denotes a disc with radius 2 in $ \mathbb{R} ^m $ . $ h $ is defined in the following way.
@@ -452,49 +435,153 @@ Since the definition of CW-complexes in Mathlib uses $n$-dimenstional cubes inst
     This statement follows from the observation, that $D^m$ is homeomorphic to $[ - 1 ,1 ]^n$. One constructs a homeomorphism via the radial projection, which maps the boundary of the sphere to the boundary of the cube. All points in the interior are scaled along the rays. In that way, the cube inherits the \emph{HEP} from the sphere.
 \end{proof}
 
-In the next step, we will prove, that for every relative CW complex $(X,A)$ with skeleton $X_n$ and for all $n \in \mathbb{N}$, the pair $(X_{n+1}, X_n)$ has the \emph{HEP}. -- The key-idea of the proof is to apply the retraction criterion. To construct the retraction, we apply a retraction for each of the added cells relative their boundary at the same time. On the base space, we use the identity. Later, we will need this result in order to construct a retraction on the entire CW-complex. 
+\subsubsection{HEP for consequitive skeletons}
 
-\begin{theorem}
-    Let $(X,C)$ be a relative CW-complex with skeleton $X_n$, then $ \forall n \in \mathbb{N} : (X_{n+1},X_n)$ has the \emph{HEP}.
+In the next step, we will prove, that for every relative CW complex $(X,C)$ with skeleton $X_n$ and for all $n \in \mathbb{N}$, the pair $(X_{n+1}, X_n)$ has the \emph{HEP}. We prove this by applying the retraction criterion, which means we construct a retraction $X_{n+1} \times [0,1] \to X_{n+1} \times \{0\} \cup X_n \times [0,1]$. This map will be obtained from the universal property of the quotient. Tho show, that $X_{n+1} \times [0,1]$ is a quotient space, it suffices to prove, that $X_{n+1}$ is a quotient space, and then apply the follwoing theorem: 
+
+\begin{theorem} \label{thm:WhiteheadQuotient}% --toDo quelle aus der MNL hinzufuegen 
+    For every locally compact space $X$ and any quotient mapping $g \colon Y \to Z$, the Cartesian product 
+    \[ g \times id_X \colon Y \times X \to Z \times X \]
+    is a quotient mapping. 
 \end{theorem}
 
-Before provig this theorem, we need some preparation. The key-idea of the proof is, to apply the retraction criterion, i.e. we want to construct a map on $X_{n+1} \times [0,1]$. 
-
-\begin{proof}
-    We proof the \emph{HEP}, using the retraction criterion.
-    
-    First, we define the map and then proof afterwards, that it has the required properties, i.e. is surjective and the weak topology agrees with the inuced topology of the quotientmap. For the definition of the map, we use the retraction $r_C$ from the \emph{HEP} for cubes relative boundary, which is defined on $[-1,1]^n \times [0,1]$. Even tough $r_C$ depends on the dimension of the cube, for reasons of convenience, we use the same notation for all of those maps. Let $J_n$ denote the indexing set for cells in dimension $n \in \mathbb{N}$ and $Q_i^n \colon D^n \to X$ be the charakteristic map of the $i$th $n$-cell. \\
-    Informally spoken, the map $r$ 
-\begin{align*}
-    r \colon X_{n+1} \times [0,1] \to X_{n+1} \times \{ 0\} \cup X_{n} \times [0,1] \\
-     (x,t) \mapsto \begin{cases}
-        r_C () , & \text{if } t = 0, \\
-        H(x,t), & \text{else}
+So let us prove, that every skeleton indeed is a quotient space:
+We set $ Z_m := C \amalg \coprod_{n \le m} \coprod_{i\in J_n}  D_i^n $ and define the map 
+\begin{align*} 
+        P_m : Z_m &\to X_m \\
+        x &\mapsto \begin{cases}
+        Q_i^n (x), & \text{if } x \in  D_i^n, \\
+        x, & \text{else } (x \in C)
         \end{cases}
 \end{align*}
 
+\begin{lemma}
+    Let $(X,C)$ be a relative CW-complex with skeleton $X_m, m \in \mathbb{N}$. The map $ P_m : Z_m \to X_m$ is a quotient map for every $m \in \mathbb{N}$.
+\end{lemma}
+
+\begin{proof}
+The map $P_m$ is well defined, since the image of the characterstic maps up to dimension $m$ is in $X_m$ and the base space $C$ is contained in every skeleton. Surjectivity is clear from the construction of CW complexes. It is left to show, that a set of $S \subset X_m$ is closed iff $P_m^{-1} (S)$ is closed. The forward direction we get from the map $P_m$ being continuous (defined in terms of continuous maps on a disjoint union). For the reverse direction we have, that $P_m^{-1} (S)$ intersected with the base space and every closed ball is closed. The $m-$skeleton only consists out of the base space and cells up to dimension $m$. So to prove closedness of a subset of the $m-$skeleton, it suffices to show, that the intersection with the base space and with all closed cells up to dimension $m$ is closed. This follows from the observation, that $P_m^{-1} (S) \cap D_i^n = S \cap \closedCell{n}{i} $ and $P_m^{-1} (S) \cap C = S \cap C$. 
 \end{proof}
 
-% \begin{lemma}
-%     Let $(X,C)$ be a relative CW-complex with skeleton $X_n$. Let $J_n$ denote the indexingset for cells in dimension $n \in \mathbb{N}$ and $Q_i^n_i^n \colon D^n \to X$ be the charakteristic map of the $i$th $n$-cell. There exists for every $m \in \mathbb{N}$ a quotient map $ C \dot\cup \coprod_{n \le m} \coprod_{i\in J_n}  D_n \to X_m $ 
-% \end{lemma}
+Now, that we know $P_{m} \times id_{[0,1]} \colon Z_{m} \times [0,1] \to X_{m} \times [0,1]$ is a quotient map, we proceed by defining the map 
+\begin{align*} 
+f_m : Z_m \times [0,1] &\to X_m \times \{0\} \cup X_{m-1} \times [0,1]  \\
+    x &\mapsto
+    \begin{cases}
+    (P_m \times id_{[0,1]}) \circ r_i^m (x), & \text{if } x.1 \in D_i^m, i \in I_m\\
+    (P_m \times id_{[0,1]}) (x), & \text{else }  
+    \end{cases}
+\end{align*}.
+Here $r_i^m \colon D_i^m \times [0,1] \to D_i^m \times \{0\} \cup S_i^{m-1} \times [0,1]$ is the retraction, whose existens we get from the retraction criterion and \cref{thm:HepDisc}. \\
+If we show, that $f_m$ is continuous and factors through $P_m \times id_{[0,1]}$, then we obtain the retraction $r_{Skel}^m$ for consecutive seketons from the universal property of the quotient, as illustrated above. Of course it is a priory not clear, that the obtained map actualy is the desired retraction. This will be checked later on.
 
-% \begin{proof}
-%     We proof the \emph{HEP}, using the retraction criterion.
-    
-%     First, I give the map and then proof afterwards, that it has the required properties. For the definition of the map I use the retraction $r_C$ from the \emph{HEP} for cubes relative boundary, which is defined on $[-1,1]^n \times [0,1]$, 
-% \begin{align*}
-%     r \colon X_{n+1} \times [0,1] \to X_{n+1} \times \{ 0\} \cup X_{n} \times [0,1] \\
-%      (x,t) \mapsto \begin{cases}
-%         r_C () , & \text{if } t = 0, \\
-%         H(x,t), & \text{else}
-%         \end{cases}
-% \end{align*}
+\begin{tikzcd}
+{Z_m \times [0,1]} \arrow[dd, "{P_m \times id_{[0,1]}}"] \arrow[rrr, "f_m"] &  &  & {X_m \times \{0\} \cup X_{m-1} \times [0,1]} \\
+                                                                                    &  &  &                                              \\
+{X_m \times [0,1]} \arrow[rrruu, "\exists r_{Skel}^m"', dashed]             &  &  &                                             
+\end{tikzcd}
 
-% \end{proof}
+\begin{lemma}\label{lem:f}
+    The map $f_m, m \in \mathbb{N}$    
+    \begin{enumerate}
+    \renewcommand{\labelenumi}{(\roman{enumi})}
+    \item is continuous
+    \item is well defined
+    \item factors through $P_m \times id_{[0,1]}$
+    \end{enumerate}
+\end{lemma}
 
+\begin{proof} \ \\ 
+(\lowroman{1}) $\colon$
+The map $f_m$ is defined on the domain $Z_{m} \times [0,1]$, which is is homeomorphic to $(C \times [0,1]) \amalg \coprod_{n \le m} \coprod_{i\in J_n}  (D_i^n \times [0,1])$, via the natural mapping. Continuity of $f$ precomposed with the homeomorphism is easy to show, since is the product and composition of continuous maps on the disjoint union. From the homeomorphisms we get, that $f$ as defined earlier is continuous. \\
+(\lowroman{2})$\colon$
+To check well definedness, we consider two different cases, same as in the definition of $f_m$. First let $(x,t) \in D_i^m \times [0,1]$ for some $i \in I_m$, so we are the "if"- case of the definition. Since $r_i^m$ is a retraction, we get the following result.
+\begin{align*}
+    f_m (x,t)   &= (P_m \times id_{[0,1]}) (r_i^m (x,t)) \\
+                &\subset (P_m \times id_{[0,1]}) (D_i^m \times \{0\} \cup S_i^{m-1} \times [0,1])
+\end{align*}
+Now, $(P_m \times id_{[0,1]}) (r_i^m (x,t)) $ will either have the second coordinate to be zero, and hence lies in $ X_m \times \{0\}$, or the first coordinate lies in the boundary, which is glued to the $m-1-$skeleton, and hence lies in $ X_{m-1} \times [0,1]$.\\ 
+The "else-"case is even more obvious. If $(x,t) \in Z_m \times [0,1]$ is a point, where $x$ lies in a closed ball, that has dimension less than $m$, then $P_m \times id_{[0,1]}$ will map this point into $ X_{m-1} \times [0,1]$. \\
+(\lowroman{3})$\colon$
+Assume we have two points $(z,t)$ and $(z',t') \in Z_m \times [0,1]$, such that $P_m \times id_{[0,1]} (z,t) = P_m \times id_{[0,1]} (z',t')$. $P_m \times id_{[0,1]}$ is the indentity on the second coordinate, so we directly get $t = t'$ and $P_m(z) = P_m(z')$. To show, that $f_m$ factors through $P_m \times id_{[0,1]}$, we have to show, that $f_m (z,t) = f_m (z',t)$. \\
+For most points, applying $f_m$ is definitionally equal to applying $P_m \times id_{[0,1]}$. Only if at least one of $z$ and $z'$ is in a top dimensional ball, something could go wrong. To be precise, something could only go wrong, when at least one of them is in the interior of a top dimensional cell, since on the boundary, theretraction $r_i^m$ is the identity and hence $f_m$ again is the same as $P_m \times id_{[0,1]}$. So what we want to show is, that if $z \in \interior D_i^m$, then $z = z'$. \\
+$P_m (z) = Q_i^m(x)$ and from the definition of a relative CW complex we have, that $\restrict{Q_i^m}{\interior{D_i^m}}\colon \interior{D_i^m} \rightarrow \openCell{m}{i}$ is a homeomorphism. Hence, there is no other point $x \neq z $ in $\interior D_i^m$, s.th. $P_m (x) = P_m (z)$, which means, that our goal reduces, to showing, that $z'$ lies in the same open ball as $z$. If $z'$ was in a different open ball $\interior D_j^m , j \neq i$ than $z \in \openCell{m}{i}$ and $z' \in \openCell{m}{j}$. Open cells of the same dimension are disjoint, which contradicts $P_m (z) = P_m (z')$. If $z'$ was in the boundary of an open ball of dimension $m$, or in any closed ball of dimension less than $m$, then $P_m(z')$ lies in the $(m-1)-$skeleton, which is also disjoint from $\openCell{m}{i}$. This again would contradict $P_m (z) = P_m (z')$. \\
+\end{proof}
 
+\begin{theorem}\label{HEP_skeleton}
+    Let $(X,C)$ be a relative CW-complex with skeleton $(X_m)_{m \in \mathbb{N}}$, then $ \forall m \in \mathbb{N} : (X_m,X_{m-1})$ has the \emph{HEP}.
+\end{theorem}
+\begin{proof}
+As discussed earlier, we have the map $r_{Skel}^m \colon X_m \times [0,1] \to X_m \times \{0\} \cup X_{m-1} \times [0,1]$ from the above diagram. We get continuity from the universal property and we know from the construction and \cref{lem:f}, that it maps into the right space. Therefore it is only left to show, that precomposition with the inclusion $\iota \colon X_m \times \{0\} \cup X_{m-1} \times [0,1] \hookrightarrow X_m \times [0,1]$ is the identity.\\
+If we have a point $(x,t) \in X_{m-1} \times [0,1]$, there is not necessarily a unique choice for a preimage in $Z_m \times [0,1]$. But since we proved in \cref{lem:f}, that $f_m$ factors through $P_m \times id_{[0,1]}$, we know, that $r_{Skel}^m (x,t)$ is indemendet of this choice. That means we can chose a preimage $(z,t) \in Z_m \times [0,1]$ of $(x,t)$, that lies \underline{not} in a closed ball of dimension $m$. Therefore, by the definition of $f_m$, we have
+\[
+   f_m (z,t) = (P_m \times id_{[0,1]} (z,t)) = (x,t) 
+\]
+Together with the equality from the comutative diagram, we get that  
+\begin{align*}
+    (x,t)= f_m (z,t) &= r_{m+1}^{Skel} (P_{m+1} \times id_{[0,1]} (z,t)) \\
+                     &= r_{m+1}^{Skel} (x,t)
+\end{align*}
+  
+So $r_{Skel}^m$ is the idenity on those type of points.\\
+Now we consider the other case, that the point $(x,0)$ lies in $(X_{m+1}) \times \{0\}$. By the same argumenation as before, we can choose any preimage $(z,0)$ in $D_i^m \times \{0\}$ for some $i \in I_m$, such that $P_m \times id_{[0,1]} (z,0) = (x,0)$, and use this for the computations. Therefor $ f_m (z,0) = (P_m \times id_{[0,1]}) \circ r_i^m (z,0) $. Now $r_i^m$ is a retraction and hence fixed on $D_i^m \times \{0\} \ subset D_i^m \times \{0\} \cup S_i^{m-1} \times [0,1]$. This yields the following equalities.
+\begin{align*}
+    f_m (z,0)  &= (P_m \times id_{[0,1]}) \circ r_i^m (z,0) \\
+            &= (P_m \times id_{[0,1]}) (z,0)\\
+            &= (x,0)
+\end{align*}
+Again, we compare this with the composition from the comutative diagram
+\begin{align*}
+    (x,0) = f_m (z,0)  &= r_{Skel}^m (P_m \times id_{[0,1]} (z,0))\\
+                    &= r_{Skel}^m (x,0)
+\end{align*}
+and conclude, that also for those points $r_{Skel}^m$ is the identity map. 
+\end{proof}
 
+\subsubsection{HEP for relative CW complexes}
+In this last section, we will prove, that every relative CW complex $(X,C)$ has the \emph{HEP}. It is easy tp prove this for finite dimensional CW complexes:
+
+\begin{lemma}\label{HEPRelSkel}
+    Let $(X,C)$ be a relative CW complex. Then $(X_n,C)$ has the \emph{HEP} for all $n \in \mathbb{N} \cup \{-1\}$.
+\end{lemma}
+\begin{proof}
+    The claim follows by induction on $n$. \\
+    \emph{Induction start $n = -1 \colon$} Note, that $X_{-1} = C$, i.e. $(X_{-1},C) = (C,C)$. This pair has the \emph{HEP} by .\\%\cref{} HEP self.
+    \emph{Induction step $n \mapsto (n + 1) \colon$} Assume, we know that $(X_n,C)$ has the \emph{HEP}. From \cref{HEP_skeleton} we know, that also $X_{n+1}, X_n$ has the \emph{HEP}. So \cref{HEP_trans} yields, that also $(X_{n+1}, X_n)$ has the \emph{HEP}
+\end{proof}
+
+\begin{corollary}\label{HEP_finiteCW}
+    Let $(X,C)$ be a finite dimensional relative CW complex. Then $(X,C)$ has the \emph{HEP}.
+\end{corollary}
+
+\begin{proof}
+    Since $(X,C)$ is finite dimensional, there exists a $n \in \mathbb{N} \cup \{-1\}$, such that $X$ is equal to the $n-$ skeleton $X_n$.
+    So we have an equality of the pairs $(X,C) = (X_n, C)$. The claim follwos from \cref{HEPRelSkel}. where we proved the \emph{HEP} for the right handside.
+\end{proof}
+
+I stoped with the formalisation at this point, nevertheless, I want to roughly present the prove of the general version here, for the sake of completness.
+
+\begin{lemma}\label{HEP_CW}
+    Let $(X,C)$ be a relative CW complex. Then $(X,C)$ has the \emph{HEP}.
+\end{lemma}
+
+\begin{proof}
+    We prove this by the retraction criterion. From \cref{HEPRelSkel} and the retraction criterion we have retractions $r_m \colon X_m \times [0,1] \to X_m \times \{0\} \cup C \times [0,1]$ for all $m \in \mathbb{N}$. I leave it to the reader to check, that $r_m$ can be explicity constructed as the composite
+\[
+    X_m \times [0,1] \xrightarrow{r_m^{Skel}} X_m \times \{0\} \cup X_{m-1} \times [0,1] \xrightarrow{id_{X_m \times \{0\}} \cup r_{m-1}} X_m \times \{0\} \cup C \times [0,1]
+\]  
+and to observe, that from this construction we get $\restrict{r_m}{X_{m-1 \times[0,1]}} = r_{m-1}$. 
+
+    We define $r \colon X \times [0,1] \to X \times \{0\} \cup C \times [0,1]$, as $r(x,t) = r_m (x,t) $, if $x \in X_m$. This $m$ is not unique, nevertehless, $r$ is well defined, by the above observation.
+    It is left to check, that $r$ is well defined and fixed on $X \times \{0\} \cup C \times [0,1]$. Continuity follows from the following proposition, which I now just want to claim $\colon$
+    \begin{proposition}
+    Let $(X,C)$ be a relative CW complex and $Z$ a locally compact space. Then the map $f \colon X \times Z \to Y$ is continuous if and only if for all $n \ge -1$, the restriction $\restrict{f}{X_n\times Z}$ is continuous. 
+    \end{proposition}
+\end{proof}
+
+% The more modern way to think about CW-complexes is the following: -- ToDo
+
+% The modern definition yields quotientmaps from every $D^n$ to a corresponding cell of dimension $n$. The weak topology on a CW complex agrees with the quotient-topology induced by those quotientmaps. -- ToDo : Könnte man auch als Theorem mit reinnehmen, aber brauche ich im Finalen Beiweis vermutlich nicht -- Furthermore, we can define a quotient map onto all of the $n$-skeleton of a relative CW complex in the following way : is a quotientspace of the disjoint union of the base space together with all $D^k$ in dimension $k \le n$. We will proof, that the week topology of the relative CW complex indeed is the same as the topology induced by this quotientmap onto the skeleton. 
 
 
 
@@ -674,7 +761,7 @@ lemma retraction_criterion_closed'.{u} {Y : Type u} [TopologicalSpace Y] (A X : 
 
 I proved the \lean{retraction_criterion_closed'} using the \\ \lean{retraction_criterion_closed}. Explicitly, for the forward direction, I obtained a retraction \lean{r} as in ToDo. In order to extend this map \lean{r} to a map \lean{s : Y × ℝ → Y × ℝ}, I precomposed in the first component with a map called \lean{mapYX : Y → X }, which is the identity on the set \lean{X} and maps all other points of Y to an arbitrary junk value in the unitInterval. \lean{Subtype.val} sends \lean{(r x).1 ∈ X }, to the corresponding point in Y. Afterwards, I had to confirm this new defined map \lean{r} indeed is a retraction, i.e. it is continuous on the relevant set, maps to the required one and the necessary values remain unchanged under applying \lean{r}. \\
 For the backward direction I start with a retraction \lean{s : Y × ℝ → Y × ℝ} and want to construct \lean{r : $\uparrow$X × ℝ → $\uparrow$X × ℝ}, so applying \lean{retractioncriterionclosed} yields, the claim. One might expect this direction to be easier, since we dont have to construct any additional values, but just restrict \lean{s}, to the desired space. Sadly these dreams shatter at the point, where we want the image to lie in $X \times I \subset Y \times \mathbb{R}$. \lean{s} is a retraction on %\lean{{p | p.1 ∈ X ∧ p.2 ∈ unitInterval}}
-, so the \lean{RetractionOn.mapsTo} property gives no information about, where in $Y \times \mathbb{R}$ we are, if the second coordinate comes from outside the unit interval. I solved this issue by procomposing the real coordinate with the map \lean{c : ℝ → ℝ := fun t ↦ (Set.projIcc (0 : ℝ) 1 zero_le_one t)}. \lean{Set.projIcc}, is a continuous map from mathlib, which retracts a linear ordered Type to a closed interval in it. This precomoposition makes, that for every point, which we apply to \lean{s}, the \lean{mapsTo} property of \lean{s} is applicable. This extra work, is a downside of working with types instead of subtypes. It would have been avoided, if I defined a homotopy only on \lean{Y × unitInterval}, instead of \lean{Y × ℝ}. \\
+, so the \lean{RetractionOn.mapsTo} property gives no information about, where in $Y \times \mathbb{R}$ we are, if the second coordinate comes from outside the unit interval. I solved this issue by procomposing the real coordinate with the map \lean{c : ℝ → ℝ := fun t ↦ (Set.projIcc (0 : ℝ) 1 zero_le_one t)}. \lean{Set.projIcc}, is a continuous map from mathlib, which retracts a linear ordered Type to a closed interval in it. This precomoposition makes, that for every point, which we apply to \lean{s}, the \lean{mapsTo} property of \lean{s} is applicable. This extra work, is a downside of working with types instead of subtypes. It would have been avoided, if I defined a homotopy only on \lean{Y × unitInterval}, instead of \lean{Y × ℝ}. \\ % c wurde umbenannt
 I want to point out, that even tough the two versions of the retraction criterion are phrased with two different versions of the definition, this was more a choise based to style, than on technical need. Also, I experienced both of these versions to be valuable. While it might be advisable to just choose the definition \lean{HEP'}, I see usage in both versions of the retraction criterion. 
 The usage of \lean{retractioncriterionclosed} is underlined by the the proof, that the pair of two consequitive skeletons satisfies the \emph{HEP}. I constructed a retraction \lean{r: (skeletonLT X m) $\times \ \mathbb{R} \to $ (skeletonLT X m) $\times \ \mathbb{R}$}. The key theorem for the construction of this continuous map was the lemma \lean{Topology.IsQuotientMap.continuous_lift_prod_left}, which is a formalisation of Whitehead's Theorem about products of quotient maps with a locally compact factor. If I worked with ambient spaces, I would have lost the surjectivity of the quotient map and would not have been able to apply this therem, the way it can be found in mathlib. 
 % ToDo: was kann retractioncriterionclosed' besser?
@@ -748,22 +835,97 @@ lemma HEP_cube_boundary (m : ℕ) : HEP (closedBall (0 : (Fin m → ℝ)) 1) (sp
 
 Before concluding this section, I want to point out, that here the definiton of \lean{HEP'} matches very good the structure of the partial homeomorphis. When I first proved this result - before defining \lean{HEP'} - for \lean{HEP}, I had to show that the \lean{Subtzpe.val} of a sphere in the closed ball is the same as the sphere in the ambient space and the same for the closed ball itself. With \lean{HEP'} we avoid this subtype coercions and the proof is more straight forward. From this result the statement for \lean{HEP} follows directely.
 
-\subsection{Skeleton is a quotient}
-(Relative) CW complexes are formalised as a subset of an ambient space. The topology is given by explicitly saying, a closed set needs to be closed, when intersected with the base space or any closed cell it is closed in those spaces. On a skeleton or any finite dimensonal CW complex is the same topology, which we also obtain from gluing together discs along their boundary and then considering the quotient topology on the complex. \\
+\subsection{HEP for consecutive skeletons}
+
+%(Relative) CW complexes are formalised as a subset of an ambient space. The topology is given by explicitly saying, a closed set needs to be closed, when intersected with the base space or any closed cell it is closed in those spaces. On a skeleton or any finite dimensonal CW complex is the same topology, which we also obtain from gluing together discs along their boundary and then considering the quotient topology on the complex. \\
 % -- stimmt das so? allgemein fuer CW complexe oder nur endlichdimensional?
-From the previous file I already have retractions defined on closed balls times the unit interval. Together with the fact, that I can "unglue" my CW complex into a basespace and closed balls in all dimensions, I can construct the retraction on a skeleton. \\
-The formalisation of this step builds on the following mathlib lemma. It replaces the theorem, which states, that the product of a quotient map with the identity on a locally compact space, is again a quotient map. 
+%From the previous file I already have retractions defined on closed balls times the unit interval. Together with the fact, that I can "unglue" my CW complex into a basespace and closed balls in all dimensions, I can construct the retraction on a skeleton. \\ 
+Now we want to continue with the second step in the proof of the \emph{HEP} for relative CW complexes, namely that the pair of two consecutive skeletons satisfies the \emph{HEP}. The formalisation of this result builds on the following mathlib lemma. It replaces the theorem, which states, that the product of a quotient map with the identity on a locally compact space, is again a quotient map. 
 
 \begin{lstlisting}
-theorem Topology.IsQuotientMap.continuous_lift_prod_left {X₀ : Type u_1} {X : Type u_2} {Y : Type u_3} {Z : Type u_4} [TopologicalSpace X₀] [TopologicalSpace X] [TopologicalSpace Y] [TopologicalSpace Z] [LocallyCompactSpace Y] {f : X₀ → X} (hf : IsQuotientMap f) {g : X × Y → Z} (hg : Continuous fun (p : X₀ × Y) => g (f p.1, p.2)) :
+theorem Topology.IsQuotientMap.continuous_lift_prod_left {X₀ : Type u_1} {X : Type u_2} {Y : Type u_3} {Z : Type u_4} [TopologicalSpace X₀] [TopologicalSpace X] [TopologicalSpace Y] [TopologicalSpace Z] [LocallyCompactSpace Y] {f : X₀ → X} (hf : IsQuotientMap f) {g : X $\times$ Y → Z} (hg : Continuous fun (p : X₀ $\times$ Y) => g (f p.1, p.2)) :
   Continuous g 
 \end{lstlisting}
 
-The result of the theorem is, that the map \lean{g}, which is defined on the product of a quotient space with a locally compact space, is Continuous. We want this \lean{g} to be the retraction map  $m-$skeleton $\times [0,1] \to (m-1)-$skeleton $\times [0,1]$. To get there, we need to 
-That means we should choose the 
+We get from this theorem, that the map \lean{g}, which is defined on the product of a quotient space with a locally compact space, is under a bunch of assumptions continuous. We want this \lean{g} to be the retraction map $m-$skeleton $\times [0,1] \to (m-1)-$skeleton $\times [0,1]$, which yields the \emph{HEP} for the consecutive skeletons. Let us take a closer look at which functions we need to define and which results we have to proof, in order to get there. \\
 
+\subsubsection{Skeleton is a quotient space}
+First of all we need a quotient map, called \lean{f} in the theorem above, to the $m-$skeleton. For this we use the fact, that we can "unglue" the skeleton into the basespace and the disjoint union of closed balls (cubes to be precise) in all dimensions up to $m$. The identity map on the base space assembles together with the caracteristic maps on each closed ball to the map \lean{SkeletonProjection}.
 
+\begin{lstlisting}
+abbrev ungluedSkel {Y : Type*} [hY : TopologicalSpace Y] [T2Space Y] (X : Set Y) (C : Set Y)
+    [RelCWComplex X C] (m : ℕ) :=
+  C ⊕ (Σ (n : Fin m) (_ : cell X n), (closedBall (0 : Fin n → ℝ) 1))
 
+def SkeletonProjection {Y : Type*} [TopologicalSpace Y] [T2Space Y] (X : Set Y) {C : Set Y} [RelCWComplex X C] (m : ℕ) : ungluedSkel X C m → skeletonLT X m := Sum.elim (fun c ↦ ⟨c, by ... ⟩) (fun ⟨n, i, x⟩ => ⟨map n i x, by ...⟩)
+\end{lstlisting}
+
+To prove, that this indeed defines a quotient map, we have to check, that it is surjective, continuous and induces the topology on the skeleton. The skeleton is a subcomplex of the (relative) CW complex and the topology is defined by characterising the closed sets. A set of the subcomplex is closed if and only if intersected with the base space and any closed cell it is closed in those spaces. %kann man schoener schreiben. 
+\\ 
+The surjectivity proof is straight forward: A point in the skeleton lies either in the base space or an open cell. In each case there exists a preimage in the base space respectively an open ball. Also continuity is not much work, since \lean{SkeletonProjection} is defined in terms of continuous functions on a disjoint union. Proving that the topology on the skeleton is induced, required some more effort. \\
+We start with a set \lean{S}, which is of Type \lean{Set (skeletonLT X ↑m)}, and the assumption, that its preimage under the \lean{SkeletonProjection} is closed in the unglued skeleton. The goal is to show, that the set \lean{S} is closed in the skeleton. In mathlib the results about closed sets are always phrased for subsets of the ambient space together with the assumption, that the set is contained in the CW complex or the subcomplex. To get into this setting, we need the following lines in the proof: 
+\begin{lstlisting}
+    set S' : Set Y := Subtype.val '' S with hS'def
+    have hS'sub : S' ⊆ (skeletonLT X m):= by
+      rintro _ ⟨a, _ , rfl⟩;
+      exact a.2
+\end{lstlisting}
+
+Now we can apply the lemma \lean{Topology.RelCWComplex.isClosed_of_isClosed_inter_openCell_or_isClosed_inter_closedCell}, which states that \lean{S'} is closed in the relative CW complex, if the intersection with the base space is closed and for every cell either \lean{S' ∩ openCell n j} or \lean {S' ∩ closedCell n j} is closed. I proved the case with the base space in the lemma \lean{hClosedBase} and the case wich cells of dimension less then $m$ in the lemma \lean{hClosedLT}. For higher dimensions the intersection of \lean{S'} with the open cell is empty and hence closed. \\
+
+\subsubsection{construction of the retraction}
+The second assumption we have to prove for the theorem \lean{Topology.IsQuotientMap.continuous_lift_prod_left} is, with to my contexed addapted variable names, \lean{hg : Continuous fun (p : (ungluedSkel X C m) $\times$ [0,1]) => r (SkeletonProjection p.1, p.2)}. Here \lean{} is the the not yet defined retraction for consecutive skeletons. \\
+Same as in the mathematical proof, also in its formalisation, we don't explicitly define the retraction map \lean{r} on the $m-$skeleton $\times [0,1]$, but instead define, what it should do, on the \lean{ungluedSkel $\times$ [0,1]}. This map, will be called \lean{SumMap} and is used in the following way, to define the \lean{r}. In this section I want to take a closer look, at the definition of \lean{SumMap} as well as at the related proofs on the way to the definition of \lean{r}.\\
+\begin{lstlisting}
+def r (m : ℕ) : skeletonLT X (m + 1) × unitInterval → skeletonLT X (m + 1) × ℝ :=
+  Function.extend (fun p ↦ ((SkeletonProjection X (m + 1) p.1), p.2)) (sumMap m) (Prod.map id Subtype.val)
+\end{lstlisting}
+It might be irritating, that \lean{r}, which is supposed to be a retraction, is formalised with the second factor of the domain only beeing the unit interval. Usually we would choose this to be the real numbers, since the retractions are defined with $\mathbb{R}$ instead of the unit interval. But observe, that the theorem \lean{Topology.IsQuotientMap.continuous_lift_prod_left} yields \lean{Continuous} and not \lean{ContinuousOn}. Therefore we should not make the domain any bigger, than what is actually mathematically relevant. In the codomain we do not have this type of problems and can just choose \lean{Z} to be the skeleton times the entire real line.\\
+Note, that the \lean{SumMap}, was called $f$ in the mathematical section. \\
+\begin{lstlisting}
+def cubesretract {m : ℕ} (n : Fin (m + 1)) :
+    (closedBall (0 : Fin (n : ℕ) → ℝ) 1) × unitInterval →
+    (closedBall (0 : Fin (n : ℕ) → ℝ) 1) × ℝ := fun p ↦
+  if n = m then (r_cube n (p.1, Subtype.val p.2))
+  else (p.1, Subtype.val p.2)
+
+def sumMap (m : ℕ) :
+    (ungluedSkel X C (m + 1)) × unitInterval → skeletonLT X (m+1) × ℝ := fun p ↦
+    p.1.elim
+      (fun c => (⟨c.val, memBase_memSkeletonLT X c.prop (m + 1)⟩, p.2))
+      (fun ⟨n, i, x⟩ => (⟨map n i (cubesretract n (x,p.2)).1, cubesretract_mapsto_weak n i (x,p.2)⟩,
+        (cubesretract n (x,p.2)).2))
+\end{lstlisting}
+\lean{SumMap} is defined using \lean{Sum.elim}, which is a "case analysis for sums that applies the appropriate function [...] after checking which constructor is present", % ToDo : Quelle - Dokumentation von Lean
+i.e. wether the first coordinate of the applied point \lean{p} lies in the base space \lean{C} or in a closed ball. In the first case, we want to do nothing, but apply the \lean{SkeletonProjection} on this first coordinate. On the base space, this was just the "identy". So we send the a point \lean{c : C}, to itself, but as an element of the $m-$skeleton. Since the prove, that a point from the base space lies any desired skeleton is used more often, I made this an own lemma called \lean{memBase_memSkeletonLT}.\\ 
+For the second case, that the first coordinate of the applied point \lean{p} comes from a closed ball, we need the map \lean{cubesretract}. \lean{cubesretract} is the retraction map for the \emph{HEP} of cubes relative their boundary, if the we are in the balls of top dimension and just a simple subtype coercion in all other dimension. For \lean{cubesretract} we proved small lemmas about continuouity, where the function is fixed and in which set the image of the function lies. 
+\begin{lstlisting}
+lemma cubesretract_continuous {m : ℕ} (n : Fin (m + 1)) : Continuous (cubesretract n) := by $\dots$
+
+lemma cubesretract_fixedOn {m : ℕ} {n : Fin (m + 1)} (x : (closedBall (0 : Fin n → ℝ) 1) × unitInterval) :
+    (n < m → cubesretract n x = (x.1, x.2.1)) ∧
+    (n = m → x ∈ {z | z.2 = 0 ∨ z.1 ∈ sphere ⟨0, by simp⟩ 1 } → cubesretract n x = (x.1, x.2.1)) := by $\dots$
+
+lemma cubesretract_mapsto_lt {m : ℕ} (n : Fin (m + 1)) (i : cell X n) (p : (closedBall 0 1) × ↑unitInterval) (hn : n < m) :
+    (map n i) (cubesretract n p).1 ∈ skeletonLT X m ∧ (cubesretract n p).2 ∈ unitInterval
+    := by $\dots$
+    
+lemma cubesretract_mapsto_top {m : ℕ} (n : Fin (m + 1)) (i : cell X n) (p : (closedBall 0 1) × ↑unitInterval) (hn : n = m) :
+    (cubesretract n p).2 = 0 ∨ (map n i) (cubesretract n p).1 ∈ skeletonLT X m ∧ (cubesretract n p).2 ∈ unitInterval := by $\dots$
+\end{lstlisting}
+
+So in this described second case, we first apply the map \lean{cubesretract} to the point and then postcompose again with what \lean{SkeletonProjection $\times$ id$_\mathbb{R}$} would do to a such point. Since the first coordinate, also after applying \lean{cubesretract} lies in a closed ball, \lean{SkeletonProjection} is the same as applying the charakteristic map of that closed ball. We have to include a poof, that the image of this characteristic map actually lies in the $m-$skeleton. Also this proof in an own lemma, called \lean{cubesretract_mapsto_weak}, which is derived from the stronger statements above. \\
+Taking a closer look at the definition of \lean{SumMap} it is, in the case, that the point \lean{p} comes from the base space or a closed ball of dimension less then \lean{m}, just the same as applying the \lean{SkeletonProjection $\times$ id$_\mathbb{R}$}. At least when ignoring the Subtype issues. It would have been inconvenient to write this application in the definition of \lean{SumMap}, so instead I proofed the two lemma, which show exactly this equality.
+\begin{lstlisting}
+lemma sumMap_eq_SkelProj_C (m : ℕ) (x : C) (t : unitInterval) : sumMap m (Sum.inl x, t) =
+    Prod.map id (Subtype.val) (SkeletonProjection X (m + 1) (Sum.inl x), t) := by $\dots$
+
+lemma sumMap_eq_SkelProj_sphereLT {m : ℕ}
+    (n : Fin (m + 1)) (i : cell X n) (x' : closedBall (0 : Fin n → ℝ) 1) (t : unitInterval) (hx : n < m ∨ n = m ∧ x' ∈ sphere ⟨0, by simp⟩ 1) :
+    sumMap m (Sum.inr ⟨n, ⟨i, x'⟩⟩, t) = Prod.map (SkeletonProjection X (m + 1)) Subtype.val (Sum.inr ⟨n, ⟨i, x'⟩⟩, t) := by $\dots$
+\end{lstlisting}
+
+\subsubsection{Continuouity of the retraction}
 
 \clearpage
 \section{Methodes and Usage of AI}

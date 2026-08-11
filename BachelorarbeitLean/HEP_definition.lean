@@ -342,7 +342,7 @@ variable {Y : Type u} [TopologicalSpace Y] (X A : Set Y) (h : HEP' X A)
 #check if_HEP_then_retraction h
 
 lemma if_HEP_then_retraction' {Y : Type u} [TopologicalSpace Y] (A X : Set Y) (hAX : A ⊆ X) :
-    HEP' X A →  ∃ r : Y × ℝ → Y × ℝ, RetractionOn r (smalcyl X) (anchor' X A) := by
+    HEP' X A → ∃ r : Y × ℝ → Y × ℝ, RetractionOn r (smalcyl X) (anchor' X A) := by
   intro h_hep
   obtain ⟨r, hr⟩ := if_HEP_then_retraction h_hep
   wlog hX : Nonempty X
@@ -374,54 +374,54 @@ lemma if_HEP_then_retraction' {Y : Type u} [TopologicalSpace Y] (A X : Set Y) (h
       · exact Or.inr hA
     simp only [hX, ↓reduceDIte, s, mapYX,  hr.fixesOn (⟨y.1, hX⟩, y.2) y_mem, Prod.mk.eta]
 
-def projIcc01 : ℝ → ℝ := fun t ↦ (Set.projIcc (0 : ℝ) 1 zero_le_one t)
+def ProjIcc : ℝ → ℝ := fun t ↦ (Set.projIcc (0 : ℝ) 1 zero_le_one t)
 
 @[simp]
-lemma proj_mem (t : ℝ) : projIcc01 t ∈ unitInterval := (Set.projIcc (0 : ℝ) 1 zero_le_one t).2
+lemma proj_mem (t : ℝ) : ProjIcc t ∈ unitInterval :=
+  Subtype.coe_prop (Set.projIcc 0 1  zero_le_one t)
 
-@[simp, grind]
-lemma proj_id {t : ℝ} (ht : t ∈ unitInterval) : projIcc01 t = t :=
+@[grind =]
+lemma proj_id {t : ℝ} (ht : t ∈ unitInterval) : ProjIcc t = t :=
   congrArg Subtype.val (Set.projIcc_of_mem _ ht)
 
+@[fun_prop]
+lemma proj_cont : Continuous ProjIcc := continuous_subtype_val.comp continuous_projIcc
+
 lemma retraction_criterion_closed' {Y : Type u} [TopologicalSpace Y] (A X : Set Y) (hAX : A ⊆ X)
-    (hA1 : IsClosed A) : HEP' X A ↔ ∃ s : Y × ℝ → Y × ℝ, RetractionOn s
-    (smalcyl X)
-    (anchor' X A) := by
+    (hA1 : IsClosed A) : HEP' X A ↔ ∃ s : Y × ℝ → Y × ℝ, RetractionOn s (smalcyl X) (anchor' X A)
+    := by
+  refine ⟨ fun h_HEP' ↦ if_HEP_then_retraction' A X hAX h_HEP' , ?_ ⟩
+  intro h_retract
+  obtain ⟨s, hs⟩ := h_retract
+  have mem_source (p : X × ℝ) : ((p.1 : Y), ProjIcc p.2) ∈ (smalcyl X) :=
+    ⟨Subtype.coe_prop p.1, proj_mem p.2⟩
+  have MapsTo1_s (p : X × ℝ) : (s ((p.1 : Y), ProjIcc p.2)).1 ∈ X := by
+    obtain h1 | h2 := hs.mapsTo (mem_source p)
+    exacts [h1.1, hAX h2.1]
+  let r : X × ℝ → X × ℝ := fun p ↦ (⟨(s (p.1, ProjIcc p.2)).1, MapsTo1_s p⟩,
+    (s (p.1, ProjIcc p.2)).2)
+  apply (retraction_criterion_closed hA1.preimage_val).2
+  use r
   constructor
-  · exact fun h_HEP' ↦ if_HEP_then_retraction' A X hAX h_HEP'
-  · intro h_retract
-    obtain ⟨s, hs⟩ := h_retract
-    have hc_cont : Continuous projIcc01 := continuous_subtype_val.comp continuous_projIcc
-    have mem_source (p : X × ℝ) : ((p.1 : Y), projIcc01 p.2) ∈
-        (smalcyl X) := ⟨Subtype.coe_prop p.1, proj_mem p.2⟩
-    have MapsTo1_r (p : X × ℝ) : (s ((p.1 : Y), projIcc01 p.2)).1 ∈ X := by
-      obtain h1 | h2 := hs.3 (mem_source p)
-      · exact h1.1
-      · exact hAX h2.1
-    let r : X × ℝ → X × ℝ := fun p ↦ (⟨(s (p.1, projIcc01 p.2)).1, MapsTo1_r p⟩,
-      (s (p.1, projIcc01 p.2)).2)
-    apply (retraction_criterion_closed hA1.preimage_val).2
-    use r
-    constructor
-    · simp
-    · unfold r
-      have hr_comp : ContinuousOn (fun p : X × ℝ ↦ s ((p.1 : Y), projIcc01 p.2)) Set.univ :=
-        ContinuousOn.comp hs.continuousOn (by fun_prop) (by tauto)
-      refine ContinuousOn.prodMk ?_ ?_
-      · rw [Topology.IsInducing.subtypeVal.continuousOn_iff]
-        exact hr_comp.fst.mono (Set.subset_univ _)
-      · exact continuous_snd.comp_continuousOn (hr_comp.mono (by tauto))
-    · intro x hx
-      simp [Set.mem_setOf_eq, Set.mem_preimage, r, proj_id hx]
-      grind [hs.mapsTo (mem_source x)]
-    · intro x hx
-      have : (x.1.1,x.2) ∈ (anchor' X A) := by
-        simp only [Set.mem_setOf_eq, Subtype.coe_prop, true_and]
-        obtain h0 | hA := hx
-        · exact Or.inl h0
-        · refine Or.inr ⟨by exact Set.mem_preimage.mp hA.1, hA.2 ⟩
-      have := hs.fixesOn (x.1.1,x.2) this
-      simp[r, proj_id (zeroOrI_subset_I hx), this]
+  · simp
+  · unfold r
+    have hr_comp : ContinuousOn (fun p : X × ℝ ↦ s ((p.1 : Y), ProjIcc p.2)) Set.univ :=
+      ContinuousOn.comp hs.continuousOn (by fun_prop) (by tauto)
+    refine ContinuousOn.prodMk ?_ ?_
+    · rw [Topology.IsInducing.subtypeVal.continuousOn_iff]
+      exact hr_comp.fst.mono (Set.subset_univ _)
+    · exact continuous_snd.comp_continuousOn (hr_comp.mono (by tauto))
+  · intro x hx
+    simp [Set.mem_setOf_eq, Set.mem_preimage, r, proj_id hx]
+    grind [hs.mapsTo (mem_source x)]
+  · intro x hx
+    have : (x.1.1,x.2) ∈ (anchor' X A) := by
+      simp only [Set.mem_setOf_eq, Subtype.coe_prop, true_and]
+      obtain h0 | hA := hx
+      · exact Or.inl h0
+      · refine Or.inr ⟨by exact Set.mem_preimage.mp hA.1, hA.2 ⟩
+    have := hs.fixesOn (x.1.1,x.2) this
+    simp[r, proj_id (zeroOrI_subset_I hx), this]
 
 -- corollary:
 --lemma HEP_Discrete {X J : Type u} [TopologicalSpace X] [TopologicalSpace J] [DiscreteTopology J]

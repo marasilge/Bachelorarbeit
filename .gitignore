@@ -1,5 +1,6 @@
 /.lake
 /CWComplexes
+/.claude
 
 # LaTeX-Build-Artefakte (PDFs bleiben absichtlich versioniert)
 *.aux
