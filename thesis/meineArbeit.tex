@@ -874,14 +874,16 @@ We start with a set \lean{S}, which is of Type \lean{Set (skeletonLT X ↑m)}, a
 Now we can apply the lemma \lean{Topology.RelCWComplex.isClosed_of_isClosed_inter_openCell_or_isClosed_inter_closedCell}, which states that \lean{S'} is closed in the relative CW complex, if the intersection with the base space is closed and for every cell either \lean{S' ∩ openCell n j} or \lean {S' ∩ closedCell n j} is closed. I proved the case with the base space in the lemma \lean{hClosedBase} and the case wich cells of dimension less then $m$ in the lemma \lean{hClosedLT}. For higher dimensions the intersection of \lean{S'} with the open cell is empty and hence closed. \\
 
 \subsubsection{construction of the retraction}
-The second assumption we have to prove for the theorem \lean{Topology.IsQuotientMap.continuous_lift_prod_left} is, with to my contexed addapted variable names, \lean{hg : Continuous fun (p : (ungluedSkel X C m) $\times$ [0,1]) => r (SkeletonProjection p.1, p.2)}. Here \lean{} is the the not yet defined retraction for consecutive skeletons. \\
-Same as in the mathematical proof, also in its formalisation, we don't explicitly define the retraction map \lean{r} on the $m-$skeleton $\times [0,1]$, but instead define, what it should do, on the \lean{ungluedSkel $\times$ [0,1]}. This map, will be called \lean{SumMap} and is used in the following way, to define the \lean{r}. In this section I want to take a closer look, at the definition of \lean{SumMap} as well as at the related proofs on the way to the definition of \lean{r}.\\
+The next preparation we take a look at, is the construction the map \lean{r}. \lean{r} is supposed to be the retraction for consecutive skeletons. In this section I want to take a closer look, at the definition of this map \lean{r}, as well as at the related proofs related to this construction. \\
+Note, that the \lean{SumMap}, was called $f$ in the mathematical section. \\
+Same as in the mathematical proof, also in its formalisation, we don't explicitly define the retraction map \lean{r} on the $m-$skeleton $\times [0,1]$, but instead define, what it should do, on the \lean{ungluedSkel $\times$ [0,1]}. This map, will be called \lean{SumMap} and is used in the following way, to define the \lean{r}. \\
 \begin{lstlisting}
 def r (m : ℕ) : skeletonLT X (m + 1) × unitInterval → skeletonLT X (m + 1) × ℝ :=
   Function.extend (fun p ↦ ((SkeletonProjection X (m + 1) p.1), p.2)) (sumMap m) (Prod.map id Subtype.val)
 \end{lstlisting}
-It might be irritating, that \lean{r}, which is supposed to be a retraction, is formalised with the second factor of the domain only beeing the unit interval. Usually we would choose this to be the real numbers, since the retractions are defined with $\mathbb{R}$ instead of the unit interval. But observe, that the theorem \lean{Topology.IsQuotientMap.continuous_lift_prod_left} yields \lean{Continuous} and not \lean{ContinuousOn}. Therefore we should not make the domain any bigger, than what is actually mathematically relevant. In the codomain we do not have this type of problems and can just choose \lean{Z} to be the skeleton times the entire real line.\\
-Note, that the \lean{SumMap}, was called $f$ in the mathematical section. \\
+\lean{Function.extend} works in a way, that whenever a point \lean{x $\in$ skeletonLT X (m + 1)} has a preimage \lean{p $\in$ ungluedSkel $\times [0,1]$} under the map \lean{(fun p $\mapsto$ ((SkeletonProjection X (m + 1) p.1), p.2))}, then \lean{r x = sumMap m p}. Otherwise \lean{r x = (Prod.map id Subtype.val) x}. It is not captured in this defintion, but we know, that the map \lean{Skeletonprojection $\times$ id} is surjective, so the second case of the \lean{Function.extend} could be filled with any junk function, since it will be never applied. One could read the defintion of \lean{r} just as, take any preimage under \lean{SkeletonProjection} and then apply \lean{sumMap} to it. \\
+It might be irritating, that \lean{r}, which is supposed to be a retraction, is formalised with the second factor of the domain only beeing the unit interval. Usually we would choose this to be the real numbers, since the retractions are defined with $\mathbb{R}$ instead of the unit interval. But observe, that the theorem \lean{Topology.IsQuotientMap.continuous_lift_prod_left} yields \lean{Continuous} and not \lean{ContinuousOn}. Therefore we should not make the domain any bigger, than what is actually mathematically relevant. In the codomain we do not have this type of problems and can just choose \lean{Z} to be the skeleton times the entire real line.
+
 \begin{lstlisting}
 def cubesretract {m : ℕ} (n : Fin (m + 1)) :
     (closedBall (0 : Fin (n : ℕ) → ℝ) 1) × unitInterval →
@@ -925,11 +927,97 @@ lemma sumMap_eq_SkelProj_sphereLT {m : ℕ}
     sumMap m (Sum.inr ⟨n, ⟨i, x'⟩⟩, t) = Prod.map (SkeletonProjection X (m + 1)) Subtype.val (Sum.inr ⟨n, ⟨i, x'⟩⟩, t) := by $\dots$
 \end{lstlisting}
 
-\subsubsection{Continuouity of the retraction}
+\subsubsection{Continuity of the retraction}
+Now, that we defined all relevant maps, we can focus on how exactly we proof the continuity of \lean{r}. As said earlier, we will get the continuity frim the theorem \lean{Topology.IsQuotientMap.continuous_lift_prod_left}. Let's have a look at what is left to proof: 
+
+\begin{lstlisting}
+lemma continuousRetract (m : ℕ) : Continuous (r (X := X) m) := by
+  refine (SkeletonProjectionIsQuotientMap (m +1) X).continuous_lift_prod_left ?_
+  $\dots$  
+\end{lstlisting}
+ 
+After this first line of proof the current goal changes to
+\begin{lstlisting} 
+    Continuous fun (p : (ungluedSkel X C m) $\times$ [0,1]) => r (SkeletonProjection p.1, p.2) 
+\end{lstlisting} 
+Showing this boils down to two major steps. The fist one is, that \lean{SumMap} factors through \lean{(fun p ↦ ((SkeletonProjection X (m + 1) p.1), p.2))}. From this we can easily show that the continuity goal is equilalent to showing, that \lean{SumMap} is continuous. Continuity of \lean{SumMap} then is the second step.\\
+We start with 
+\begin{lstlisting}
+lemma factors (m : ℕ) : (sumMap m).FactorsThrough (fun p ↦ ((SkeletonProjection X (m + 1) p.1), p.2)) := by 
+    intro x y hxy 
+    $\dots$
+\end{lstlisting}
+\lean{x} and \lean{y} are two points in \lean{ungluedSkel $\times$ [0,1]}. Their second coordinate is the same and they have the same image under \lean{SkeletonProjection}. Now we have to show, that \lean{SumMap m x = SumMap m y}. With \lean{lemma sumMap_eq_SkelProj_C} and \lean{lemma sumMap_eq_SkelProj_sphereLT} (printed above) we already have usefull tools to prove this goal. A tricky part, that requird qute some work is: 
+\begin{lstlisting}
+lemma SkeletonProj_inj_top {Y : Type*} [TopologicalSpace Y] [T2Space Y] (X : Set Y) {C : Set Y} [RelCWComplex X C] {m : ℕ} {n : Fin (m + 1)} (hnm : ↑n = m) (i : cell X n) (x' : closedBall (0 : Fin n → ℝ) 1) (x_ball : x'.1 ∈ ball (0 : Fin n → ℝ) 1) (y : ungluedSkel X C (m + 1)) (hskel : SkeletonProjection X (m + 1) (Sum.inr ⟨n, ⟨i, x'⟩⟩) = SkeletonProjection X (m + 1) y) :
+    y = Sum.inr ⟨n, i, x'⟩ := by
+\end{lstlisting}
+The lemma \lean{SkeletonProj_inj_top} tells us, that whenever given one point \lean{x} in an specific open ball of top dimension, and any other point \lean{y} in \lean{ungledSkel}. If they have the same image under \lean{SkeletonProjection}, then \lean{y} is the exact same point as \lean{x}. \\
+The prove of \lean{factors} is long, because it is split into many different case distinctions. Begining with whether \lean{x} lies in the base space or an closed ball. Then in each case I considered the same two options for \lean{y} seperately. In the case, that \lean{x} is in an closed ball, we look at the cases that it is in the top dimesnioal open cell, or not. Most of those cases themselves are quite short. \\
+In the mathematical explination it was sufficient to just look at the case, that a point is in the top dimensional cell, or not. So why do I split up the situation so much more in the formalisation? -- ToDo: weil ich nicht einfach sagen kann: x in C sondern es ein c gibt,... und dann ist es einfacher, wie ich es gemacht habe \\
+For continuity of \lean{SumMap} we precompose the map with the homeomphism 
+\begin{lstlisting}
+def homeoProd (m : ℕ) :
+  (C ⊕ (Σ (n : Fin (m + 1)) (_ : cell X n), closedBall (0 : Fin n → ℝ) 1)) × unitInterval ≃ₜ
+  (C × unitInterval) ⊕ (Σ (n : Fin (m + 1)) (_ : cell X n),
+    (closedBall (0 : Fin n → ℝ) 1) × unitInterval) := $\dots$
+\end{lstlisting}
+This composite has as a domain not a product anymore, but instead a union. And on each summand the continuity goal is proven by just combining resluts proven earlier such as \lean{cubesretract_continuous} and continuity of the characteristic maps. Since continuity is preserved under precomposition with a homeomorphism, this yields, that \lean{SumMap} and finally also \lean{r} is continuous.  
+
+\subsubsection{Properties of the reatraction}
+In this section I want to conclude the proof of the \emph{HEP} for consecutive skeletons. For the proof via the retraction criterion we have to make a small adjustment to the map \lean{r}, which we worked with before. I mentioned in the begining, that despite the fact, the desired retraction sould have \lean{(skeletonLT X (m + 1)) × ℝ} as a domain, \lean{r} is just defined on the unit interval in the second component. I experienced it to be the easiest way to extend \lean{r} by precomposing the second coordinate with the map \lean{ProjIcc}, which was defined in the very first file. Therefore the final definition looks like below.
+
+\begin{lstlisting}
+def retr_skeleton (m : ℕ) : (skeletonLT X (m + 1)) × ℝ → (skeletonLT X (m + 1)) × ℝ := fun p ↦
+  (r m) (p.1, ⟨ProjIcc p.2, proj_mem p.2 ⟩)
+\end{lstlisting}
+
+Now it is only left to show, that \lean{retr_skeleton} is continuous, maps to the right space and is fixed, where required. The continuity follows directely from all the work we did bevore. The claims about \lean{mapsTo} and \lean{fixedOn} are first proven for \lean{SumMap} and then transferted to \lean{retr_skel}. All together this results in the follwoing lemma. 
+
+\begin{lstlisting}
+lemma HEP'_skeleton (m : ℕ) : HEP' (skeletonLT X (m + 1)).carrier (skeletonLT X m).carrier := by
+  apply (retraction_criterion_closed (IsClosed.preimage_val (skeletonLT X ↑m).closed') ).2
+  use retr_skeleton m
+  $\dots$
+\end{lstlisting}
+
+ToDo: man könnte hier noch auf subst eingehen, weil das ein game changer war. 
+
+\subsection{HEP for finite dimensional relative CW complexes}
+In this last part about my formalisation we will get to the result, that finite dimensional relative CW complexes satisfy the \emph{HEP}. In the chapter about the mathematics it was already visible, that the finite dimensional case follows straight from what we showed earlier by induction, wherelse the general case requires much more work. Due to the limited time for this thesis I had to stop at this point. \\
+The induction looks in Lean as follows: 
+
+\begin{lstlisting}
+lemma HEP_skelLT_base (m : ℕ) : HEP' (skeletonLT X m) C := by
+  induction m with
+  | zero =>
+    rw [ENat.coe_zero, skeletonLT_zero_eq_base, HEP', Subtype.coe_preimage_self]
+    exact HEP_self
+  | succ n n_ih =>
+    apply HEP_trans (skeletonLT X (n + 1)).carrier  (skeletonLT X n) C (skeletonLT_mono
+      le_self_add)  ?_ (Subcomplex.base_subset (skeletonLT X ↑n)) n_ih
+    exact HEP'_skeleton n
+
+lemma HEP_skel_base (m : ℕ) : HEP' (skeleton X m) C := by
+  rw [skeleton.congr_simp X m m rfl]
+  exact HEP_skelLT_base X (m + 1)
+\end{lstlisting}
+
+The induction start, is exactly the lemma \lean{HEP_self}, which we proved in the very begining just after defining the \emph{HEP}. For the induction step we combine via transitivity the induction hypothesis and the \emph{HEP} for consecutive skeletons. \\
+During my project I used to work the whole time, as recommenden by Hannah Scholz % Quelle hinzufügen
+with \lean{SkeletonLT}, instead of \lean{Skeleton}. And only defived the statement for \lean{Skeleton} from this. \lean{SkeletonLT} is especially usefull for inductions, as demonstrated above, because it also includes the case of the $(-1)-$skeleton, which would otherwise be left out.
+
+
+ToDo Ausblick:
+In the prvious secion, where we proved the \emph{HEP} for consecutive sekeltons, I used the lemma \lean{retractioncriterionclosed}, where the retraction map is defined on the Type 
+
+ToDo SkelLT und skel erklären
 
 \clearpage
 \section{Methodes and Usage of AI}
 
+\clearpage
+\section{Summary und Ausblick}
 
 \clearpage
 \addcontentsline{toc}{section}{Literatur}
