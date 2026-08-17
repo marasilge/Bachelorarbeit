@@ -400,7 +400,7 @@ lemma retraction_criterion_closed' {Y : Type u} [TopologicalSpace Y] (A X : Set 
     exacts [h1.1, hAX h2.1]
   let r : X × ℝ → X × ℝ := fun p ↦ (⟨(s (p.1, ProjIcc p.2)).1, MapsTo1_s p⟩,
     (s (p.1, ProjIcc p.2)).2)
-  apply (retraction_criterion_closed hA1.preimage_val).2
+  apply (retraction_criterion_closed  hA1.preimage_val).2
   use r
   constructor
   · simp
@@ -471,59 +471,16 @@ lemma homeomorph_HEP {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
         simp only [Set.mem_Icc, hb.2, and_self, and_true]
         exact (Set.mem_image_iff_of_inverse hf1 hf2).mp hb.1 -/
 
-lemma PartialHomeomorph_HEP'' {X Y : Type u} [TopologicalSpace X] [TopologicalSpace Y]
-    {X1 X2 : Set X} (hX : X2 ⊆ X1) {Y1 Y2 : Set Y} (hY : Y2 ⊆ Y1) (hHEP : HEP' X1 X2)
-    (homeo : PartialHomeomorph X Y) (source : X1 = homeo.source) (target : Y1 = homeo.target)
-    (h2 : homeo '' X2 = Y2) (hX2closed : IsClosed (X2 : Set X)) (hY2closed : IsClosed (Y2 : Set Y)) :
-    HEP' Y1 Y2 := by
-  intro Z _ rangeH' f H hf1 hf2 hH1 hH2 hagree
-  subst target source
-  let fX : homeo.source → Z := fun p ↦ f ⟨(homeo.toFun p), homeo.mapsTo p.prop⟩
-  let HX : homeo.source × ℝ → Z := fun p ↦ H (⟨(homeo.toFun p.1), homeo.mapsTo p.1.prop⟩, p.2)
-  have  := hHEP Z rangeH' fX HX ?_ ?_ ?_ ?_ ?_
-  · obtain ⟨HX', hHX'⟩ := this
-    let homeo_prod : ↑homeo.target × ℝ → ↑homeo.source × ℝ  :=
-      (fun p ↦ (⟨(homeo.symm p.1), homeo.map_target p.1.2⟩, p.2))
-    use HX' ∘ homeo_prod
-    constructor
-    · sorry
-    · sorry
-    · sorry
-    · sorry
-  · refine hf1.comp ?_
-    have cts_homeo := homeo.continuousOn
-    apply continuousOn_iff_continuous_restrict.1 at cts_homeo
-    exact (cts_homeo).subtype_mk  fun x ↦ homeo.mapsTo (Subtype.prop x)
-  · apply Set.Subset.trans ?_ hf2
-    exact Set.range_comp_subset_range _ _
-  · unfold HX
-    have : ContinuousOn (fun (p : homeo.source × ℝ) ↦
-      ((⟨ homeo.toPartialEquiv p.1.1, homeo.mapsTo p.1.prop⟩ : { x // x ∈ homeo.target }), p.2))
-      (smalcyl (homeo.source ↓∩ X2)) := by
-      refine ContinuousOn.prodMk ?_ continuousOn_snd
-      simp only [PartialHomeomorph.toFun_eq_coe]
-      sorry
-    apply hH1.comp this ?_
-    intro _ hz
-    simp only [Set.mem_preimage, PartialHomeomorph.toFun_eq_coe, Set.mem_setOf_eq]
-    refine ⟨?_, hz.2⟩
-    rw[← h2]; exact Set.mem_image_of_mem (↑homeo) hz.1
-  · apply Set.MapsTo.comp hH2 ?_
-    intro _ hz
-    refine ⟨ ?_, hz.2⟩
-    rw[← h2]
-    exact Set.mem_image_of_mem (↑homeo) hz.1
-  · sorry
 
 
 lemma PartialHomeomorph_HEP' {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
     {X1 X2 : Set X} (hX : X2 ⊆ X1) {Y1 Y2 : Set Y} (hY : Y2 ⊆ Y1) (hHEP : HEP' X1 X2)
     (f : PartialHomeomorph X Y) (source : X1 = f.source) (target : Y1 = f.target)
-    (h2 : f '' X2 = Y2) (hX2closed : IsClosed (X2 : Set X)) (hY2closed : IsClosed (Y2 : Set Y)) :
+    (h2 : f '' X2 = Y2) (hX2closed : IsClosed X2) (hY2closed : IsClosed Y2) :
     HEP' Y1 Y2 := by
   have := h2.symm
   subst target source this
-  apply (retraction_criterion_closed' X2 f.source hX hX2closed).mp at hHEP
+  apply (retraction_criterion_closed' X2 f.source hX hX2closed ).mp at hHEP
   obtain ⟨r, hr⟩ := hHEP
   let r_comp_fsymm : Y × ℝ → X × ℝ := fun p ↦ (r (f.invFun p.1 , p.2))
   let r' : Y × ℝ → Y × ℝ := fun p ↦ (f (r_comp_fsymm p).1, (r_comp_fsymm p).2 )
@@ -624,3 +581,56 @@ lemma HEP_trans {X : Type*} [TopologicalSpace X] (A1 A2 A3 : Set X) (h21_sub : A
   rw[← hH1'.agreeH ⟨a.1, h32_sub a.prop⟩ t,
     H2'extend_apply ⟨a.1, h32_sub a.prop⟩ t.1,
     ← hH2'.agreeH ⟨⟨ a.1.1, h32_sub a.prop⟩, a.prop⟩ t]
+
+-- Partail homeomorph ohne retraction criterion
+
+-- lemma PartialHomeomorph_HEP'' {X Y : Type u} [TopologicalSpace X] [TopologicalSpace Y]
+--     {X1 X2 : Set X} (hX : X2 ⊆ X1) {Y1 Y2 : Set Y} (hY : Y2 ⊆ Y1) (hHEP : HEP' X1 X2)
+--     (homeo : PartialHomeomorph X Y) (source : X1 = homeo.source) (target : Y1 = homeo.target)
+--     (h2 : homeo '' X2 = Y2) (hX2closed : IsClosed (X2 : Set X)) (hY2closed : IsClosed (Y2 : Set Y)) :
+--     HEP' Y1 Y2 := by
+--   intro Z _ rangeH' f H hf1 hf2 hH1 hH2 hagree
+--   subst target source
+--   let fX : homeo.source → Z := fun p ↦ f ⟨(homeo.toFun p), homeo.mapsTo p.prop⟩
+--   let HX : homeo.source × ℝ → Z := fun p ↦ H (⟨(homeo.toFun p.1), homeo.mapsTo p.1.prop⟩, p.2)
+--   have := hHEP Z rangeH' fX HX ?_ ?_ ?_ ?_ ?_
+--   · obtain ⟨HX', hHX'⟩ := this
+--     let homeo_prod : ↑homeo.target × ℝ → ↑homeo.source × ℝ  :=
+--       (fun p ↦ (⟨(homeo.symm p.1), homeo.map_target p.1.2⟩, p.2))
+--     use HX' ∘ homeo_prod
+--     constructor
+--     · have := hHX'.ContinuousOn
+--       apply hHX'.ContinuousOn.comp (by
+--         refine Continuous.continuousOn ?_
+--         simp only [continuous_prodMk, homeo_prod]
+--         refine ⟨?_, continuous_snd⟩
+--         sorry)
+--       intro x
+--       simp [homeo_prod]
+--     · sorry
+--     · sorry
+--     · sorry
+--   · refine hf1.comp ?_
+--     have cts_homeo := homeo.continuousOn
+--     apply continuousOn_iff_continuous_restrict.1 at cts_homeo
+--     exact (cts_homeo).subtype_mk  fun x ↦ homeo.mapsTo (Subtype.prop x)
+--   · apply Set.Subset.trans ?_ hf2
+--     exact Set.range_comp_subset_range _ _
+--   · unfold HX
+--     have : ContinuousOn (fun (p : homeo.source × ℝ) ↦
+--       ((⟨ homeo.toPartialEquiv p.1.1, homeo.mapsTo p.1.prop⟩ : { x // x ∈ homeo.target }), p.2))
+--       (smalcyl (homeo.source ↓∩ X2)) := by
+--       refine ContinuousOn.prodMk ?_ continuousOn_snd
+--       simp only [PartialHomeomorph.toFun_eq_coe]
+--       sorry
+--     apply hH1.comp this ?_
+--     intro _ hz
+--     simp only [Set.mem_preimage, PartialHomeomorph.toFun_eq_coe, Set.mem_setOf_eq]
+--     refine ⟨?_, hz.2⟩
+--     rw[← h2]; exact Set.mem_image_of_mem (↑homeo) hz.1
+--   · apply Set.MapsTo.comp hH2 ?_
+--     intro _ hz
+--     refine ⟨ ?_, hz.2⟩
+--     rw[← h2]
+--     exact Set.mem_image_of_mem (↑homeo) hz.1
+--   · sorry

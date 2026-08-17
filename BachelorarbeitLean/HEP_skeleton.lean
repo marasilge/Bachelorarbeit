@@ -487,7 +487,6 @@ r ist now almost the retraction, we need for the retraction criterion. Only we h
 second coordinate onto all of ℝ and then proof, it satisfies all conditions of a retraction:
 -/
 
-
 def retr_skeleton (m : ℕ) : (skeletonLT X (m + 1)) × ℝ → (skeletonLT X (m + 1)) × ℝ := fun p ↦
   (r m) (p.1, ⟨ProjIcc p.2, proj_mem p.2 ⟩)
 

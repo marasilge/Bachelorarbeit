@@ -258,7 +258,7 @@ def comp_partialhomeo : PartialHomeomorph (EuclideanSpace ℝ (Fin m)) (Fin m �
     · rw [ comp_homeo, trans_eq_comp, Set.surjOn_comp_iff]
       simp only [homeo_euclid_max, Homeomorph.homeomorph_mk_coe, Equiv.coe_fn_mk]
       rw[← closure_hG_cosed]
-      exact (Set.image_eq_iff_surjOn_mapsTo.1 hG_closed).1 )
+      apply (Set.image_eq_iff_surjOn_mapsTo.1 hG_closed).1 )
 
 lemma HEP_cube_boundary' (m : ℕ) :
     HEP' (closedBall (0 : (Fin m → ℝ)) 1) (sphere 0 1) := by
