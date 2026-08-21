@@ -21,4 +21,8 @@
 *.toc
 *.vrb
 
+# minted-Cache und makeindex-Log (kommen bei jedem lualatex-Lauf neu)
+_minted/
+*.ilg
+
 .DS_Store

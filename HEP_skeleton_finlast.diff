@@ -1,0 +1,225 @@
+================================================================================
+Umbau HEP_skeleton.lean:  "n = m" (in ℕ)  ->  "n = Fin.last m" (in Fin (m+1))
+================================================================================
+Stand vorher : BachelorarbeitLean/HEP_skeleton.lean.bak-finlast
+Stand nachher: BachelorarbeitLean/HEP_skeleton.lean
+Status       : `lake build BachelorarbeitLean.HEP_skeleton` laeuft fehlerfrei
+               durch (nur die schon vorher vorhandenen Style-Warnungen).
+
+Benutzte Mathlib-Lemmas fuer die Uebersetzung Fin <-> ℕ:
+  Fin.lt_last_iff_ne_last : a < Fin.last n ↔ a ≠ Fin.last n
+  Fin.val_lt_last         : a ≠ Fin.last n → ↑a < n
+  Fin.val_last            : ↑(Fin.last n) = n
+  Fin.le_last             : a ≤ Fin.last n
+Ein eigenes Brueckenlemma war dadurch nicht noetig.
+
+Geaenderte Deklarationen (Signatur):
+  cubesretract_fixedOn                n < m            -> n < Fin.last m
+  cubesretract_mapsto_lt              hn : n < m       -> hn : n < Fin.last m
+  cubesretract_mapsto_top             hn : ↑n = m      -> hn : n = Fin.last m
+  sumMap_eq_SkelProj_LtOrSphere       hx : ↑n < m ∨ ↑n = m ∧ ...
+                                          -> n < Fin.last m ∨ n = Fin.last m ∧ ...
+  TopOpen                             ↑n_y = m         -> n_y = Fin.last m
+  SkeletonProj_inj_top                hnm : ↑n = m     -> hnm : n = Fin.last m
+
+Unveraendert (arbeiten weiter mit ℕ, beruehren das `if` nicht):
+  topopen_notLT, same_point, FinNeq_lt (jetzt ungenutzt -- kann geloescht
+  werden, `Fin.lt_last_iff_ne_last` ersetzt es), skeletonLT-Argumente ueberall.
+
+================================================================================
+DIFF
+================================================================================
+--- HEP_skeleton.lean (vorher)	2026-08-21 16:26:17
++++ HEP_skeleton.lean (nachher)	2026-08-21 16:28:25
+@@ -169,12 +169,13 @@
+ 
+ lemma cubesretract_fixedOn {m : ℕ} {n : Fin (m + 1)}
+     (x : (closedBall (0 : Fin n → ℝ) 1) × unitInterval) :
+-    (n < m → cubesretract n x = (x.1, x.2.1)) ∧
+-    (n = Fin.last m → x ∈ {z | z.2 = 0 ∨ z.1 ∈ sphere ⟨0, by simp⟩ 1 } → cubesretract n x = (x.1, x.2.1))
++    (n < Fin.last m → cubesretract n x = (x.1, x.2.1)) ∧
++    (n = Fin.last m → x ∈ {z | z.2 = 0 ∨ z.1 ∈ sphere ⟨0, by simp⟩ 1 } →
++      cubesretract n x = (x.1, x.2.1))
+     := by
+   by_cases h : n = Fin.last m
+   · subst h
+-    simp only [Fin.val_last, lt_self_iff_false, cubesretract, IsEmpty.forall_iff,
++    simp only [lt_self_iff_false, cubesretract, IsEmpty.forall_iff,
+       forall_const, true_and]
+     intro hx
+     have := (r_cube_RetractionOn (Fin.last m)).fixesOn (x.1, x.2) (by
+@@ -190,25 +191,24 @@
+   lies in the given codomain.
+ -/
+ lemma cubesretract_mapsto_lt {m : ℕ} (n : Fin (m + 1)) (i : cell X n)
+-    (p : (closedBall 0 1) × ↑unitInterval) (hn : n < m) :
++    (p : (closedBall 0 1) × ↑unitInterval) (hn : n < Fin.last m) :
+     (map n i) (cubesretract n p).1 ∈ skeletonLT X m
+     ∧ (cubesretract n p).2 ∈ unitInterval
+     := by
+   unfold cubesretract
+-  simp  [Nat.ne_of_lt hn, ↓reduceIte]
+-  constructor
+-  · apply Topology.CWComplex.skeletonLT_mono (m := n + 1) ?_ ?_
+-    · rw [ENat.add_one_le_iff (ENat.coe_ne_top ↑n)]
+-      exact ENat.coe_lt_coe.mpr hn
+-    · apply closedCell_subset_skeletonLT n i
+-      apply Set.mem_image_of_mem
+-      exact Subtype.coe_prop p.1
+-  · exact p.2.2
++  simp only [hn.ne, ↓reduceIte, Subtype.coe_prop, and_true]
++  apply Topology.CWComplex.skeletonLT_mono (m := n + 1) ?_ ?_
++  · rw [ENat.add_one_le_iff (ENat.coe_ne_top ↑n)]
++    exact ENat.coe_lt_coe.mpr (Fin.val_lt_last hn.ne)
++  · apply closedCell_subset_skeletonLT n i
++    apply Set.mem_image_of_mem
++    exact Subtype.coe_prop p.1
+ 
+ lemma cubesretract_mapsto_top {m : ℕ} (n : Fin (m + 1)) (i : cell X n)
+-    (p : (closedBall 0 1) × ↑unitInterval) (hn : n = m) :
++    (p : (closedBall 0 1) × ↑unitInterval) (hn : n = Fin.last m) :
+     (cubesretract n p).2 = 0 ∨ (map n i) (cubesretract n p).1 ∈ skeletonLT X m ∧
+     (cubesretract n p).2 ∈ unitInterval := by
++  have hn' : (n : ℕ) = m := by rw [hn, Fin.val_last]
+   have mapsto := by
+     have : (p.1, (p.2 : ℝ)) ∈ (cyl _) := Set.mem_setOf.mpr p.2.2
+     exact (r_cube_RetractionOn n).mapsTo this
+@@ -217,21 +217,21 @@
+   · simp [h0]
+   · refine Or.inr ⟨?_, h1.2⟩
+     apply Set.Subset.trans (cellFrontier_subset_skeletonLT n i)
+-      (skeletonLT_mono (Std.le_of_eq (congrArg Nat.cast hn)))
++      (skeletonLT_mono (Std.le_of_eq (congrArg Nat.cast hn')))
+     apply Set.mem_image_of_mem
+     exact h1.1
+ 
+ lemma cubesretract_mapsto_weak {m : ℕ} (n : Fin (m + 1)) (i : cell X n)
+     (p : (closedBall 0 1) × ↑unitInterval) :
+     (map n i) (cubesretract n p).1 ∈ skeletonLT X (m + 1) := by
+-  by_cases hn : n = m
++  by_cases hn : n = Fin.last m
+   · obtain h0 | h1 := cubesretract_mapsto_top X n i p hn
+-    · apply Set.mem_of_mem_of_subset (s := skeletonLT X (n + 1)) ?_ (skeletonLT_mono (by rw[hn]))
++    · apply Set.mem_of_mem_of_subset (s := skeletonLT X (n + 1)) ?_ (skeletonLT_mono (by simp [hn]))
+       apply closedCell_subset_skeletonLT n i
+       exact Set.mem_image_of_mem _ (Subtype.coe_prop (cubesretract n p).1)
+     · exact skeletonLT_mono le_self_add h1.1
+   · exact skeletonLT_mono le_self_add
+-      (cubesretract_mapsto_lt X n i p (lt_of_le_of_ne (Fin.is_le n) hn)).1
++      (cubesretract_mapsto_lt X n i p (Fin.lt_last_iff_ne_last.mpr hn)).1
+ 
+ def sumMap (m : ℕ) :
+     (ungluedSkel X (m + 1)) × unitInterval → skeletonLT X (m+1) × ℝ := fun p ↦
+@@ -248,11 +248,11 @@
+ 
+ lemma sumMap_eq_SkelProj_LtOrSphere {m : ℕ}
+     (n : Fin (m + 1)) (i : cell X n) (x' : closedBall (0 : Fin n → ℝ) 1) (t : unitInterval)
+-    (hx : n < m ∨ n = m ∧ x' ∈ sphere ⟨0, by simp⟩ 1) :
++    (hx : n < Fin.last m ∨ n = Fin.last m ∧ x' ∈ sphere ⟨0, by simp⟩ 1) :
+     sumMap X m (Sum.inr ⟨n, ⟨i, x'⟩⟩, t) =
+     Prod.map (SkeletonProjection X (m + 1)) Subtype.val (Sum.inr ⟨n, ⟨i, x'⟩⟩, t) := by
+   obtain hx_lt | ⟨hx_eq, hx_sphere⟩ := hx
+-  · simp [sumMap,  cubesretract, SkeletonProjection, (Nat.ne_of_lt hx_lt), Sum.elim_inr]
++  · simp [sumMap, cubesretract, SkeletonProjection, hx_lt.ne, Sum.elim_inr]
+     rfl
+   · have := (cubesretract_fixedOn (x', t)).2 hx_eq (Or.inr hx_sphere)
+     simp [sumMap, this, SkeletonProjection]
+@@ -292,7 +292,7 @@
+   · rw [source_eq]; exact y_ball
+   · rw [source_eq]; exact x_ball
+ 
+-lemma SkeletonProj_inj_top {m : ℕ} {n : Fin (m + 1)} (hnm : ↑n = m) (i : cell X n)
++lemma SkeletonProj_inj_top {m : ℕ} {n : Fin (m + 1)} (hnm : n = Fin.last m) (i : cell X n)
+     (x' : closedBall (0 : Fin n → ℝ) 1) (x_ball : x'.1 ∈ ball (0 : Fin n → ℝ) 1)
+     (y : ungluedSkel X (m + 1))
+     (hskel : SkeletonProjection X (m + 1) (Sum.inr ⟨n, ⟨i, x'⟩⟩) = SkeletonProjection X (m + 1) y) :
+@@ -330,10 +330,11 @@
+       exact ⟨y'.prop, y_ball⟩
+ 
+ lemma TopOpen {m : ℕ} (n_y : Fin (m + 1)) (y' : closedBall 0 1)
+-    (h : ¬(n_y < m ∨ n_y = m ∧ y' ∈ sphere (⟨0, by simp⟩ : closedBall (0 : Fin n_y → ℝ) 1) 1)) :
+-    n_y = m ∧ y' ∈ ball ⟨0, by simp⟩ 1 := by
++    (h : ¬(n_y < Fin.last m ∨ n_y = Fin.last m ∧
++      y' ∈ sphere (⟨0, by simp⟩ : closedBall (0 : Fin n_y → ℝ) 1) 1)) :
++    n_y = Fin.last m ∧ y' ∈ ball ⟨0, by simp⟩ 1 := by
+   simp only [not_or, not_lt, not_and] at h
+-  have ny_eq_m : ↑n_y = m := Nat.le_antisymm_iff.2 ⟨Fin.is_le n_y, h.1⟩
++  have ny_eq_m : n_y = Fin.last m := le_antisymm (Fin.le_last n_y) h.1
+   refine ⟨ny_eq_m , ?_ ⟩
+   rw [← Metric.closedBall_sdiff_sphere]
+   exact ⟨y'.prop , h.2 ny_eq_m⟩
+@@ -350,25 +351,29 @@
+     · rw [← sumMap_eq_SkelProj_C]
+       congr
+     · simp only at heq2
+-      suffices hyLtSphere : ↑n_y < m ∨ ↑n_y = m ∧ y' ∈ sphere ⟨0, by simp⟩ 1 by
++      suffices hyLtSphere : n_y < Fin.last m ∨ n_y = Fin.last m ∧
++          y' ∈ sphere ⟨0, by simp⟩ 1 by
+         rw [sumMap_eq_SkelProj_LtOrSphere X n_y i_y y' t hyLtSphere, heq2, Prod.map_apply,
+           Prod.map_apply, id_eq]
+       by_contra hynotLTSphere
+-      have hytop_open : n_y = m ∧ y' ∈ ball ⟨0, by simp⟩ 1 := TopOpen n_y y' hynotLTSphere
++      have hytop_open : n_y = Fin.last m ∧ y' ∈ ball ⟨0, by simp⟩ 1 :=
++        TopOpen n_y y' hynotLTSphere
+       have : ↑(SkeletonProjection X (m + 1) (Sum.inl cx, tx).1) ∉ skeletonLT X ↑m := by
+         rw[heq1]
+-        apply topopen_notLT X i_y y' hytop_open.2 ⟨m, by linarith⟩
++        apply topopen_notLT X i_y y' hytop_open.2 ⟨m, by simp [hytop_open.1]⟩
+       exact this (memBase_memSkeletonLT X cx.prop m)
+   · -- x in some closed ball
+-    by_cases hxLtSphere : n < m ∨ n = m ∧ x' ∈ sphere ⟨0, by simp⟩ 1
++    by_cases hxLtSphere : n < Fin.last m ∨ n = Fin.last m ∧ x' ∈ sphere ⟨0, by simp⟩ 1
+     · simp only at heq2
+       rw [sumMap_eq_SkelProj_LtOrSphere X n i x' tx hxLtSphere, Prod.map_apply, heq1]
+       obtain ⟨c | ⟨n_y, i_y, y'⟩, t⟩ := y
+       · congr
+-      · suffices hynotTop : n_y < m ∨ ↑n_y = m ∧ y' ∈ sphere ⟨0, by simp⟩ 1 by
++      · suffices hynotTop : n_y < Fin.last m ∨ n_y = Fin.last m ∧
++            y' ∈ sphere ⟨0, by simp⟩ 1 by
+           rw [sumMap_eq_SkelProj_LtOrSphere X n_y i_y y' t hynotTop, heq2, Prod.map_apply]
+         by_contra hynotLTSphere
+-        have top_open : n_y = m ∧ y' ∈ ball ⟨0, by simp⟩ 1 := TopOpen n_y y' hynotLTSphere
++        have top_open : n_y = Fin.last m ∧ y' ∈ ball ⟨0, by simp⟩ 1 :=
++          TopOpen n_y y' hynotLTSphere
+         have hTopInj := SkeletonProj_inj_top X top_open.1 i_y y' top_open.2
+           (Sum.inr ⟨n,i,x'⟩) heq1.symm
+         rw [Sum.inr.inj_iff, Sigma.mk.injEq] at hTopInj
+@@ -380,7 +385,7 @@
+         exact hynotLTSphere hxLtSphere
+     · congr
+       simp only [not_or, not_lt, not_and] at hxLtSphere
+-      have n_eq_m : ↑n = m :=  Eq.symm (Nat.le_antisymm hxLtSphere.1 (Fin.is_le n))
++      have n_eq_m : n = Fin.last m := le_antisymm (Fin.le_last n) hxLtSphere.1
+       refine (SkeletonProj_inj_top X n_eq_m i x' ?_ y.1 heq1).symm
+       rw [← closedBall_sdiff_sphere]
+       exact ⟨x'.prop, hxLtSphere.2 n_eq_m⟩
+@@ -481,9 +486,9 @@
+   · simp only [sumMap, Sum.elim_inl, Subtype.coe_prop, and_true]
+     exact Or.inr (mem_skeletonLT_iff.mpr (Or.inl c.prop))
+   · simp only [sumMap, Sum.elim_inr]
+-    by_cases hn : n = m
++    by_cases hn : n = Fin.last m
+     · exact cubesretract_mapsto_top X n i (x',t) hn
+-    · exact Or.inr (cubesretract_mapsto_lt X n i (x',t) (lt_of_le_of_ne (Fin.is_le n) hn))
++    · exact Or.inr (cubesretract_mapsto_lt X n i (x',t) (Fin.lt_last_iff_ne_last.mpr hn))
+ 
+ lemma sumMap_fixedOn (m : ℕ) {s : ↑(skeletonLT X (↑m + 1)).carrier × ℝ} (hs : s ∈ anchor
+   ((skeletonLT X (↑m + 1)).carrier ↓∩ ↑(skeletonLT X ↑m))) (hs2 : s.2 ∈ unitInterval)
+@@ -494,7 +499,7 @@
+   have cubesFixed : cubesretract n (x', t) = ((x', t).1, ↑(x', t).2) := by
+     by_cases h : n = Fin.last m
+     · subst h
+-      apply (cubesretract_fixedOn (x', t)).2 (Fin.val_last m)
++      apply (cubesretract_fixedOn (x', t)).2 rfl
+       rcases hs with hs0 | hs1
+       · apply Or.inl
+         rw [hxproj2]
+@@ -505,7 +510,7 @@
+         have := topopen_notLT X i x' (by rw [← closedBall_sdiff_sphere]; exact ⟨x'.prop, notSphere⟩)
+           (Fin.last m)
+         exact this hs1.1
+-    · exact (cubesretract_fixedOn (x', t)).1 (Fin.val_lt_last h)
++    · exact (cubesretract_fixedOn (x', t)).1 (Fin.lt_last_iff_ne_last.mpr h)
+   simp only [cubesFixed]
+   refine Prod.ext_iff.mpr ⟨ ?_, SetCoe.ext_iff.2 hxproj2 ⟩
+   simp only [SkeletonProjection, Sum.elim_inr] at hxproj1

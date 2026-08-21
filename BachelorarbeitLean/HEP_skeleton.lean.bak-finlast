@@ -156,12 +156,12 @@ lemma r_cube_RetractionOn (m : ℕ) : RetractionOn (r_cube m) (cyl _)
 def cubesretract {m : ℕ} (n : Fin (m + 1)) :
     (closedBall (0 : Fin (n : ℕ) → ℝ) 1) × unitInterval →
     (closedBall (0 : Fin (n : ℕ) → ℝ) 1) × ℝ := fun p ↦
-  if n = m then (r_cube n (p.1, Subtype.val p.2))
+  if n = Fin.last m then (r_cube n (p.1, Subtype.val p.2))
   else (p.1, Subtype.val p.2)
 
 lemma cubesretract_continuous {m : ℕ} (n : Fin (m + 1)) : Continuous (cubesretract n) := by
   unfold cubesretract
-  by_cases hnm : n =  m
+  by_cases hnm : n = Fin.last m
   · simp only [hnm,]
     exact (r_cube_RetractionOn n).continuousOn.comp_continuous (by fun_prop) (fun x ↦ x.2.2)
   · simp only [hnm, continuous_prodMk]
@@ -170,17 +170,18 @@ lemma cubesretract_continuous {m : ℕ} (n : Fin (m + 1)) : Continuous (cubesret
 lemma cubesretract_fixedOn {m : ℕ} {n : Fin (m + 1)}
     (x : (closedBall (0 : Fin n → ℝ) 1) × unitInterval) :
     (n < m → cubesretract n x = (x.1, x.2.1)) ∧
-    (n =  m → x ∈ {z | z.2 = 0 ∨ z.1 ∈ sphere ⟨0, by simp⟩ 1 } → cubesretract n x = (x.1, x.2.1))
+    (n = Fin.last m → x ∈ {z | z.2 = 0 ∨ z.1 ∈ sphere ⟨0, by simp⟩ 1 } → cubesretract n x = (x.1, x.2.1))
     := by
-  by_cases h : n = m
-  · simp only [h, lt_self_iff_false, IsEmpty.forall_iff, mem_sphere, Set.mem_setOf_eq,
-    forall_const, true_and]
+  by_cases h : n = Fin.last m
+  · subst h
+    simp only [Fin.val_last, lt_self_iff_false, cubesretract, IsEmpty.forall_iff,
+      forall_const, true_and]
     intro hx
-    have := (r_cube_RetractionOn n).fixesOn (x.1, x.2) (by
+    have := (r_cube_RetractionOn (Fin.last m)).fixesOn (x.1, x.2) (by
       obtain hx1 | hx2 :=  hx
       · exact Or.inl (Set.Icc.coe_eq_zero.mpr hx1)
       · exact Or.inr ⟨mem_sphere.mpr hx2, unitInterval.mem_unitIntervalSubmonoid.mp x.2.prop⟩)
-    simp [cubesretract, this]
+    congr
   · simp[cubesretract, h]
 
 /-
@@ -193,14 +194,16 @@ lemma cubesretract_mapsto_lt {m : ℕ} (n : Fin (m + 1)) (i : cell X n)
     (map n i) (cubesretract n p).1 ∈ skeletonLT X m
     ∧ (cubesretract n p).2 ∈ unitInterval
     := by
-  simp only [cubesretract, Nat.ne_of_lt hn, ↓reduceIte, Subtype.coe_prop, and_true]
-  apply Topology.CWComplex.skeletonLT_mono (m := n + 1) ?_ ?_
-  · rw [ENat.add_one_le_iff (ENat.coe_ne_top ↑n)]
-    exact ENat.coe_lt_coe.mpr hn
-  · apply closedCell_subset_skeletonLT n i
-    apply Set.mem_image_of_mem
-    exact Subtype.coe_prop p.1
-
+  unfold cubesretract
+  simp  [Nat.ne_of_lt hn, ↓reduceIte]
+  constructor
+  · apply Topology.CWComplex.skeletonLT_mono (m := n + 1) ?_ ?_
+    · rw [ENat.add_one_le_iff (ENat.coe_ne_top ↑n)]
+      exact ENat.coe_lt_coe.mpr hn
+    · apply closedCell_subset_skeletonLT n i
+      apply Set.mem_image_of_mem
+      exact Subtype.coe_prop p.1
+  · exact p.2.2
 
 lemma cubesretract_mapsto_top {m : ℕ} (n : Fin (m + 1)) (i : cell X n)
     (p : (closedBall 0 1) × ↑unitInterval) (hn : n = m) :
@@ -509,7 +512,7 @@ lemma sumMap_fixedOn (m : ℕ) {s : ↑(skeletonLT X (↑m + 1)).carrier × ℝ}
   exact hxproj1
 
 lemma HEP'_skeleton (m : ℕ) : HEP' (skeletonLT X (m + 1)).carrier (skeletonLT X m).carrier := by
-  apply (retraction_criterion_closed (skeletonLT X ↑m).closed'.preimage_val).2
+  apply (retraction_criterion_closed (IsClosed.preimage_val (skeletonLT X ↑m).closed') ).2
   use retr_skeleton X m
   have ProjId (s : (skeletonLT X (↑m + 1)).carrier × ℝ) (hs : s.2 ∈ unitInterval ) :
       (⟨ProjIcc s.2, proj_mem s.2⟩ : unitInterval) = ⟨s.2, hs⟩ := by

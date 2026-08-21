@@ -9,11 +9,8 @@ import BachelorarbeitLean.HEP_definition
 
 noncomputable section
 
-
-  --(f : (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) → Y)
-
 /-
-Prop 2.28
+HEP for `ball and boundary`:
 ∀ m ≥ 0, the pair (D^m , ∂D^m) has the homotopy extension property
 
 Proof:
@@ -24,7 +21,7 @@ We then use aux_fun to define the extended homotopy.
 
 open Metric
 
-variable {m : ℕ} {X Y : Type} [TopologicalSpace X] (C : Set Y)
+variable {m : ℕ} {Y : Type} [TopologicalSpace Y] (C : Set Y)
   (f : (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) → Y)
   (H : (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) × ℝ → Y)
 
@@ -33,7 +30,7 @@ def aux_fun : EuclideanSpace ℝ (Fin m) → Y := fun p =>
   if hp : norm p ≤ 1 then f ⟨p, by simp[hp]⟩
   else H (⟨((norm p)⁻¹ : ℝ) • p, inv_norm_smul_mem_unitClosedBall p⟩, norm p - 1)
 
-lemma aux_contOn_ring [TopologicalSpace Y]
+lemma aux_contOn_ring
     (hH_cont : ContinuousOn H (smalcyl (sphere ⟨0, by simp⟩ 1)))
     (hAgree : agreeOn f H (sphere ⟨0, by simp⟩ 1)) :
     ContinuousOn (aux_fun f H) {p | 1 ≤ dist 0 p ∧ dist 0 p ≤ 2} := by
@@ -66,8 +63,8 @@ lemma aux_contOn_ring [TopologicalSpace Y]
       rw [Set.mem_setOf_eq, dist_zero_left] at this
       exact this.1
 
--- Continuity on the two dist for the auxilliar function
-lemma aux_contOn [TopologicalSpace Y] (hf_cont : Continuous f)
+-- Continuity on the ball with radius 2 of the auxilliar function:
+lemma aux_contOn (hf_cont : Continuous f)
     (hH_cont : ContinuousOn H (smalcyl (sphere ⟨0, by simp⟩ 1)))
     (hAgree : agreeOn f H (Metric.sphere ⟨0, mem_closedBall_self zero_le_one⟩ 1)) :
     ContinuousOn (aux_fun f H) (closedBall 0 2) := by
@@ -95,14 +92,13 @@ def H' : (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) × ℝ → Y :=
   fun p => (aux_fun f H ) ((1 + p.2) • p.1)
 
 -- checking, that this homotopy H' satisfies all required properties: (ContinuousOn, MapsTo, ...)
-lemma H'_ContinuousOn [TopologicalSpace Y] (hf_cont : Continuous f)
+lemma H'_ContinuousOn (hf_cont : Continuous f)
     (hH_cont : ContinuousOn H (smalcyl (sphere ⟨0, by simp⟩ 1)))
     (hAgree : agreeOn f H (Metric.sphere ⟨0, by simp⟩ 1)) :
-    ContinuousOn (H' f H) (bigcyl (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1)) := by
+    ContinuousOn (H' f H) (cyl (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1)) := by
   refine ContinuousOn.comp (aux_contOn f H hf_cont hH_cont hAgree) (by fun_prop ) ?_
   intro x hx
   rw [Metric.mem_closedBall, dist_zero_right]
-    -- (ab hier eigentlich nur noch Ungleichung lösen)
   have : ‖1 + x.2‖ ≤ 2 := by
       rw [show ‖1 + x.2‖ = |1 + x.2| from rfl]
       grw [abs_add_le, hx.2]
@@ -114,9 +110,10 @@ lemma H'_ContinuousOn [TopologicalSpace Y] (hf_cont : Continuous f)
   simp only [Nat.ofNat_pos, mul_le_iff_le_one_right]
   apply mem_closedBall_zero_iff.1 (Subtype.coe_prop x.1)
 
+omit [TopologicalSpace Y] in
 lemma H'_MapsTo (hf_range : Set.range f ⊆ C)
     (hH_mapsto : Set.MapsTo H (smalcyl (sphere ⟨0, by simp⟩ 1)) C) :
-    (bigcyl (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1)).MapsTo (H' f H) C := by
+    (cyl (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1)).MapsTo (H' f H) C := by
   unfold H' aux_fun
   intro x hx
   by_cases hp : ‖(1 + x.2) • x.1.val‖ ≤ 1
@@ -169,6 +166,7 @@ lemma H'_agreeH
     · rw [norm_smul, norm_a, Real.norm_eq_abs, mul_one, abs_of_pos (by grind)]
       norm_num
 
+-- combining the above results to the desired claim
 lemma HEP_disc_boundary : ∀ (m : ℕ),
     HEP (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) (sphere ⟨0, by simp⟩ 1) := by
   intro m Y hY rangeH' f H hf_cont hf_range hH_cont hH_range hAgree
@@ -176,14 +174,19 @@ lemma HEP_disc_boundary : ∀ (m : ℕ),
   · exact fun _ hx => H'_MapsTo rangeH' f H hf_range hH_range hx
   · exact fun x => by simp [H', aux_fun, mem_closedBall_zero_iff.mp x.prop]
 
+-- can be transvered via an exact statement to the version with `HEP'`:
 lemma HEP_disc_boundary' : ∀ (m : ℕ),
   HEP' (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) (sphere 0 1) := HEP_disc_boundary
 
 /-
 HEP for Cubes and boundary:
+∀ m ≥ 0, the pair ([-1,1]^m , ∂([-1,1]^m)) has the homotopy extension property
+Proof:
+Construct a homeomorhism from the m dimensional ball to the cube.
 -/
 
-variable {m : ℕ}
+-- Idintity map, that changes the norm of the ambient space from euclidian to maximum norm.
+
 def homeo_euclid_max : EuclideanSpace ℝ (Fin m)  ≃ₜ (Fin m → ℝ) where
   toFun := fun p ↦ p
   invFun := fun p ↦ {ofLp := p }
@@ -202,17 +205,18 @@ lemma closed_embedding_euclid_max : Topology.IsClosedEmbedding (@homeo_euclid_ma
   use WithLp.toLp 2 x
   simp[homeo_euclid_max]
 
+-- The image of the closed ball under `homeo_euclid_max` is convex, nonempty and bounded.
 lemma convex_euclid_to_max_ball : Convex ℝ (homeo_euclid_max '' (closedBall
   (0 :EuclideanSpace ℝ (Fin m)) 1)) := by
   refine Convex.is_linear_image (convex_closedBall 0 1) ?_
   exact { map_add := fun x ↦ congrFun rfl, map_smul := fun c ↦ congrFun rfl }
 
 lemma nonempty_euclid_to_max_ball : (interior (homeo_euclid_max '' (closedBall
-    (0 :EuclideanSpace ℝ (Fin m)) 1))).Nonempty := by
+    (0 : EuclideanSpace ℝ (Fin m)) 1))).Nonempty := by
   use 0
   rw [mem_interior]
   use homeo_euclid_max '' ball 0 1
-  refine ⟨ Set.image_mono  ball_subset_closedBall ,  homeo_euclid_max.isOpenMap
+  refine ⟨Set.image_mono ball_subset_closedBall, homeo_euclid_max.isOpenMap
     (ball 0 1) isOpen_ball , ?_ ⟩
   use 0
   refine ⟨mem_ball_self zero_lt_one, by rfl ⟩
@@ -221,6 +225,7 @@ lemma bounded_euclid_to_max_ball : Bornology.IsBounded (homeo_euclid_max '' (clo
     (0 :EuclideanSpace ℝ (Fin m)) 1)) :=
   Bornology.isBounded_induced.mp isBounded_closedBall
 
+-- Homeomprphism from the image of the closed ball under `homeo_euclid_max` to [-1,1]^m
 def G : (Fin m → ℝ) ≃ₜ (Fin m → ℝ):= (exists_homeomorph_image_interior_closure_frontier_eq_unitBall
   convex_euclid_to_max_ball
   nonempty_euclid_to_max_ball bounded_euclid_to_max_ball).choose
@@ -241,6 +246,9 @@ lemma closure_hG_cosed : closure (@homeo_euclid_max m '' closedBall 0 1) =
   exact (closed_embedding_euclid_max.isClosed_iff_image_isClosed).mp
     isClosed_closedBall
 
+/- desired homeomorphism is the composite of the two above homeomorphims. It is especially
+  a partial homeomorphism from the ball to the cube
+-/
 def comp_homeo : EuclideanSpace ℝ (Fin m) ≃ₜ (Fin m → ℝ) := homeo_euclid_max.trans G
 
 def comp_partialhomeo : PartialHomeomorph (EuclideanSpace ℝ (Fin m)) (Fin m → ℝ) :=
@@ -260,11 +268,11 @@ def comp_partialhomeo : PartialHomeomorph (EuclideanSpace ℝ (Fin m)) (Fin m �
       rw[← closure_hG_cosed]
       apply (Set.image_eq_iff_surjOn_mapsTo.1 hG_closed).1 )
 
+/- `PartialHomeomorph_HEP'` yields the final result.-/
 lemma HEP_cube_boundary' (m : ℕ) :
     HEP' (closedBall (0 : (Fin m → ℝ)) 1) (sphere 0 1) := by
   refine PartialHomeomorph_HEP' sphere_subset_closedBall sphere_subset_closedBall
-    (HEP_disc_boundary' m) comp_partialhomeo (by rfl) (by rfl) ?_
-    isClosed_sphere isClosed_sphere
+    (HEP_disc_boundary' m) comp_partialhomeo (by rfl) (by rfl) ?_ isClosed_sphere
   simp only [comp_partialhomeo, comp_homeo, homeo_euclid_max,
     Homeomorph.toPartialHomeomorphOfImageEq_apply, Homeomorph.trans_apply,
     Homeomorph.homeomorph_mk_coe, Equiv.coe_fn_mk]
@@ -274,34 +282,7 @@ lemma HEP_cube_boundary' (m : ℕ) :
   simp only [homeo_euclid_max, Homeomorph.homeomorph_mk_coe, Equiv.coe_fn_mk] at this ⊢
   rw[← this, frontier_closedBall 0 one_ne_zero]
 
+-- analoge for HEP
 lemma HEP_cube_boundary (m : ℕ) :
     HEP (closedBall (0 : (Fin m → ℝ)) 1) (sphere ⟨0, by simp⟩ 1) := by
-  --exact HEP_cube_boundary'
-  refine partialHomeomorph_HEP (HEP_disc_boundary m) comp_partialhomeo (by rfl) (by rfl) ?_
-    (IsClosed.trans isClosed_sphere isClosed_closedBall)
-    (IsClosed.trans isClosed_sphere isClosed_closedBall)
-  simp only [comp_partialhomeo, comp_homeo, homeo_euclid_max,
-    Homeomorph.toPartialHomeomorphOfImageEq_apply, Homeomorph.trans_apply,
-    Homeomorph.homeomorph_mk_coe, Equiv.coe_fn_mk]
-  have s_finm: Subtype.val '' (sphere ⟨0, mem_closedBall_self zero_le_one⟩ 1 :
-      Set (closedBall (0 : Fin m → ℝ) 1)) = sphere 0 1 := by
-    refine Set.SurjOn.image_eq_of_mapsTo ?_ fun ⦃x⦄ a ↦ a
-    intro f hf
-    simp only [Set.mem_image, mem_sphere, Subtype.exists, mem_closedBall, dist_zero_right,
-      exists_and_right, exists_eq_right]
-    use mem_closedBall_zero_iff.mp (sphere_subset_closedBall hf)
-    exact mem_sphere.mp hf
-  have s_eucl : Subtype.val '' (sphere ⟨0, mem_closedBall_self zero_le_one⟩ 1 :
-      Set (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1)) = sphere 0 1 := by
-    refine Set.SurjOn.image_eq_of_mapsTo ?_ fun ⦃x⦄ a ↦ a
-    intro f hf
-    simp only [Set.mem_image, mem_sphere, Subtype.exists, mem_closedBall, dist_zero_right,
-      exists_and_right, exists_eq_right]
-    use mem_closedBall_zero_iff.mp (sphere_subset_closedBall hf)
-    exact mem_sphere.mp hf
-  rw[s_finm, s_eucl, ← hG_front, ← Set.image_image]
-  refine (Set.image_eq_image G.injective).mpr ?_
-  have := (@homeo_euclid_max m).image_frontier (closedBall 0 1)
-  simp only [homeo_euclid_max, Homeomorph.homeomorph_mk_coe, Equiv.coe_fn_mk] at this
-  simp only [homeo_euclid_max, Homeomorph.homeomorph_mk_coe, Equiv.coe_fn_mk]
-  rw[← this, frontier_closedBall 0 one_ne_zero]
+  exact HEP_cube_boundary' m
