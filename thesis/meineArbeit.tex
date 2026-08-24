@@ -66,7 +66,7 @@
 %\institut{Institut f\"ur Numerische Simulation}
 %\institut{Forschungsinstitut f\"ur Diskrete Mathematik}
 %Titel der Bachelorarbeit
-\title{Formalizing the homotopy extension property in LEAN}
+\title{Formalising the Homotopy Extension Property in Lean}
 %Do not change!
 \ausarbeitungstyp{Bachelor's Thesis Mathematics}
 
@@ -114,8 +114,11 @@
 \newtheorem{corollary}[theorem]{Corollary}
 \theoremstyle{definition}
 \newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
 \theoremstyle{remark}
 \newtheorem{remark}[theorem]{Remark}
+\crefname{example}{Example}{Examples}
+\Crefname{example}{Example}{Examples}
 \numberwithin{equation}{section}
 \numberwithin{theorem}{section}
 \addbibresource{Literatur.bib}
@@ -132,11 +135,7 @@
 
 \maketitle
 
-\section*{Summary}
-This thesis is about the formalisation of the homotopy extenion property in the formal language of the proof assistant Lean. \\
-After a short introduction \cref{motivation}, the chapter \cref{section:HEP} gives an overview of the mathematics behind the formalisation. We see the definition, in equivalent phrasings, the retraction criterion, which is used to show a pair of topological spaces satisfies the homotopy extension property and have two statements about the conversation of the property. Afterwards we encounter the important instance, that relative CW-complexes satisfy the homotopy extension property. The formalisation contiues up to the proof of this result for finite dimensional complexes. \\
-The following chapter is about Lean and mathlib (cref ToDo). Apart from a general short overview I highlight three concepts, relevant for this project. Namely the difference between sets and subtypes, structures and junk values. I briefly mention the library of formalised mathematics, called mathlib. \\
-The chapter (cref ToDo) makes up a main part of this thesis. Based on short sequeces of my formalisation I explain and juge the decissions made along the way. Main theorems from mathlib, which some proofs are build on, are introduced. \\
+
 
 \begin{flushright}
 \end{flushright}
@@ -148,76 +147,80 @@ The chapter (cref ToDo) makes up a main part of this thesis. Based on short sequ
 \printnomenclature
 
 \clearpage
-\section{Introduction}
-    In this work, if not specifized in any other way, every space has a topology and every map is a continuous map.  
+\section{Introduction} \label{section:Introduction}
 
-\subsection{Motivation} \label{motivation}
-    The goal of this thesis is to formalize the \emph{homotopy extension property (HEP)} in Lean. I started with the proof of the \emph{retraction criterion} and worked towards the result that every relative CW complex satisfies the HEP. Our motivation for studying this property is that it is needed for two major theorems in algebraic topology. The first is the \emph{cellular approximation theorem}.
+This thesis is about the formalisation of the homotopy extension property (HEP) in the formal language of the proof assistant Lean, working towards the result that every relative CW-complex satisfies the HEP. A proof assistant is a software system that checks every single step of a mathematical proof in detail. Lean comes with a mathematical library called mathlib. Both, the language and its library are introduced in \cref{subsec:mathlib}. \\
+Relative CW-complexes are already a part of mathlib, the homotopy extension property, however, is not. Mathlib contains the class \lean{HomotopicalAlgebra.CategoryWithCofibrations}, which is a closely related concept, but no formalisation of the HEP that would allow us to work with it explicitly and to prove it for concrete pairs of spaces. This is what is done in this thesis. % Klingt zu sehr so, als wollte ich das zu mathlib machen, aber das ist nicht das Ziel.
+
+\subsection*{Motivation} 
+The motivation for this project has two sides: why the result is mathematically interesting, and what is gained by formalising it.\\
+Our mathematical motivation for studying the HEP is that it is needed for two major theorems in algebraic topology. The first is the \emph{cellular approximation theorem}.
 
 \begin{theorem}[Cellular Approximation Theorem, {\cite[Theorem 4.8]{HAT01}}] 
-    Every map $f \colon X \to Y $ of CW complexes is homotopic to a cellular map. If $f$ is already cellular on a subcomplex $A \subset X$, the homotopy may be taken to be stationary on A.
-\end{theorem}
-    
-    Here a map is called \emph{cellular} if it sends the $n$-skeleton of $X$ to the $n$-skeleton of $Y$ for all $n \in \mathbb{N}$. \\
+    Every map $f \colon X \to Y $ of CW-complexes is homotopic to a cellular map. If $f$ is already cellular on a subcomplex $A \subset X$, the homotopy may be taken to be stationary on A.
+\end{theorem} 
+Here a map is called \emph{cellular} if it sends the $n$-skeleton of $X$ to the $n$-skeleton of $Y$ for all $n \in \mathbb{N}$. \\
     Equipping $S^k$ with the CW structure consisting of one $0$-cell and one $k$-cell, it has no cells in dimensions $0 < n < k$. Hence any map $S^n \to S^k$ with $n < k$ is homotopic to one landing in the $n$-skeleton, which is a single point, and is therefore nullhomotopic. This yields the corollary $\pi_n(S^k) = 0$ for all $n < k$.
-
-    Secondly, the result that relative CW complexes satisfy the HEP is one of the main steps towards the proof of \emph{Whitehead's theorem}.
-
+Secondly, the result that relative CW complexes satisfy the HEP is one of the main steps towards the proof of \emph{Whitehead's theorem}.
 {\emergencystretch=2em
 \begin{theorem}[Whitehead's Theorem, {\cite[Theorem 4.5]{HAT01}}] 
     If a map $f \colon X \to Y$ between connected CW complexes induces isomorphisms $f_* \colon \pi_n (X) \to  \pi _n (Y) $ for all $n$, then $f$ is a homotopy equivalence. In case $f$ is the inclusion of a subcomplex $X \hookrightarrow Y$, the conclusion is stronger: $X$ is a deformation retract of $Y$.
 \end{theorem}
 \par}
     
-   Whitehead's theorem states that, in order to prove that two connected CW complexes are homotopy equivalent, it suffices to exhibit a map between them that induces isomorphisms on all homotopy groups, i.e.\ a weak homotopy equivalence. Showing that two spaces are homotopy equivalent is in general a difficult task, and Whitehead's theorem provides a powerful tool for such problems. 
+Whitehead's theorem states that, in order to prove that two connected CW complexes are homotopy equivalent, it suffices to exhibit a map between them that induces isomorphisms on all homotopy groups, i.e.\ a weak homotopy equivalence. Showing that two spaces are homotopy equivalent is in general a difficult task, and Whitehead's theorem provides a powerful tool for such problems. \\
+Formalising a proof has several effects. The first is verification: the proof assistant accepst an argument only once every step has been caried out, which leaves no room for a case that has been overlooked or a hyothesis that is used without being stated. That way results become available to others, since anyone who builds on a formalised statement can rely on its proof being free of errors. What a formal proof cannot guarantee is that the statement says what one intended it to say. We ran into a such point in the closedness assumption of the retraction criterion, which we discuss in \cref{subsec:lean:retractioncriterion}. \\
+The second point is a personal one. Formalising these arguments made me understand them far more deeply and precisely than following them in a lecture had. The retraction criterion is my clearest example. Only while formalising it did I notice that the closedness assumption from the given argument is needed in one of the two directions and not in the other. This is something I had not been aware of before, and this is why the corresponding lemma is split in two. \\
+
+\subsection*{Outline}
+Throughout this work, unless specified otherwise, every space carries a topology and every map is continuous. \\
+\Cref{section:math} gives an overview of the mathematics behind the formalisation. We give the definition of the homotopy extension property in several equivalent phrasings and prove the retraction criterion, which is the tool we use to show that a pair of topological spaces satisfies the property, together with two results on its preservation. Afterwards we tirm to the instance we are interested in, namely that relative CW-complexes satisfy the homotopy extension property. \\
+The following chapter \cref{section:Lean} is about Lean and mathlib. Apart from  a short general overview, we highlight three concepts that are relevant for this project, namely the difference between sets and subtypes, structures, and junk values. We briefly introduce mathlib itself and the part of it concerning relative CW-complexes, which our own formalisation builds on. The formalisation is the subject of \cref{section:formalisation} and makes up the main part of this thesis.\\
+Based on short excerpts of the Lean code, we explain and assess the decisions made along the way. The formalisation follows the mathematical chapter up to the proof of the homotopy extension property for finite dimensional relative CW complexes. The general case is not covered. \\
+The complete Lean code accompanying this thesis can be found at (ToDo) % ToDo: Link zum Repository
+
 
 \newpage 
-\section {Homotopy Extension Property} \label{section:HEP}
-Our formalisation is not based on a single source. The overall structure follows the lecture notes of the course Topology I, taught by Markus Hausmann at the University of Bonn in the winter term 2025/26. These notes are not publicly available; the chapter on the homotopy extension property closely follows the (German) lecture notes Algebraische Topologie by F. Waldhausen (Bielefeld) \cite{WAL}, which we cite instead wherever a specific argument is taken from them.
+\section {Mathematics of the HEP} \label{section:math}
+The formalisation of this project is not based on a single source. The overall structure follows the lecture notes of the course Topology I, taught by Markus Hausmann at the University of Bonn in the winter term 2025/26. These notes are not publicly available. Since the chapter on the homotopy extension property closely follows the (German) lecture notes Algebraische Topologie by F. Waldhausen (Bielefeld) \cite{WAL}, we cite this instead wherever a specific argument is taken from them.
 Throughout, all maps between topological spaces are assumed to be continuous, and we write $I :=[0,1]$ for the unit interval. % Quelle hinzufuegen
 % https://www.math.uni-bielefeld.de/~fw/at.pdf
 
 
-\subsection{The Homotopy Extension Property}
+\subsection{Homotopy Extension Property} \label{subsec:HEP}
 
-There are several equivalent ways to define the homotopy extension property, and this section  We begin with the definition that is closest to the one we formalised in Lean.
+There are several equivalent ways to define the homotopy extension property, and this section we begin with the definition that is closest to the one we formalised in Lean.
 
--- Question: nicht genau so zitiert, aber es gibt ähnliche definition in der Quelle, dann schribbe ich die Quelle dran?
-\begin{definition} \label{def:HEP} \Cref{WAL} 
-A pair of topological spaces $(X,A)$ with $A \subseteq X$ has the
-\emph{homotopy extension property (HEP)} if for every topological space $Y$, every
-map $f \colon X \to Y$, and every homotopy $H \colon A \times I \to Y$ satisfying
-$H(a,0) = f(a)$ for all $a \in A$, there exists a homotopy
-$H' \colon X \times [0,1] \to Y$ such that
+\begin{definition} [cf.\ {\cite[Bemerkung~1]{WAL}}] \label{def:HEP}
+A pair of topological spaces $(X,A)$ with $A \subseteq X$ has the \emph{homotopy extension property (HEP)} if for every topological space $Y$, every map $f \colon X \to Y$, and every homotopy $H \colon A \times I \to Y$ satisfying $H(a,0) = f(a)$ for all $a \in A$, there exists a homotopy $H' \colon X \times [0,1] \to Y$ such that
 \begin{align*}
     H'(x,0) &= f(x)    && \text{for all } x \in X, \\
     H'(a,t) &= H(a,t)  && \text{for all } (a,t) \in A \times [0,1].
 \end{align*}
 \end{definition}
+The two extreme cases are immediatate, but we record them separately because we will use one of them later as the base case of an induction.
 
-THe two extreme cases are immediatate, but we record them separately because we will use them later as the base case of an induction.
-
-\begin{lemma} \label{lem:HEPtrivial}
-    For every topological space $X$, both $(X,X)$ and $(X,\emptyset)$ have the HEP.
-\end{lemma}
+\begin{example} \label{example:HEPtrivial} 
+     For every topological space $X$, both $(X,X)$ and $(X,\emptyset)$ have the HEP.
+\end{example}
 \begin{proof}
     For $(X,X)$, the homotopy $H$ is already defined on all of $X \times I$ and satisfies $H(x,0) = f(x)$, so we may take $H' \coloneqq H$. \\ 
     For $(X,\emptyset)$, the second condition of \Cref{def:HEP} is vacuous, so the constant homotopy $H'(x,t) \coloneqq f(x)$ has the required properties.
 \end{proof}
 
-\begin{remark} \label{rem:pushout}
-    The HEP can equivalently be phrased as follows: $(X,A)$ has the HEP if and only if every map defined on the pushout $X \cup_A (A \times I)$ extends to a map on $X \times I$. Here the pushout is taken along the inclusion $A \hookrightarrow X$ and the map $A \to A \times I, a \mapsto (a,0)$. This is in general, \emph{not} the same as requiring that every map defined on the subspace $X \times \{0\} \cup (A \times I) \subset X \times I$ extends to $X \times I$, because the cannonical map
-    \[
-    X \cup_A (A \times I) \to X \times \{0\} \cup (A \times I)
-    \]
-    need not be a necessarily a homeomorphism. In general, it is only a continuous bijection. If $A$ is closed in $X$, however, both $X \times \{0\}$ and $A \times I$ are closed in $X \times I$, the canonical map is a closed map and hence a homeomorphism, and the two formulations agree. This is the reason why the closedness assumption appears in exactly one direction of \cref{lem:HEPextension} below. 
+\begin{remark} [cf.\ {\cite[Bemerkung~2 und 3]{WAL}}] \label{rem:pushout}
+    The HEP can equivalently be phrased as follows: $(X,A)$ has the HEP if and only if every map defined on the pushout $X \cup_A (A \times I)$ extends to a map on $X \times I$. Here the pushout is taken along the inclusion $A \hookrightarrow X$ and the map $A \to A \times I, a \mapsto (a,0)$. This is, in general, \emph{not} the same as requiring that every map defined on the subspace $(X \times \{0\}) \cup (A \times I) \subseteq X \times I$ extends to $X \times I$, because the canonical map
+\[
+    X \cup_A (A \times I) \to (X \times \{0\}) \cup (A \times I)
+\]
+need not be a homeomorphism. In general, it is only a continuous bijection. If $A$ is closed in $X$, however, both $X \times \{0\}$ and $A \times I$ are closed in $X \times I$, the canonical map is a closed map and hence a homeomorphism, and the two formulations agree. This is the reason why the closedness assumption appears in exactly one direction of \cref{lem:HEPextension} below. 
 \end{remark}
 
 \begin{lemma} \label{lem:HEPextension}
     Let $A$ be a subset of a topological space $X$ and consider the following two statements
     \begin{enumerate} 
         \renewcommand{\labelenumi}{(\roman{enumi})}
-        \item The pais $(X,A)$ has the \emph{HEP}
+        \item The pair $(X,A)$ has the \emph{HEP}
         \item For every topological space $Y$ and every continuous map $g\colon (X \times \{ 0\}) \cup (A \times I) \to Y$ there exists an extension of $g$ to a map $G \colon X \times I \to Y$
     \end{enumerate}
     Then (i) implies (ii). If in addition $A$ is closed in $X$, then also (ii) implies (i).
@@ -225,17 +228,17 @@ THe two extreme cases are immediatate, but we record them separately because we 
 
 \begin{proof} 
     \emph{(i) $\Rightarrow$ (ii).} 
-    Let $g \colon X \times \{ 0\} \cup A \times I \to Y$ be a map. Define
+    Let $g \colon (X \times \{ 0\}) \cup A \times I \to Y$ be a map. Define
     \[ 
     f \colon X \to Y, x \mapsto g(x,0)
     \qquad\text{and}\qquad
-    H \colon A \times [0,1] \to Y, (x,t) \mapsto g(x,t).
+    H \colon (A \times I) \to Y, (x,t) \mapsto g(x,t).
     \] 
-    Both are continuous, being composites of $g$ with the continuous maps $x \mapsto (x,0)$ and $A \times I \hookrightarrow (X \times \{0\}) \cup (A \times I)$. They are compatible in the sense of \cref{def:HEP}, since $H(a,0) = g(a,0) = f(a)$ for all $a \in A$. Applying the HEP of $(X,A)$ yields a homotopy $H' \colon X \times I \to Y$ with $H'(x,0) = f(x) = g(x,0)$ and $H'|_{A \times I} = H = g|_{A \times I}$. Hence $G \coloneqq H'$ restricts to $g$ on all of $(X \times \{0\}) \cup (A \times I)$. \\
+    Both maps are continuous: $H$ is the restriction of $g$ to the subspace $A \times I$, and $f$ is the restriction of $g$ to $X \times \{0\}$, composed with the homeomorphism $X \to X \times \{0\}$, $x \mapsto (x,0)$. They are compatible in the sense of \cref{def:HEP}, since $H(a,0) = g(a,0) = f(a)$ for all $a \in A$. Applying the HEP of $(X,A)$ yields a homotopy $H' \colon X \times I \to Y$ with $H'(x,0) = f(x) = g(x,0)$ and $H'|_{A \times I} = H = g|_{A \times I}$. Hence $G \coloneqq H'$ restricts to $g$ on all of $(X \times \{0\}) \cup (A \times I)$. \\
     \emph{(ii) $\Rightarrow$ (i), assuming $A$ closed.}
     Let $f \colon X \to Y$ and $ H \colon A \times I \to Y$ with $H(a,0) = f(a)$ for all $a \in A$. We define
     \[
-    g \colon X \times \{ 0\} \cup A \times [0,1] \rightarrow Y, 
+    g \colon (X \times \{ 0\}) \cup (A \times I) \rightarrow Y, 
     \qquad
     (x,t) \mapsto \begin{cases}
         f(x), & t = 0, \\
@@ -245,11 +248,11 @@ THe two extreme cases are immediatate, but we record them separately because we 
     The map $g$ is well defined: the two cases overlap precisely on $A \times \{0\}$, where $H(a,0) = f(a)$ by assumption. For continuity we use that $A$ is closed in $X$: then $A \times I$ is closed in $X \times I$, and so is $X \times \{0\}$. Both are therefore closed in the subspace $(X \times \{0\}) \cup (A \times I)$, which they cover, and the restrictions of $g$ to them are continuous. By assumption there is an extension $G \colon X \times I$ of $g$,  and $H' \coloneqq G$ satisfies both conditions of \cref{def:HEP} by construction.
 \end{proof}
 
-\begin{definition}\label{def:retraction}
+\begin{definition} \label{def:retraction}
     Let $X$ be a topological space and $A \subset X$ a subset with inclusion $ \iota : A \hookrightarrow X $. A \emph{retraction} of $X$ onto $A$ is a map $r \colon X \to A$ with $r \circ i = id_A $. If such an $r$ exists, we call $A$ a \emph{retract} of $X$.
 \end{definition}
 
-\begin{lemma} \label{lem:retract}
+\begin{lemma} [cf.\ {\cite[Hilfssatz, page 39]{WAL}}] \label{lem:retract}
     Let $A$ be a subset of a topological space $X$. The following are equivalent:
     \begin{enumerate}
         \renewcommand{\labelenumi}{(\roman{enumi})}
@@ -260,22 +263,21 @@ THe two extreme cases are immediatate, but we record them separately because we 
 
 \begin{proof}
     \emph{(i) $\Rightarrow$ (ii).}
-   Apply (i) to the special case $Y \coloneqq A$ and $g \coloneqq id_A$. The resulting extension $G$ restricts to the
+    Apply (i) to the special case $Y \coloneqq A$ and $g \coloneqq id_A$. The resulting extension $G$ restricts to the
     identity on $A$ and is therefore a retraction. \\
     \emph{(ii) $\Rightarrow$ (i).} 
-    Let $g \colon A \to Y$ be a map and let $r \colon X \to A$ be a retraction.Then $G \coloneqq g \circ r$ is continuous, and for $a \in A$ we have $G(a) = g(r(a)) = g(a)$, so $G$ extends $g$. 
+    Let $g \colon A \to Y$ be a map and let $r \colon X \to A$ be a retraction. Then $G \coloneqq g \circ r$ is continuous, and for $a \in A$ we have $G(a) = g(r(a)) = g(a)$, so $G$ extends $g$. 
 \end{proof}
-
-Combining the two lemmas gives the \emph{retraction criterion}, which is the tool we use in several of the following proofs: it replaces the quantification over all spaces $Y$ and all maps into them by the existence of a single map. In the lecture notes the criterion is stated only for closed subspaces $A \subseteq X$. Hatcher \cite{HAT01} states it without any such assumption, but his proof of the implication from the retraction to the HEP again requires $A$ to be closed;for the general case he refers to the appendix, where a detailed proof followingan argument of \cite{STM} is given. Our formulation follows the same pattern as \cref{lem:HEPextension}: we impose closedness only on the implication that actually needs it. \\
+Combining the two lemmas gives the \emph{retraction criterion}, which is the tool we use in several of the following proofs.In the lecture notes, the criterion is stated only for closed subspaces $A \subseteq X$. Hatcher \cite{HAT01} states it without this assumption, but for the implication from the existence of a retraction to the HEP he gives a proof under the additional hypothesis that $A$ is closed, referring to the appendix for the general case, where a detailed proof following an argument of \cite{STM} is given. Our formulation follows the same pattern as \cref{lem:HEPextension}. We impose closedness only on the implication that actually needs it. \\
 For our purposes this restriction is harmless, since in all cases we consider the closedness of the subspace is available at no additional cost.
 --ToDo : Ausblick: verallgemeinern 
 
-\begin{proposition}[Retraction Criterion] \label{prop:retractioncriterion}
+\begin{proposition}[Retraction Criterion, cf.\ {\cite[Bemerkung~4]{WAL}}]  \label{prop:retractioncriterion}
     Let $X$ be a topological space and $A \subseteq X$ a subspace. Consider the following two statements:
     \begin{enumerate}
     \renewcommand{\labelenumi}{(\roman{enumi})}
         \item The pair $(X,A)$ has the \emph{HEP}
-        \item the subspace $X \times \{ 0\} \cup A \times I$ is a retract of $X \times I$
+        \item the subspace ($X \times \{ 0\}) \cup (A \times I)$ is a retract of $X \times I$
     \end{enumerate}
     Then (i) implies (ii). If in addition $A$ is closed in $X$, then (ii) also implies (i).
 \end{proposition}
@@ -286,7 +288,7 @@ For our purposes this restriction is harmless, since in all cases we consider th
     \emph{(ii) $\Rightarrow$ (i), assuming $A$ closed.} By \cref{lem:retract}, applied to the same subspace, every map defined on $(X \times \{0\}) \cup (A \times I)$ extends to $X \times I$. Since $A$ is closed in $X$, the second direction of \cref{lem:HEPextension} applies and yields the HEP for $(X,A)$.
 \end{proof}
 
-The remaining results of this section are permanence properties: they allow us to build new pairs with the HEP out of known ones. The first one is used in \cref{cor:HEPcube} to transfer the HEP from balls to cubes, the second one is the inductive step in the proof for relative CW-complexes.
+The remaining results of this section are permanence properties: they allow us to build new pairs with the HEP out of known ones. The first one states that the HEP depends on the pair $(X,A)$ only up to homeomorphism of pairs. We record this explicitly, since it is used in \cref{cor:HEPcube} to transfer the HEP from balls to cubes. The second result is the inductive step in the proof for relative CW-complexes.
 
 \begin{proposition} \label{prop:HEPhomeo}
     Let $(X,A)$ and $(Y,B)$ be pairs of topological spaces with $B$ closed in $Y$, and let $\varphi \colon X \to Y$ be a homeomorphism with $\varphi(A) = B$. If $(X,A)$ has the HEP, then so does $(Y,B)$.
@@ -301,13 +303,16 @@ The remaining results of this section are permanence properties: they allow us t
         pr_I \circ r_X\big(\varphi^{-1}(y), t\big)\Big) .
     \end{align*}
     We show that $r_Y$ is a retraction. By \cref{prop:retractioncriterion} this  yields the HEP for the pair $(Y,B)$, since $B$ is closed in $Y$. The map $r_Y$
-
     \begin{itemize}
+    \item \emph{takes values in $(Y \times \{0\}) \cup (B \times I)$}: let $(y,t) \in Y \times I$. The point $r_X(\varphi^{-1}(y),t)$ lies in the image of $r_X$, which is $(X \times \{0\}) \cup (A \times I)$. Hence either its second coordinate is $0$, in which case the second component of $r_Y(y,t)$ is $0$ as well, or its first component lies in $A$, in which case the first component of $r_Y(y,t)$ lies in $\varphi(A) = B$.
     \item \emph{is continuous}, since both component functions are composites of continuous maps.
-    \item \emph{takes values in $(Y \times \{0\}) \cup (B \times I)$}: let $(y,t) \in Y \times I$. The point $r_X(\varphi^{-1}(y),t)$ lies in the image of $r_X$, which is $(X \times \{0\}) \cup (A \times I)$. Hence either its second component is $0$, in which case the second component of $r_Y(y,t)$ is $0$ as well, or its first component lies in $A$, in which case the first component of $r_Y(y,t)$ lies in $\varphi(A) = B$.
-    \item \emph{restricts to the identity on $(Y \times \{0\}) \cup (B \times I)$}: let $(y,t)$ be a point of thissubspace. Since $\varphi^{-1}$ maps $Y$ to $X$ and $B$ to $A$, the point $(\varphi^{-1}(y),t)$ lies in $(X \times \{0\}) \cup (A \times I)$, on which $r_X$ is the identity. Therefore $r_X(\varphi^{-1}(y),t) = (\varphi^{-1}(y),t)$, and applying $\varphi$ to the first component gives $r_Y(y,t) = (y,t)$.
+    \item \emph{restricts to the identity on $(Y \times \{0\}) \cup (B \times I)$}: let $(y,t)$ be a point of this subspace. Since $\varphi^{-1}$ maps $Y$ to $X$ and $B$ to $A$, the point $(\varphi^{-1}(y),t)$ lies in $(X \times \{0\}) \cup (A \times I)$, on which $r_X$ is the identity. Therefore $r_X(\varphi^{-1}(y),t) = (\varphi^{-1}(y),t)$, and applying $\varphi$ to the first component gives $r_Y(y,t) = (y,t)$.
     \end{itemize}
 \end{proof}
+
+\begin{remark}
+The assumption that $B$ be closed in $Y$ is not needed for the statement itself. The HEP is preserved under homeomorphisms of pairs without any further hypotheses. It is used only in the proof given above, where closedness is required to apply the given above version of the retraction criterion \cref{prop:retractioncriterion}. This proof is given here, since this is the one formalised.
+\end{remark}
 
 % % https://math.jhu.edu/~jmb/note/hep.pdf
 % \begin{corollary} \cite{JHU}
@@ -334,6 +339,7 @@ The remaining results of this section are permanence properties: they allow us t
 %     is a retract.
 % \end{proof}
 
+The following proposition states, that the HEP behaves transitive for two pairs. In the language of cofibrations, this statement asserts that a composite of cofibrations is again a cofibration, and is proofen here: (ToDo: Quelle einfügen) %(ToDo: vermutlich hier: https://hbz-ulb.primo.exlibrisgroup.com/discovery/fulldisplay?docid=cdi_springer_books_10_1007_BFb0083031&context=PC&vid=49HBZ_ULB:DEFAULT&lang=de&search_scope=MyInst_and_CI&adaptor=Primo%20Central&tab=Everything&query=any,contains,tom%20Dieck,%20Algebraic%20Topology)
 
 \begin{proposition} \label{prop:HEPtrans}
     Let $C \subseteq B \subseteq X$ be topological spaces such that both $(X,B)$ and $(B,C)$ have the HEP. Then $(X,C)$ has the HEP.
@@ -349,7 +355,7 @@ The remaining results of this section are permanence properties: they allow us t
     In particular $H'(b,0) = f(b)$, so we may apply the HEP of $(X,B)$ to $f$ and $H'$ and obtain a homotopy $H'' \colon X \times I \to Z$ with $H''(x,0) = f(x)$ for all $x \in X$ and $H''|_{B \times I} = H'$. The first condition of \cref{def:HEP} is thus satisfied, and since $C \subseteq B$ we also get $H''|_{C \times I} = H'|_{C \times I} = H$.
 \end{proof}
 
-\subsection{HEP for relative CW-complexes}
+\subsection{HEP for relative CW-complexes} \label{subsec:HEP_relCW}
 
 To proof the \emph{HEP} for relative CW-complexes, we generalize the pair of spaces in three steps proving the HEP at each stage:
 \begin{enumerate}
@@ -359,14 +365,14 @@ To proof the \emph{HEP} for relative CW-complexes, we generalize the pair of spa
 \end{enumerate}
 
 Before turning to the proofs we introduce the defintions and notations we use for CW-complexes.\\
-The follwoing definition of relative CW complexes is a modified version of the definition of CW-complexes given in the bachelor thesis of Hannah Scholz \cite{SCH01}. She farmalised the historical definition of CW-complexes, presented by Whithead in \cite{WH}, and this formalisation is now available in mathlib as \emph{Classical CW-Complex}. We follow her definition because it provides exactly the structures our formalised proofs rely on: explicit characteristic maps together with the weak topology, rather than an inductive description via attaching cells.
+The follwoing definition of relative CW complexes is a modified version of the definition of CW-complexes given in the bachelor thesis of Hannah Scholz \cite{SCH01}. She formalised the historical definition of CW-complexes, presented by Whithead in \cite{WH}, and this formalisation is now available in mathlib as \emph{Classical CW-Complex}. We present her definition because it provides exactly the structures our formalised proofs rely on: explicit characteristic maps together with the weak topology, rather than an inductive description via attaching cells.
 
 \begin{definition}
 We write $D^n \coloneqq \{ x \in \mathbb{R}^n \mid \norm{x} \le 1 \}$ $n$-dimensional closed ball.
 Its boundary $\partial D^n = S^{n-1} \coloneqq \{ x \in \mathbb{R}^n \mid \norm{x} = 1\} $ is the $(n-1)$-dimensional sphere.
 \end{definition}
 
-\begin{definition}\label{def:CWComplex}
+\begin{definition} [cf.\ {\cite[Definition 1.1.2.]{SCH01}}] \label{def:CWComplex}
 Let $X$ be a Hausdorff space and $C \subset X$ a closed subspace. A \emph{relative CW-complex} on $(X,C)$ consists of a family of indexing sets $(I_n)_{n \in \mathbb{N}}$ together with a family of maps $(Q_i^n\colon D_i^n\to X)_{n \ge 0, i \in I_n}$ such that:
     \begin{enumerate}
         \item $\restrict{Q_i^n}{\interior{D_i^n}}\colon \interior{D_i^n} \to Q_i^n(\interior{D_i^n})$ is a homeomorphism. We call $\openCell{n}{i} \coloneq Q_i^n(\interior{D_i^n})$ an \emph{(open) $n$-cell} (or a cell of dimension $n$) and $\closedCell{n}{i} \coloneq Q_i^n(D_i^n)$ a \emph{closed $n$-cell}.
@@ -382,7 +388,7 @@ Let $X$ be a Hausdorff space and $C \subset X$ a closed subspace. A \emph{relati
     \]
 \end{definition}
 
-Note that $X_{-1} = C$ and $X_\infty = X$. Moreover, every skeleton is closed in $X$. This follows from condition (4), since the intersection of $X_n$ with $C$ and with every closed cell is closed. We use this below whenever we apply the converse direction of \cref{prop:retractioncriterion}.
+Note that $X_{-1} = C$ and $X_\infty = X$. Moreover, every skeleton is closed in $X$. This follows from condition (4), since the intersection of $X_n$ with $C$ and with every closed cell is closed. We use this below when we apply the converse direction of the retraction criterion \cref{prop:retractioncriterion} for skeleta.
 
 \begin{definition}
     If $C = \emptyset$, we call $(X,\emptyset)$, or simply $X$, an \emph{(absolute) CW-complex}.
@@ -395,12 +401,12 @@ Note that $X_{-1} = C$ and $X_\infty = X$. Moreover, every skeleton is closed in
 \symbolindex {$X_n$}{}{The \emph{$n$-skeleton} of a CW-complex X}{}
 \symbolindex{$(I_n)$}{}{The indexinset for cells of dimension $n$}{}
 
-\subsubsection{HEP for balls}
-\begin{theorem} \label{thm:HEPball}
+\subsubsection{HEP for balls} \label{subsubsec:HEP_ball}
+\begin{theorem} [cf.\ {\cite[Lemma 11]{JHU}}] \label{thm:HEPball}
     For every $m \in \mathbb{N}$, the pair $(D^m, \partial D^m)$ has the HEP.
 \end{theorem}
 
-There are two different attempts to prove this. One argues visually via the retraction criterion, projection the cylinder $D^m \times I$ from a point above it onto $(D^m \times \{0\}) \cup (\partial D^m \times I)$. The other constructs the extended homotopy explicitly. We give the constructive proof, since it was the easier one to formalise in Lean.
+There are two different attempts to prove this. One argues visually via the retraction criterion, projection the cylinder $D^m \times I$ from a point above it onto $(D^m \times \{0\}) \cup (\partial D^m \times I)$. The other constructs the extended homotopy explicitly. We give the constructive proof presented in {\cite[Lemma 11]{JHU}}, since it was the easier one to formalise in Lean.
 
 \begin{proof}
     Let $Y$ be a topological space, let $f \colon D^m \to Y$ be a map and let $H \colon \partial D^m \times I \to Y$ be a homotopy with $H(a,0) = f(a)$ for all $a \in \partial D^m$. We assemble these into a map $ h \colon D_2^m \to Y $, where $D_2^m $ denotes the closed ball of radius 2 in $ \mathbb{R} ^m $, by setting
@@ -411,7 +417,7 @@ There are two different attempts to prove this. One argues visually via the retr
         H\!\left(\dfrac{x}{\norm{x}},\, \norm{x} - 1\right), & \norm{x} \ge 1  
     \end{cases}
 \] 
-    The two cases agree on the sphere $\norm{x} = 1$, where the second one gives $H(x,0) = f(x)$, and both domains are closed in $D_2^m$, so $h$ is continuous by the pasting lemma. Using $h$ we define
+    The two cases agree on the sphere $\norm{x} = 1$, where they ask for exactly the compatibility assumption. Both domains are closed in $D_2^m$, so $h$ is continuous by the pasting lemma. Using $h$ we define
     \[
         H' \colon D^m \times I \to Y, \qquad H'(x,t) = h\big((1+t)x\big),
     \]
@@ -419,20 +425,22 @@ There are two different attempts to prove this. One argues visually via the retr
 \end{proof}
 
 For $m = 0$ the sphere $\partial D^0$ is empty and the second case of the definition of $h$ never occurs. In Lean this requires no special treatment, since division by zero is defined to be zero: the term $x / \norm{x}$ is total and the case distinction goes through unchanged. \\
-Since the definition of CW-complexes in mathlib uses $n$-dimenstional cubes rather than closed balls as the domain of the caracteristic maps, we restate the HEP for cubes relative to their boundary. -- ToDo: Question: eigentlich nicht ist der domain nicht der cube, sondern es ist ein partial homeomorphismus mit source cube. Muss man da präzieser sein, oder reicht das, weil es hier nur um die Motivation geht? 
+Since the definition of CW-complexes in mathlib uses $n$-dimenstional cubes rather than closed balls as the domain of the caracteristic maps, we restate the HEP for cubes relative to their boundary. \\
+-- ToDo: Question: eigentlich nicht ist der domain nicht der cube, sondern es ist ein partial homeomorphismus mit source cube. Muss man da präzieser sein, oder reicht das, weil es hier nur um die Motivation geht? \\
+-- ToDo: Question: Das folgende Lemma hat wieder keine Quelle. Das ist okay, oder? %(eventuell auch in https://hbz-ulb.primo.exlibrisgroup.com/discovery/fulldisplay?docid=cdi_springer_books_10_1007_BFb0083031&context=PC&vid=49HBZ_ULB:DEFAULT&lang=de&search_scope=MyInst_and_CI&adaptor=Primo%20Central&tab=Everything&query=any,contains,tom%20Dieck,%20Algebraic%20Topology
+)
 
-\begin{corollary}\label{HEPcube}
+\begin{corollary}\label{cor:HEPcube}
     For every $ n \in \mathbb{N}$, the pair $([ - 1 ,1 ]^n , \partial [- 1 ,1 ]^n ) $ has the HEP. 
 \end{corollary}
 \begin{proof}
     The ball $D^n$ is homeomorphic to the cube $[-1,1]^n$ via radial scaling, which maps each ray from the origin to itself and takes $\partial D^n$ to $\partial [-1,1]^n$. This maps the sphere to the boundary of the cube. The claim now follows from \cref{thm:HEPball} together with \cref{prop:HEPhomeo}.
 \end{proof}
 
-\subsubsection{HEP for consequitive skeletons}
-
-In the next step we prove that for every relative CW complex $(X,C)$ and every $m \in \mathbb{N}$, the pair $(X_n,X_{n-1})$ has the HEP. We do so by applying the retraction criterion, that is, by constructing a retraction 
+\subsubsection{HEP for consequitive skeletons} \label{subsubsec:HEP_skel}
+In the next step we prove that for every relative CW complex $(X,C)$ and every $m \in \mathbb{N}$, the pair $(X_m,X_{m-1})$ has the HEP. We do so by applying the retraction criterion, that is, by constructing a retraction 
 \[ r^{\mathrm{Skel}}_m \colon X_m \times I \to (X_m \times \{0\}) \cup (X_{m-1} \times I). \] 
-This map will be obtained from the universal property of the quotient. To use it we need to know that $X_m \times I$ carries the quotient topology,and for this it suffices to know that $X_m$ does, by the following theorem:
+This map will be obtained from the universal property of the quotient. To use it we need to know that $X_m \times I$ carries the quotient topology, and for this it suffices to know that $X_m$ does, by the following theorem: (ToDo: Quelle in der MNL anschauen und einfügen - ist bestellt) %https://hbz-ulb.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991009987839706467&context=L&vid=49HBZ_ULB:DEFAULT&lang=de&search_scope=MyInst_and_CI&adaptor=Local%20Search%20Engine&isFrbr=true&tab=Everything&query=any,contains,general%20Topology,%20Ryszard%20Engelking&sortby=date_d&facet=frbrgroupid,include,9035791847587913213&offset=0
 
 \begin{theorem} \label{thm:quotientproduct}
     Let $Z$ be a locally compact space and let $g \colon Y \to Y'$ be a quotient map. Then
@@ -441,8 +449,7 @@ This map will be obtained from the universal property of the quotient. To use it
     \]
     is a quotient map.
 \end{theorem}
-
-Since the unit interval $I$ is compact, and in particular locally compact,\cref{thm:quotientproduct} applies to $Z \coloneqq I$ throughout this section. So let us prove that every skeleton indeed is a quotient space:
+Since the unit interval $I$ is compact, and in particular locally compact, \cref{thm:quotientproduct} applies to $Z \coloneqq I$ throughout this section. So let us prove that every skeleton indeed is a quotient space:
 We set $ Z_m \coloneqq C \amalg \coprod_{n \le m} \coprod_{i\in I_n}  D_i^n $ and define  
 \begin{align*} 
         P_m : Z_m &\to X_m \\
@@ -452,12 +459,12 @@ We set $ Z_m \coloneqq C \amalg \coprod_{n \le m} \coprod_{i\in I_n}  D_i^n $ an
         \end{cases}
 \end{align*}
 
-\begin{lemma}
+\begin{lemma} [cf.\ {\cite[Satz~4.1.11]{SZ}}] \label{lem:skeletonquotient}
     Let $(X,C)$ be a relative CW-complex. For every $m \in \mathbb{N}$ the map $ P_m : Z_m \to X_m$ is a quotient map .
 \end{lemma}
 
 \begin{proof}
-The map $P_m$ is well defined, since the images of the characteristic maps up to dimension $m$ lie in $X_m$ and the base $C$ is contained in every skeleton. It is continuous because its restriction to each summand of the coproduct is, and it is surjective by the definition of $X_m$.\\
+Let $m \in \mathbb{N}$ be a natural number. The map $P_m$ is well defined, since the images of the characteristic maps up to dimension $m$ lie in $X_m$ and the base $C$ is contained in every skeleton. It is continuous because its restriction to each summand of the coproduct is, and it is surjective by the definition of $X_m$.\\
 It remains to show that a subset $S \subseteq X_m$ is closed whenever $P_m^{-1}(S)$ is closed. So let $P_m^{-1}(S)$ be closed. By the definition of the coproduct topology this means that
     \[
         P_m^{-1}(S) \cap C = S \cap C
@@ -468,22 +475,25 @@ are closed for all $n \le m$ and $i \in I_n$. Since $X_m$ is closed in $X$, it s
 $S \cap C$ is closed by the above. For $n \le m$ we have $S \cap \closedCell{n}{i} = Q_i^n\big((Q_i^n)^{-1}(S)\big) $, which is closed as the image of a closed set of a compact space $D_i^n$ under a continuous map into a Hausdorff space. For $n > m$ we use a variant of the closedness characterisation, which is available in mathlib as \lean{Topology.RelCWComplex.isClosed_of_isClosed_inter_openCell_or_isClosed_inter_closedCell}. By this it suffices to consider the intersection of $S$ with the open cells $\openCell{n}{i}$. Since $S \subseteq X_m$ is disjoint from every open cell of dimension greater than $m$, these intersections are empty and hence closed.
 \end{proof}
 
-By \cref{lem:skeletonquotient} and \cref{thm:quotientproduct}, the map $P_m \times id_I \colon Z_m \times I \to X_m \times I$ is a quotient map. We now define 
+\begin{remark}
+The reference given for \cref{lem:skeletonquotient} does not prove this exact statement, but the closely related result that a map defined on a CW-complex is continuous if and only if its restriction to each closed cell is continuous. Moreover, we have adapted the statement to relative CW-complexes by imposing an additional condition on the restriction to the base.
+\end{remark}
+
+By \cref{lem:skeletonquotient} and \cref{thm:quotientproduct}, the map $P_m \times id_I \colon Z_m \times I \to X_m \times I$ is a quotient map. We now define for all $m \in \mathbb{N}$
 \begin{align*} 
 f_m : Z_m \times I &\to (X_m \times \{0\}) \cup (X_{m-1} \times I)  \\
     (z,t) &\mapsto
     \begin{cases}
-    (P_m \times id_I) \circ r_i^m (x), & z \in D_i^m \text{for some} i \in I_m\\
+    (P_m \times id_I) \circ r_i^m (x), & z \in D_i^m \text{ for some } i \in I_m\\
     (P_m \times id_I) (z,t), & \text{otherwise }  
     \end{cases}
-\end{align*}.
-Here $r_i^m \colon D_i^m \times I \to D_i^m \times \{0\} \cup S_i^{m-1} \times I$ is the retraction, obtained from \cref{thm:HEPball} and \cref{prop:retractioncriterion}. Note that the case distinction is unambiguous: the summands of $Z_m$ are disjoint, so $z$ lies in a ball of dimension exactly $m$ for at most one index $i$.
-Once we know that $f_m$ is continuous and factors through $P_m \times id_I$, the universal property of the quotient yields a map $r^{\mathrm{Skel}}_m$ making the following diagram commute.
+\end{align*}
+Here $r_i^m \colon D_i^m \times I \to (D_i^m \times \{0\}) \cup (S_i^{m-1} \times I)$ is the retraction, obtained from \cref{thm:HEPball} and the retraction criterion \cref{prop:retractioncriterion}. Note that the case distinction is unambiguous: the summands of $Z_m$ are disjoint, so $z$ lies in a ball of dimension exactly $m$ for at most one index $i$. Once we know that $f_m$ is continuous and factors through $P_m \times id_I$, the universal property of the quotient yields a map $r^{\mathrm{Skel}}_m$ making the following diagram commute.
 \begin{center}
 \begin{tikzcd}
 {Z_m \times [0,1]} \arrow[dd, "{P_m \times id_{[0,1]}}"] \arrow[rrr, "f_m"] &  &  & {X_m \times \{0\} \cup X_{m-1} \times [0,1]} \\
                                                                                     &  &  &                                              \\
-{X_m \times [0,1]} \arrow[rrruu, "\exists r_{Skel}^m"', dashed]             &  &  &                                             
+{X_m \times [0,1]} \arrow[rrruu, "\exists r^{Skel}_m"', dashed]             &  &  &                                             
 \end{tikzcd}
 \end{center}
 
@@ -509,32 +519,29 @@ If the second coordinate of $r_i^m(z,t)$ is $0$, then $f_m(z,t) \in X_m \times \
 Now let $(z,t) \in Z_m \times I$ be a point of the second case, so $z \in C$ or $z \in D_i^n$ for some $n < m$. In either case $P_m(z) \in X_{m-1}$, hence $f_m(z,t) \in X_{m-1} \times I$.
 
     \emph{(ii).} 
-The space $Z_{m} \times I$ is homeomorphic to $(C \times I) \amalg \coprod_{n \le m} \coprod_{i\in J_n}  (D_i^n \times I)$, via the canonical mapp. Under this homeomorphism, $f_m$ is defined on a coproduct and not a product space anymore. $f_m$ restricts on each summand to a composite of continuous maps, and a map out of a coproduct is continuous if and only if all its restrictions to the summands are. Hence $f_m$ is continuous.
+The space $Z_{m} \times I$ is homeomorphic to $(C \times I) \amalg \coprod_{n \le m} \coprod_{i\in I_n}  (D_i^n \times I)$, via the canonical map. Under this homeomorphism, $f_m$ is defined on a coproduct and not a product space anymore. $f_m$ restricts on each summand to a composite of continuous maps. A map out of a coproduct is continuous if and only if all its restrictions to the summands are. Hence $f_m$ is continuous.
 
     \emph{(iii).}
 Let $(z,t)$ and $(z',t') \in Z_m \times I$ with $P_m \times id_I (z,t) = P_m \times id_I (z',t')$. $P_m \times id_{[0,1]}$. Since $P_m \times id_I$ is the indentity on the second coordinate, we directly get $t = t'$ and $P_m(z) = P_m(z')$. We must show, that $f_m (z,t) = f_m (z',t)$. \\
-If neither $z$ nor $z'$ lies in a ball of dimension $m$, both are in the second case of the definition and $f_m(z,t) = (P_m \times id_I)(z,t) = (P_m \times id_I)(z',t) = f_m(z',t)$. The same conclusion holds if $z$ or $z$ lie in $\boundary D_i^m$ for some $i \in I_m$, since $r_i^m$ is a retraction it is the identity there and $f_m$ again agrees with $P_m \times id_I$. So we may assume that $z \in \interior D_i^m$ for some $i \in I_m$, and it suffices to show $z = z'$. \\
-We have $P_m (z) = Q_i^m(x) \in \openCell{m}{i}$. Suppose $z'$ did not lie in $\interior D_i^m$. If $z' \in \interior D_j^m$ for some $j \ne i$, then $P_m(z') \in \openCell{m}{j}$, which is disjoint from $\openCell{m}{i}$ by condition (2) of \cref{def:CWComplex}. In all remaining cases — that is, if $z' \in C$, or $z'$ lies in a ball of dimension less than $m$, or in the boundary of a ball of dimension $m$ — condition (3) gives $P_m(z') \in X_{m-1}$, which is disjoint from $\openCell{m}{i}$ as well. Both contradict $P_m(z) = P_m(z')$, so $z' \in \interior D_i^m$. Since $\restrict{Q_i^m}{\interior D_i^m}$ is a homeomorphism onto $\openCell{m}{i}$ and hence injective, $P_m(z) = P_m(z')$ forces $z = z'$.
+If neither $z$ nor $z'$ lies in a ball of dimension $m$, both are in the second case of the definition and $f_m(z,t) = (P_m \times id_I)(z,t) = (P_m \times id_I)(z',t) = f_m(z',t)$. The same conclusion holds if $z$ or $z'$ lie in $\boundary D_i^m$ for some $i \in I_m$, since $r_i^m$ is a retraction it is the identity on the boundary and $f_m$ again agrees with $P_m \times id_I$. So we may assume that $z \in \interior D_i^m$ for some $i \in I_m$, and it suffices to show $z = z'$. \\
+We have $P_m (z) = Q_i^m(z) \in \openCell{m}{i}$. Suppose $z'$ did not lie in $\interior D_i^m$. If $z' \in \interior D_j^m$ for some $j \ne i$, then $P_m(z') \in \openCell{m}{j}$, which is disjoint from $\openCell{m}{i}$ by condition (2) of \cref{def:CWComplex}. In all remaining cases — that is, if $z' \in C$, or $z'$ lies in a ball of dimension less than $m$, or in the boundary of a ball of dimension $m$. Condition (3) gives $P_m(z') \in X_{m-1}$, which is disjoint from $\openCell{m}{i}$ as well. Both contradict $P_m(z) = P_m(z')$, so $z' \in \interior D_i^m$. Since $\restrict{Q_i^m}{\interior D_i^m}$ is a homeomorphism onto $\openCell{m}{i}$ and hence is injective, $P_m(z) = P_m(z')$ forces $z = z'$.
 \end{proof}
 
-\begin{theorem}\label{HEPskeleton}
+The idea of the following proof is from {\cite[page 40]{WAL}}.
+\begin{theorem} \label{thm:HEPskeleton} 
     Let $(X,C)$ be a relative CW-complex with skeleta $(X_m)_{m \in \mathbb{N}}$, then $(X_m,X_{m-1})$ has the \emph{HEP} for every $m \in \mathbb{N}$.
 \end{theorem}
 
 \begin{proof}
 By \cref{lem:fm} and the universal property of the quotient we have a continuous map $r^{\mathrm{Skel}}_m \colon X_m \times I \to (X_m \times \{0\}) \cup (X_{m-1} \times I)$ with $r^{\mathrm{Skel}}_m \circ (P_m \times id_I) = f_m$. By \cref{prop:retractioncriterion} it remains to show that $r^{\mathrm{Skel}}_m$ restricts to the identity on $(X_m \times \{0\}) \cup (X_{m-1} \times I)$. Then the pair then has the HEP, since $X_{m-1}$ is closed in $X_m$.\\
-Since $f_m$ factors through $P_m \times id_I$, the value $r^{\mathrm{Skel}}_m(x,t)$ does not depend on the choice of a preimage of $(x,t)$, and we may therefore choose a convenient one in each case. \\
+Because $f_m$ factors through $P_m \times id_I$, the value $r^{\mathrm{Skel}}_m(x,t)$ does not depend on the choice of a preimage of $(x,t)$, and we may therefore choose a convenient one in each case. \\
 \emph{Points of $X_{m-1} \times I$.} Let $(x,t) \in X_{m-1} \times I$. Then $x$ lies in $C$ or in a closed cell of dimension less than $m$, so we may choose a preimage $(z,t)$ with $z \in C$ or $z \in D_i^n$ for some $n < m$. Such a $z$ falls under the second case of the definition of $f_m$. Therefor
     \[
         r^{\mathrm{Skel}}_m(x,t)
         = r^{\mathrm{Skel}}_m\big((P_m \times id_I)(z,t)\big)
         = f_m(z,t) = (P_m \times id_I)(z,t) = (x,t) .
     \] 
-\emph{Points of $X_m \times \{0\}$.} Let $(x,0) \in X_m \times \{0\}$.If $x$
-    lies in $X_{m-1}$, the previous case applies. Otherwise $x$ lies in an open
-    cell of dimension $m$, so there are $i \in I_m$ and $z \in D_i^m$ with
-    $P_m(z) = x$. Since $r_i^m$ is a retraction and
-    $(z,0) \in D_i^m \times \{0\}$, we get $r_i^m(z,0) = (z,0)$ and therefore
+\emph{Points of $X_m \times \{0\}$.} Let $(x,0) \in X_m \times \{0\}$. If $x$ lies in $X_{m-1}$, the previous case applies. Otherwise $x$ lies in an open cell of dimension $m$, so there are $i \in I_m$ and $z \in D_i^m$ with $P_m(z) = x$. Since $r_i^m$ is a retraction and $(z,0) \in D_i^m \times \{0\}$, we get $r_i^m(z,0) = (z,0)$ and therefore
     \[
         r^{\mathrm{Skel}}_m(x,0)
         = f_m(z,0)
@@ -543,7 +550,7 @@ Since $f_m$ factors through $P_m \times id_I$, the value $r^{\mathrm{Skel}}_m(x,
     \]
 \end{proof}
 
-\subsubsection{HEP for relative CW complexes}
+\subsubsection{HEP for relative CW complexes} \label{subsubsec:HEP_CW}
 In this final section we prove that every relative CW-complex $(X,C)$ has the HEP. For the finite dimensional complex this follows quickly from what we established so far.
 
 \begin{lemma}\label{lem:HEPrelskel}
@@ -551,8 +558,8 @@ In this final section we prove that every relative CW-complex $(X,C)$ has the HE
 \end{lemma}
 \begin{proof}
     We proceed by induction on $n$. \\
-    \emph{IBase case $n = -1 \colon$} Note, that $X_{-1} = C$, so the pair in question is $(X_{-1},C) = (C,C)$, which has the HEP by \cref{lem:HEPtrivial}. \\
-    \emph{Inductive step $n \to n+1$.} Assume, we know that $(X_n,C)$ has the HEP. By \cref{HEPskeleton} the pair $X_{n+1}, X_n$ has the HEP as well, and since $C \subseteq X_n \subseteq X_{n+1}$, \cref{prop:HEPtrans} yields the HEP for $(X_{n+1}, C)$.
+    \emph{Base case $n = -1 \colon$} Note, that $X_{-1} = C$, so the pair in question is $(X_{-1},C) = (C,C)$, which has the HEP by \cref{example:HEPtrivial}. \\
+    \emph{Inductive step $n \to n+1$.} Assume, we know that $(X_n,C)$ has the HEP. By \cref{thm:HEPskeleton} the pair $(X_{n+1}, X_n)$ has the HEP as well. Since $C \subseteq X_n \subseteq X_{n+1}$, the transitivity shown in \cref{prop:HEPtrans} yields the HEP for $(X_{n+1}, C)$.
 \end{proof}
 
 \begin{corollary}\label{cor:HEPfiniteCW}
@@ -564,18 +571,18 @@ In this final section we prove that every relative CW-complex $(X,C)$ has the HE
 \end{proof}
 
 This is the point at which our formalisation stops. For the sake of completeness we sketch the proof of the general case, which we did not formalise in Lean.
-
-\begin{lemma}\label{HEP_CW}
+ToDo: in der Quelle ist in diesem Beweis ein Fehler... nach anderer Quelle suchen. Question: Soll ich da noch drauf aufmerksam machen?
+\begin{lemma}  [cf.\ {\cite[page 40 f.]{WAL}}] \label{HEP_CW}
     Let $(X,C)$ be a relative CW complex. Then $(X,C)$ has the HEP.
 \end{lemma}
 
-
 \begin{proof}[Sketch]
-    We use the retraction criterion, which applies since $C$ is closed in $X$. By \cref{lem:HEPrelskel} and \cref{prop:retractioncriterion} there are retractions
+    We use the retraction criterion, which applies since $C$ is closed in $X$. \\
+    In a first step the maps $r_m$ are constructed inductively for all $m \in \mathbb{N} \cup \{-1\}$. 
     \[
         r_m \colon X_m \times I \to (X_m \times \{0\}) \cup (C \times I)
     \]
-    for all $m \in \mathbb{N} \cup \{-1\}$. These can be constructed inductively: for $m = -1$ we take the identity, and for $m \ge 0$ we let $r_m$ be the composite
+    For $m = -1$ we take the identity, and for $m \ge 0$ we let $r_m$ be the composite
     \[
         X_m \times I \xrightarrow{\ r^{\mathrm{Skel}}_m\ }
         (X_m \times \{0\}) \cup (X_{m-1} \times I)
@@ -583,10 +590,10 @@ This is the point at which our formalisation stops. For the sake of completeness
         (X_m \times \{0\}) \cup (C \times I) ,
     \]
     where the second map is the identity on $X_m \times \{0\}$ and $r_{m-1}$ on $X_{m-1} \times I$. A straightforward induction shows that these two descriptions agree on the overlap and that $\restrict{r_m}{X_{m-1} \times I} = r_{m-1}$ for all $m$. This compatibility allows us to define
-    \[
-        r \colon X \times I \to (X \times \{0\}) \cup (C \times I), \qquad 
+    \begin{align*}
+        r \colon X \times I \to (X \times \{0\}) \cup (C \times I), \qquad \\
         r(x,t) \coloneqq r_m(x,t) \quad \text{for any } m \text{ with } x \in X_m ,
-    \]
+    \end{align*}  
     which is independent of the choice of $m$. It restricts to the identity on $(X \times \{0\}) \cup (C \times I)$, since each $r_m$ does. Continuity follows from \cref{prop:CWcontinuity} below, applied to $Z \coloneqq I$: the restriction of $r$ to $X_n \times I$ is $r_n$ and hence continuous for every $n$. Thus $r$ is a retraction, and the retraction criterion gives the HEP for $(X,C)$.
 \end{proof}
 
@@ -598,74 +605,80 @@ We state \cref{prop:CWcontinuity} without proof. It expresses that $X$ carries t
 
 
 \clearpage 
-\section {Lean and mathlib}
+\section {Lean and mathlib} \label{section:Lean}
 
 Having discussed the informal mathematics behind our formalisation, we now give a brief overview of Lean and of the conventions and concepts that are relevant to this project.
 
-Lean is a proof assistant, that is, a tool that checks the individual reasoning steps of a proof written in its formal language. It verifies that assumptions, axioms, functions and theorems are applied only where permitted and that new results follow by valid logical inference. According to its main designers, this verification rests upon a \textquote[leanTP]{small trusted kernel based on dependent type theory}, a notion we explain in the next section. Lean is one of several proof assistants, alongside Rocq and Isabelle. As Kontorovich describes in \emph{The Shape of Math to Come} \cite{KON25}, it is remarkable how quickly Lean has gained relevance not only in computer science and mathematical logic, but in mainstream mathematical research.
+Lean is a proof assistant, that is, a tool that checks the individual reasoning steps of a proof written in its formal language. It verifies that assumptions, axioms, functions and theorems are applied only where permitted and that new results follow by valid logical inference. According to its main designers, this verification rests upon a \textquote[LTP]{small trusted kernel based on dependent type theory}, a notion we explain in the next section. Lean is one of several proof assistants, alongside Rocq and Isabelle. As Kontorovich describes in \emph{The Shape of Math to Come} \cite{KON25}, it is remarkable how quickly Lean has gained relevance not only in computer science and mathematical logic, but in mainstream mathematical research.
 
-The first version of Lean was created by Leonardo de Moura in 2013, and the first stable release of Lean~4 appeared in September 2023. Since July 2023 the development of the language has been coordinated by the non-profit \emph{Lean Focused Research Organization}, whose stated goal is \textcquote{FRO}{enhanced scalability, usability, documentation, and proof automation while guiding Lean toward long-term self-sustainability}. Alongside the language, the mathematical library \emph{mathlib} has grown considerably: as of August 2026 it comprises almost 2{.}500{.}000 lines of code contributed by over 770 authors \cite{MStats}.
+The first version of Lean was created by Leonardo de Moura in 2013, and the first stable release of Lean~4 appeared in September 2023. Since July 2023 the development of the language has been coordinated by the non-profit \emph{Lean Focused Research Organization}, whose stated goal is \textcquote{FRO}{enhanced scalability, usability, documentation, and proof automation while guiding Lean toward long-term self-sustainability}. Alongside the language, the mathematical library \emph{mathlib} has grown considerably: as of August 2026 it comprises almost 2,500,000 lines of code contributed by over 770 authors \cite{MStats}.
 
-\subsection{Lean's Dependent Type Theory}
-The following description is based on the chapter \emph{Dependent Type Theory} int the digital book \emph{Theorem Proving in Lean 4}  \cite{TPIL}. \\ 
+\subsection{Lean's Dependent Type Theory} \label{subsec:typetheory}
+The following description is based on the chapter \emph{Dependent Type Theory} in the digital book \emph{Theorem Proving in Lean 4}  \cite{TPIL}. \\ 
 Every expression in Lean has a type, which can be displayed with the command \lean{#check}. The familiar mathematical objects $\mathbb{N}$, $\mathbb{R}$, $\mathbb{C}$ and the Euclidean spaces all have type \lean{Type}, and a function from \lean{α} to \lean{β} has type \lean{α → β}. Types themselves are expressions and therefore have types again: \lean{Type} has type \lean{Type 1}, and in general \lean{Type k} has type \lean{Type (k+1)}. This hierarchy of \emph{universes} is the reason why declarations in later sections carry universe variables such as \lean{u}, introduced automatically when we write \lean{Type*} for a type in an arbitrary universe.
 
 \begin{minted}{lean4}
-    #check ℕ
-        «\leanout{ℕ : Type}»
-    #check EuclideanSpace ℝ (Fin 3)
-        «\leanout{EuclideanSpace ℝ (Fin 3) : Type}»
-    #check Type
-        «\leanout{Type : Type 1}»
-    #check 2 = 1
-        «\leanout{2 = 1 : Prop}»
+#check ℕ
+    «\leanout{ℕ : Type}»
+#check EuclideanSpace ℝ (Fin 3)
+    «\leanout{EuclideanSpace ℝ (Fin 3) : Type}»
+#check Type
+    «\leanout{Type : Type 1}»
+#check 2 = 1
+    «\leanout{2 = 1 : Prop}»
 \end{minted}
 
 A distinguished type is \lean{Prop}, the type of propositions. Note that \lean{2 = 1} is a well-formed term of type \lean{Prop}. Propositions need not be true. \\
 
-
-% Type theory not only allows one to define an element, such as the natural number \lean{3} above, but also to construct new types from existing ones. Functions are one such example. To illustrate this, I start by choosing two arbitrary but fixed types \lean{α} and \lean{β}. Writing \lean{Type*} admits types of any universe. Lean then automatically introduces a so-called universe variable, here \lean{u_1}. A
-% function with domain \lean{α} and codomain \lean{β} has type \lean{α → β}. This newly constructed type again has a type of its own, whose universe is the maximum of the universe levels of \lean{α} and \lean{β}.
-
 What makes this a \emph{dependent} type theory is that a type may depend not only on other types, but on arbitrary terms. We have already seen an instance of this: \lean{Fin : ℕ → Type} assigns to every natural number $n$ the type with $n$ elements, so that \lean{Fin 3} and \lean{Fin 5} are distinct types determined by the values $3$ and $5$.
 
-\subsection{Sets and Subtypes} \label{sec:sets}
-Type theory allows us not only to define elements of a tyoe, but to build new tyoes from existing ones. The most relevant construction to this project is  that of a subtype. Given a type \lean{α} and a predicate \lean{p : α → Prop}, the subtyoe \lean{{x : α // p x}} is the type whose terms are pairs consisting of a term \lean{x : α} together with a proof of \lean{p x}. Cunstructing such a term therefore requires supplying both components. In the example below, the zero of the closed unit ball in $\mathbb{R}$. In the example below, the zero of the closed unit ball in $\mathbb{R}$ is given by the real number \lean{0} together with a proof that it lies in the ball. While one would not usually distinguish between this point and the real number zero, in Lean tey are terms of different types. 
+\subsection{relevant concepts of Lean} \label{subsec:concepts}
+\subsubsection{Sets and Subtypes} \label{subsubsec:sets}
+Type theory allows us not only to define elements of a type, but to build new types from existing ones. The construction most relevant to this project is that of a subtype. Given a type \lean{α} and a predicate \lean{p : α → Prop}, the subtype \lean{{x : α // p x}} is the type whose terms are pairs consisting of a term \lean{x : α} together with a proof of \lean{p x}. Constructing such a term therefore requires supplying both components. In the example below, the zero of the closed unit ball in $\mathbb{R}$ is given by the real number \lean{0} together with a proof that it lies in the ball. While one would not usually distinguish between this point and the real number zero, in Lean they are terms of different types. 
 \begin{minted}{lean4}
-    #check (⟨0 , Metric.mem_closedBall_self zero_le_one⟩ : Metric.closedBall (0 : ℝ) 1)
-        «\leanout{⟨0, …⟩ : \{ x // x ∈ Metric.closedBall 0 1 \} }»
+#check (⟨0 , Metric.mem_closedBall_self zero_le_one⟩ : Metric.closedBall (0 : ℝ) 1)
+    «\leanout{⟨0, …⟩ : \{ x // x ∈ Metric.closedBall 0 1 \} }»
 \end{minted}
 
-Closely related is the type \lean{Set α} of subset of \lean{α}, which is defined as \lean{α → Prop}. These two notions are connected by a coercion. Every \lean{S : Set α} can be read as a type \lean{↑S}, namely the subtype \lean{{x : α // x ∈ S}}, and conversely every term of \lean{↑S} has an underlying term of \lean{α}, obtained by \lean{Subtype.val}. Both directions are inserted automatically by Lean where needed. \\
+Closely related is the type \lean{Set α} of subsets of \lean{α}, which is defined as \lean{α → Prop}. These two notions are connected by a coercion. Every \lean{S : Set α} can be read as a type \lean{↑S}, namely the subtype \lean{{x : α // x ∈ S}}, and conversely every term of \lean{↑S} has an underlying term of \lean{α}, obtained by \lean{Subtype.val}. Both directions are inserted automatically by Lean where needed. \\
 The distinction matters for us because it offers different ways of formalising a pair of spaces $(X,A)$ with $A \subseteq X$, two of which are used in this project. In the first, the larger space is a type \lean{X} and the subspace is a term \lean{A : Set X}. In the second, both are terms of \lean{Set Y} for an ambient type \lean{Y}. In either case a subtype appears as soon as we want to treat a set as a space in its own right. Much of the design of the definitions below is aimed at avoiding subtypes and coercions.
 
-\subsection{Structures}
+\subsubsection{Structures} \label{subsubsec:structures}
 A \emph{structure} in Lean bundles several components into a single type. Its declaration lists a number of fields, each with its own type, and a term of the structure is obtained by supplying a term for every field. Structures are how mathlib organises mathematical objects: a topological space, for instance, is a structure whose fields consist of a collection of open sets together with proofs of the axioms it has to satisfy.
 We use this mechanism in two places, in both cases as a structure whose fields are all propositions. Since proofs of a proposition are indistinguishable in Lean, such a structure carries no data beyond the fact that its conditions hold. It simply gives a name to a conjunction of conditions, so that a single hypothesis can be passed around instead of four separate ones, and each condition can be retrieved by its field name.
 
-\subsection{Junk Values} \label{sec:junkvalues}
+\subsubsection{Junk Values} \label{subsubsec:junkvalues}
 If a formalised statement involves a division by zero, Lean returns the result $0$.
 \begin{minted}{lean4}
 example : (1 : ℚ) / 0 = 0 := by norm_num
 \end{minted}
-This makes division a total function $\mathbb{Q} \to \mathbb{Q} \to \mathbb{Q}$, even though certain inputs have no genuine mathematical meaning. As explained in \cite{Meiburg}, such \emph{junk values} are common practice in Lean. The same convention applies, for instance, to the inversion of square matrices, which is defined for singular matrices as well and returns the zero matrix, or to the derivative of a function at a point where it is not differentiable, which is defined to be zero. 
+This makes division a total function $\mathbb{Q} \to \mathbb{Q} \to \mathbb{Q}$, even though certain inputs have no genuine mathematical meaning. As explained in \cite{Meiburg}, such \emph{junk values} are common practice in Lean. The same convention applies, for instance, to the inversion of square matrices, which is defined for singular matrices as well and returns the zero matrix, or to the derivative of a function at a point where it is not differentiable, which is defined to be zero. \\
 At first glance this may seem concerning, since one can state and prove propositions that in classical mathematics would look false or ill-defined. The issue is resolved by adding suitable hypotheses such as \lean{n ≠ 0} or \lean{Differentiable 𝕜 f} to any statement about the object in question. These ensure that a theorem can only be applied where its conclusion is meaningful. What is gained in return is that definitions and statements become simpler, because no side conditions have to be carried along merely to make an expression well formed.\\
-We make frequent use of this convention. Functions that are mathematically defined only on a subset are defined on the entire ambient space. This allows us to extend them without subtype coercions and to apply arguments to them, without proving every time, they lie in the right subset. Junk values also appear in the formalisation of \cref{thm:HEPball}: the term $x / \norm{x}$ occurring in the definition of $h$ is meaningless at $x = 0$, but since division by zero is defined to be zero, no separate treatment of this case is required.
+We make frequent use of this convention. Functions that are mathematically defined only on a subset are defined on the entire ambient space, which allows us to extend them without subtype coercions and to apply them to a point, without proving each time that it lies in the right subset. Junk values also appear in the formalisation of \cref{thm:HEPball}: the term $x / \norm{x}$ occurring in the definition of $h$ is meaningless at $x = 0$, but since division by zero is defined to be zero, no separate treatment of this case is required.
 
-\subsection{mathlib}
-\emph{mathlib} is a community-driven library of mathematics formalised in Lean. It contains definitions and theorems from a wide range of mathematical fields, and it is continually extenden by contributors all over the wordl. Results are stated as generally as the setting allows, so that they are apply in as many situations as possible. For this project, we import, among others, the topology packages, whcih include the formalisation of CW-complexes and some the basic results about them that our proof rely on. \\
-Names in mathlib are chosen to be self-explanatory, in the sense that the name of a result describes its statement. The theorem that a composition of two continuous functions is continuous, for example, is called \lean{Continuous.comp}. Given \lean{f} and \lean{g} together with proofs \lean{hg: Continuous g} and \lean{hf: Continuous g}, we obtain a proof of \lean{Continuous (g ∘ f)} by writing \lean{Continuous.comp hg hf}, or, in the shorter and more common form using dot notation, \lean{hg.comp hf}. This is possible, because \lean{hg} has type \lean{Continuous g} and the theorem's name bgins with \lean{Continuous}, so Lean resolves \lean{hg.comp} to \lean{Continuous.comp} with \lean{hg} insterted as the first explicit argument of that type.
+\subsection{mathlib} \label{subsec:mathlib}
+Results in mathlib are stated as generally as the setting allows, so that they apply in as many situations as possible. For this project we import, among others, the topology packages, which include the formalisation of CW-complexes and the basic results about them that our proofs rely on. \\
+Names in mathlib are chosen to be self-explanatory, in the sense that the name of a result describes its statement. The theorem that a composition of two continuous functions is continuous, for example, is called \lean{Continuous.comp}. Given \lean{f} and \lean{g} together with proofs \lean{hg: Continuous g} and \lean{hf: Continuous f}, we obtain a proof of \lean{Continuous (g ∘ f)} by writing \lean{Continuous.comp hg hf}, or, in the shorter and more common form using dot notation, \lean{hg.comp hf}. This works because \lean{hg} has type \lean{Continuous g} and the name of the theorem begins with \lean{Continuous}, so that Lean resolves \lean{hg.comp} to \lean{Continuous.comp} with \lean{hg} inserted as the first explicit argument of that type.\\
+
+\subsubsection{CW-complexes in mathlib} \label{subsubsec:mathlibCW}
+We introduce those aspects of mathlib's formalisation of CW-complexes that are relevant for us. The reference for this section is the documentation of \lean{Topology.RelCWComplex}.   (ToDo: cite/ link %https://leanprover-community.github.io/mathlib4_docs/Mathlib/Topology/CWComplex/Classical/Basic.html#Topology.RelCWComplex.skeletonLT
+) All notions discussed below live in the namespace \lean{Topology.RelCWComplex}, which we open in our files, so that we write \lean{cell}, \lean{map} or \lean{skeletonLT} without the prefix.\\ 
+
+First of all, a relative CW-complex is not defined as a pushout, but instead lives in an ambient type. That is what motivated the definition \lean{HEP'}. A relative CW-complex $(X,C)$ is declared in the following way. 
+\begin{minted}{lean4}
+variable {Y : Type u} [TopologicalSpace Y] (X : Set Y) {C : Set Y} [RelCWComplex X C]
+\end{minted}
+Here the complex \lean{X} and its base space \lean{C} are both sets of the ambient type \lean{Y}. Mathlib's definition does not assume the ambient space to be Hausdorff. Nevertheless, for many statements about complexes we have to add the instance \lean{[T2Space Y]}. \\
+In each dimension there is an index type \lean{cell X n}, and for each cell a characteristic map \lean{map (n : ℕ) (i : cell X n) : PartialEquiv (Fin n → ℝ) Y}. The image of the open ball is called \lean{openCell n i} and that of the closed ball \lean{closedCell n i}. \\
+These characteristic maps are not maps from the closed ball to the closed cell, but maps between the ambient types. They are partial equivalences with source the open ball and target the open cell, since these are the sets between which we have a bijection, and they are continuous on the closed ball, since that is where their definition has a mathematical meaning.\\
+When saying that the source of the partial equivalence is an open ball, one has to be careful. In the definition this ball lies in the type \lean{Fin m → ℝ}, which is a formalisation of the $m-$dimensional real vector space carrying the maximum norm. Hence the ball is something we would usually rather call a cube. That is why it does not suffice to prove the HEP for a ball in an $m-$dimensional Euclidean space \lean{EuclideanSpace ℝ (Fin m)}, but the result has to be transferred to cubes, which we do in \cref{subsec:lean:ballcube}.\\
+The topology of a complex is described through its closed sets. A subset of \lean{X} is closed if and only if its intersection with the base space and with every closed cell is closed there. Note that with this definition the description of the complex as a quotient of the disjoint union of the base space with the closed balls, which for a definition by a pushout would be the definition itself, becomes a statement that has to be proved. We do exactly that in \cref{subsubsec:lean:skel:quotient}. \\
+Skeleta are not plain sets but subcomplexes, that is, terms of a structure whose underlying set is available as \lean{(skeletonLT X n).carrier}. There are two related notions of skeleton, which differ by one index. The set \lean{skeletonLT X n} is the union of the base space with all cells of dimension strictly less than $n$, whereas \lean{skeleton X n} also includes the cells of dimension $n$. The gain of working with \lean{skeletonLT} is that in an induction the base case is about the base space itself rather than about its union with the cells of dimension zero. The results for \lean{skeleton} are then derived from those for \lean{skeletonLT}. This is the procedure suggested in the documentation, and the one we follow throughout this project. \\
+Finally, a complex is \lean{FiniteDimensional} if the index types \lean{cell X n} are empty from some dimension on. We use this property for our final result in \cref{subsec:lean:relCW}.
 
 \clearpage 
-\section {Lean formalisation of the Homotopy Extension Property}
-\subsection{CW-complexes in Mathlib} 
-\begin{enumerate}
-    \item NOTIZEN:
-    \item Cellen im CW complex sind würfel anstatt spheres 
-    \item CW -complexe leben in einem größeren Raum -> 
-\end{enumerate}
-
-\subsection{HEP Definition}
+\section {Lean formalisation of the Homotopy Extension Property} \label{section:formalisation}
+\subsection{HEP Definition} \label{subsec:lean:definition}
 
 Already in the mathematical part, the definition of the homotopy extension propert was long and technical and its formalisation is no shorter. Throughout the formalisation project we use the follwoing abbreviations, and for this section we fix the variables below. 
 \begin{minted}{lean4}
@@ -680,7 +693,7 @@ abbrev smalanchor {Y : Type*} (X A : Set Y) : Set (Y × ℝ) :=
   {p | p.1 ∈ X ∧ p.2 = 0 ∨ p.1 ∈ A ∧ p.2 ∈ unitInterval}
 \end{minted}
 
-These four abbreviations name the subsets of that occur in the definition of the HEP and in the retraction criterion. The set \lean{cyl X} is the cylinder of hight one over the type \lean{X}, whereas \lean{smalcyl A} is the cylinder only over a set \lean{A} of type \lean{Set X}. The set \lean{anchor A} is the union of the cylinder over \lean{(A : Set X)} together with the bottom of the cylinder \lean{cyl X}. Finally, \lean{smalanchor X A} is the corresponding set for the case that \lean{(X A : Set Y)} are subsets of an ambient type \lean{Y}. It  is the union of the cylinder over \lean{A} with the bottom of \lean{smalcyl X}. All four are declared as \lean{abbrev} rather than \lean{def} and are therefore reducible, so that elaboration and \lean{simp} see through them.  \\
+These four abbreviations name the subsets that occur in the definition of the HEP and in the retraction criterion. The set \lean{cyl X} is the cylinder of hight one over the type \lean{X}, whereas \lean{smalcyl A} is the cylinder only over a set \lean{A} of type \lean{Set X}. The set \lean{anchor A} is the union of the cylinder over \lean{(A : Set X)} together with the bottom of the cylinder \lean{cyl X}. Finally, \lean{smalanchor X A} is the corresponding set for the case that \lean{(X A : Set Y)} are subsets of an ambient type \lean{Y}. It  is the union of the cylinder over \lean{A} with the bottom of \lean{smalcyl X}. All four are declared as \lean{abbrev} rather than \lean{def} and are therefore reducible, so that elaboration and \lean{simp} see through them.  \\
 We can now turn to the definition itself.
 
 \begin{minted}{lean4}
@@ -697,9 +710,9 @@ def HEP (X : Type u) [TopologicalSpace X] (A : Set X) : Prop :=
 \end{minted}
 
 To shorten the definition and make it more readable, we first define \lean{agreeOn}. It expresses that the map \lean{f} and the homotopy \lean{H} we wish to extend take the same values on \lean{A}, respectively \lean{A × {0}}, so that the two maps are compatible and asking for a common extension makes sense.
-Secondly, the structure \lean{HomotopyExtension} bundles the properties the desired homotopy should have: continuity on the cylinder, that its values lie in the prescribed set, and that it agrees with the two given maps. Using a structure rather than a conjunction has the advantage that it comes with projections for the individual fields, which is what makes the applications in \cref{prop:retractioncriterion} readable. \\
+Secondly, the structure \lean{HomotopyExtension} bundles the properties the desired homotopy should have: continuity on the cylinder, that its values lie in the prescribed set, and that it agrees with the two given maps. Using a structure rather than a conjunction has the advantage that it comes with projections for the individual fields, which is what makes the applications readable. \\
 
-This definition of \lean{HEP} is close to the informal \cref{def:HEP}, apart from the two aspects elaborated below. We will then present the two variants \lean{HEPY} and \lean{HEP'} and discuss their usefulness. Before tuning to that and as a first sanity check that the defintion is usable at all, we prove that every space has the HEP relative to itself and relative to the empty set. The lemma \lean{HEP_self} will serve as the base case of the induction in \cref{sec:hepfindim}.
+This definition of \lean{HEP} is close to the informal \cref{def:HEP}, apart from the three aspects elaborated below. Before tuning to that and as a first sanity check that the defintion is usable at all, we prove that every space has the HEP relative to itself and relative to the empty set. The lemma \lean{HEP_self} will serve as the base case of the induction in \cref{subsec:lean:relCW}.
 \begin{minted}{lean4}
 lemma HEP_self : HEP X (@Set.univ X) := by ...
   
@@ -707,14 +720,14 @@ lemma HEP_empty : HEP X ∅ := by ...
 \end{minted}
 
 \subsubsection*{Homotopies on \lean{X × ℝ}}
-The homotopies are defined on \lean{X × ℝ} rather than on \lean{X × unitInterval} or even \lean{A × unitInterval}. The reason is that a homotopy defined on \lean{↑A × ↑unitInterval} is applied to pairs \lean{(⟨a, ha⟩, ⟨t, ht⟩)}: every time we want to evaluate it we have to supply a proof that the point lies in the right subset, and every equation between such terms has to be passed through \lean{Subtype.ext} or a congruence lemma before the underlying points can be compared. On \lean{X × ℝ} none of this bookkeeping appears. \\
-This does not change the object being defined. The field \lean{ContinuousOn H' (cyl X)} constrains \lean{H'} only onto the cylinder. So what \lean{H'} does outside the unit interval is irrelevant. This field shifts the focus onto exactly what the definition needs. The choise not to work with subtypes is not free of cost. In the backward direction of \lean{lemma retraction_criterion_closed'}  we will have to precompose with a projection onto $[0,1]$ in order to make the \lean{MapsTo} field applicable, as discribed in \cref{sec:retractioncriterion}.\\
+The homotopies are defined on \lean{X × ℝ} rather than on \lean{X × unitInterval} or even \lean{A × unitInterval}. The reason is that a homotopy defined on \lean{↑A × ↑unitInterval} is applied to pairs \lean{(⟨a, ha⟩, ⟨t, ht⟩)}. Every time we want to evaluate it we have to supply a proof that the point lies in the right subset, and every equation between such terms has to be passed through \lean{Subtype.ext} or a congruence lemma before the underlying points can be compared. On \lean{X × ℝ} none of this bookkeeping appears. \\
+This does not change the object being defined. The field \lean{ContinuousOn H' (cyl X)} constrains \lean{H'} only onto the cylinder. So what \lean{H'} does outside the unit interval is irrelevant. This field shifts the focus onto exactly what the definition needs. The choise not to work with subtypes is not free of cost. For example in the backward direction of \lean{lemma retraction_criterion_closed'} we will have to precompose with a projection onto $[0,1]$ in order to make the \lean{MapsTo} field applicable, as discribed in \cref{subsec:lean:retractioncriterion}.\\
 
 \subsubsection*{The set \lean{rangeH'} and the variant \lean{HEPY}}
 
-The set \lean{rangeH'} has no equivalent in the informal definition \cref{def:HEP}. It is a set in the codomain type \lean{Y} in which the extendet homotopy \lean{H'} is required to take its values. It forces two additional hypotheses \lean{Set.range f ⊆ rangeH'} and \lean{(smalcyl A).MapsTo H rangeH'}. Without them there could be no such extension, since \lean{H'} extends both \lean{f} and \lean{H}.\\
+The set \lean{rangeH'} has no equivalent in the informal \cref{def:HEP}. It is a set in the codomain type \lean{Y} in which the extendet homotopy \lean{H'} is required to take its values. It forces two additional hypotheses \lean{Set.range f ⊆ rangeH'} and \lean{(smalcyl A).MapsTo H rangeH'}. Without them there could be no such extension, since \lean{H'} extends both \lean{f} and \lean{H}.\\
 
-The gain of carring this set along is that is lets us apply the HEP with a \emph{subset} of a type as codomain without ever forming the corresponding subtype. The application we have in mind is the retaction criterion: there the HEP is applied with \lean{Y := X × ℝ} and \lean{rangeH' := anchor A}, so that the extension it produces is a self-map of \lean{X × ℝ} whose image lies in the anchor. This is precisely what the formalisation of a retraction onto the anchor requires, as discussed later on. \\
+The gain of carring this set along is that is lets us apply the HEP with a \emph{subset} of a type as codomain without ever forming the corresponding subtype. The application we have in mind is the retaction criterion. There the HEP is applied with \lean{Y := X × ℝ} and \lean{rangeH' := anchor A}, so that the extension it produces is a self-map of \lean{X × ℝ} whose image lies in the anchor. This is precisely what the formalisation of a retraction onto the anchor requires, as discussed later on. \\
 In most applications one takes \lean{rangeH'} to be the whole codomain, written  \lean{@ Set.univ Y} in Lean. The two additional hypotheses become statements that \lean{tauto} solves. Since this extra work is negligible, we prefer this definition over the shorter variant discussed next. \\
 
 Because \lean{rangeH'} has no informal counterpart, one could ask whether it changes the notion being defind. To settle this we also formalise the literal reading of \cref{def:HEP}, in which the extension is only required to be a map into \lean{Y}
@@ -732,9 +745,9 @@ The lemma \lean{HEP_iff_HEPY} shows that the two definitions are equivalent, so 
 
 \subsubsection*{Universes}
 
-In both versions of the definition the codomain \lean{Y} is quantified over \lean{Type u}, the same univers as \lean{X}.  This is foreced by the way we use the definition.\\
+In the definition the codomain \lean{Y} is quantified over \lean{Type u}, the same univers as \lean{X}.  This is foreced by the way we use the definition.\\
 A quantifier \lean{∀ (Y : Type v)} can only be filled with codomaines lying in exactly that universe. All codomains we ever need, however, are built from the space \lean{X} itself and hence live in its universe. In the retraction criterion, for instance, the codomain is \lean{X × ℝ}, which lies in \lean{Type u}. Quantifying over a lower or higher universe would make the definition inapplicable to such instances. \\
-There is a short argument why the definition with this restriction on the universe of \lean{Y} is equivalent to a more general one: the retraction criterion shows that \lean{HEP}, at least in the case that the subspace is closed, is equivalent to the existance of a retraction, and that statement does not mention the codomain \lean{Y} at all. 
+There is a short argument why the definition with this restriction on the universe of \lean{Y} is equivalent to a more general one: the retraction criterion shows that \lean{HEP}, at least in the case that the subspace is closed, is equivalent to the existance of a retraction, and that statement does not mention the codomain \lean{Y} or its universe at all. 
 
 \subsubsection*{The variant \lean{HEP'}}
 Let us now turn to the variant \lean{HEP'}, which changes the shape of the pair of spaces.
@@ -746,16 +759,13 @@ def HEP' {Y : Type*} [TopologicalSpace Y] (X A : Set Y) : Prop := HEP X (X ↓�
 
 The notation \lean{(X ↓∩ A)} means, that we regard \lean{(X ∩ A)} as a set of type \lean{Set ↑X}. Te difference is that in \lean{HEP} the set \lean{A} is a subset of the type \lean{X}, whereas in \lean{HEP'} both \lean{X} and \lean{A} are subsets of one ambient type \lean{Y}.\\
 Two consequences of defining \lean{HEP'} through \lean{HEP} are worth noting. First, \lean{HEP'} does not require $A$ to be a subset of $X$. To be precise, we do not check, that the pair $(X,A)$ has tht HEP, but instead the pair $(X, X \cap A)$ does, and this is the intended statment only if $A \subset X$. In some proofs, such as \lean{HEP_trans}, the inclusion therefore appears as an explicit hypothesis.\\
-Secondly, \lean{HEP} and \lean{HEP'} are definitionally equal, so reuluts transfer betwen them for free, als we will see for example when \lean{HEP_disc_boundary'} is proved by \lean{HEP_disc_boundary} alone. \\
+Secondly, \lean{HEP} and \lean{HEP'} are definitionally equal, so results transfer between them for free, als we will see for example when \lean{HEP_disc_boundary'} is proved by \lean{HEP_disc_boundary} alone. \\
 
 We introduced \lean{HEP'}, when we came to pairs of consecutive skeleta, since a skeleton of a relative CW-complex is a subcomplex whose carrier is a subset of an ambient space. So this is the shape in which the objects actually arise. It also turned out to be the better fit for balls and spheres: the sphere is then simply the set of points of norm one in the ambient normed space, rather than a subset of the subtype of the closed ball. 
 
-Note, that in this definition the maps \lean{f} and \lean{H} to be extended are defined on the subtype \lean{↑X}, respectively \lean{↑X × ℝ}. Working with these subtypes caused some extra work in the proof of \lean{retraction_criterion_closed'} and offers \lean{HEP_trans'}. One could avoid it by not defining \lean{HEP'} in terms of \lean{HEP} but writing it out with maps defined on \lean{Y} and\lean{Y × ℝ}. The definition would be longer, since for instance continuity of \lean{f} would become to a \lean{ContinuousOn} statement. Also, the equivalence with \lean{HEP} would have to be proven rather than holding by definition. Nevertheless, it is an interesting modification that should be considered looking for the best formalisation, even tough we do not pursue it further in this work. \\
+Note, that in this definition the maps \lean{f} and \lean{H} to be extended are defined on the subtype \lean{↑X}, respectively \lean{↑X × ℝ}. Working with these subtypes caused some extra work in the proof of \lean{retraction_criterion_closed'}. One could avoid it by not defining \lean{HEP'} in terms of \lean{HEP} but writing it out with maps defined on \lean{Y} and \lean{Y × ℝ}. The definition would be longer, since for instance continuity of \lean{f} would become to a \lean{ContinuousOn} statement. Also, the equivalence with \lean{HEP} would have to be proven rather than holding by definition. Nevertheless, it is an interesting modification that should be considered looking for the best formalisation, even tough we do not pursue it further in this work. \\
 
-\subsubsection*{Summary}
-To sum up, there are the two versions \lean{HEP} and \lean{HEP'}, both of which are used in this formalisation project. \lean{HEP} is applied to a type together with a subset of it, whereas for \lean{HEP'} both spaces are subsets of the same ambient type. We consider the primed version \lean{HEP'} to be more usefull one to work with, optionally with the modification discussed above of spelling it out with maps defined on the ambient space. This does not mean that \lean{HEP'} is preferable on counts, since the statements become longer and also the proof of the retraction criterion would have been longer and more tedious. 
-
-\subsection{Retraction Criterion}
+\subsection{Retraction Criterion} \label{subsec:lean:retractioncriterion}
 
 Before turning to the formalisation of the retraction criterion itself, we look at the definition of a retraction. Classically, a retraction $r$ from $B$ onto $A$ is defined via precomposition with the inclusion $A \hookrightarrow B$, as in \cref{def:retraction}. As with the definition of the HEP, we again want to avoid working with subtypes. Instead of defining a map from $B$ to $A$, we therefore let the retraction be a map from an ambient type $X$ to itself. The structure \lean{RetractionOn} bundles the properties that make such a map a retraction.
 
@@ -768,67 +778,68 @@ structure RetractionOn (r : X → X) (B A : Set X) : Prop where
 \end{minted}
 
 As the name \lean{RetractionOn} suggests, the map \lean{r} is a self-map of the
-type \lean{X} that is not a retraction on all of its domain. It only "retracts" a subset \lean{B} onto a subset \lean{A}. The four fields translate the classical conditions as as follows. The first property \lean{subset} states that \lean{A} is contained in \lean{B}. Note, that omitting this property would define a more general class of self-maps that need not staisfy $r(B) = A$. The field \lean{continuousOn} requires continuity on the relevant subset $B$ only. Since the codomain of a retraction is supposed to be \lean{A}, the field \lean{mapsTo} requires that \lean{r} sends every element of \lean{B} to an element of \lean{A}. Finally, the classical definition demands that precomposition with the inclusion $A \hookrightarrow B$ gives the identity $id_A$. In our setting there is no inclusion map, since domain and codomain of \lean{r} are the same type \lean{X}, so the condition therefore becomes the requirement that ever element of \lean{A} is fixed by $r$. This is the field \lean{fixesOn}. \\
+type \lean{X} that is not a retraction on all of its domain. It only "retracts" a subset \lean{B} onto a subset \lean{A}. The four fields translate the classical conditions as as follows. The first property \lean{subset} states that \lean{A} is contained in \lean{B}. Note, that omitting this property would define a more general class of self-maps that need not staisfy $r(B) = A$. The field \lean{continuousOn} requires continuity on the relevant subset $B$ only. Since the codomain of a retraction is supposed to be \lean{A}, the field \lean{mapsTo} requires that \lean{r} sends every element of \lean{B} to an element of \lean{A}. Finally, the classical definition demands that precomposition with the inclusion $A \hookrightarrow B$ gives the identity $id_A$. In our setting there is no inclusion map, since domain and codomain of \lean{r} are the same type \lean{X}, so the condition therefore becomes the requirement that ever element of \lean{A} is fixed by \lean{r}. This is the field \lean{fixesOn}. \\
 
-Recall that the retraction criterion was obtained from two lemmas, and the formalisation follows the same structure. Since \cref{lem:HEPextension} consists of two implications, only one of which requires closedness, we split it into two separate lemmas, \lean{if_HEP_then_extension} and \lean{retraction_criterion_closed} which is the equivalence under closedness assumption, so that the closedness assumption appears only where it is needed. Their proofs are unspectacular and follow the informal argument of \cref{lem:HEPextension} closely, as do the formalisations of \cref{lem:retract} and of the retraction criterion \cref{prop:retractioncriterion} itself. 
+Recall that the retraction criterion was obtained from two lemmas, and the formalisation follows the same structure. Since \cref{lem:HEPextension} consists of two implications, only one of which requires closedness, we split it into two separate lemmas. The forward implication is called \lean{if_HEP_then_extension}, and the equivalence under the closedness assumption is called \lean{retraction_criterion_closed}. Their proofs are unspectacular and follow the informal argument of \cref{lem:HEPextension} closely, as do the formalisations of \cref{lem:retract} and of the retraction criterion \cref{prop:retractioncriterion} itself. 
 
 \begin{minted}{lean4}
 lemma retraction_criterion_closed (hA1 : IsClosed A) : HEP X A ↔ 
     ∃ r : X × ℝ → X × ℝ, RetractionOn r (cyl X) (anchor A) := by ...
 \end{minted}
 
-Here the retraction is a map on the product \lean{X × ℝ}, where \lean{X} is the larger space of the pair. Although the lemma is phrased in terms of \lean{HEP}, it can be applied to \lean{HEP'} as well, since the tow definitions are definitionally equal:
+Here the retraction is a map on the product \lean{X × ℝ}, where \lean{X} is the larger space of the pair. Although the lemma is phrased in terms of \lean{HEP}, it can be applied to \lean{HEP'} as well, since the two definitions are definitionally equal:
 
 \begin{minted}{lean4}
 variable (X A : Set Y) (hHEP' : HEP' X A)
 #check if_HEP_then_retraction hHEP'
 «\leanout{ if\_HEP\_then\_retraction hHEP' : ∃ (r : ↑X × ℝ → ↑X × ℝ), RetractionOn r (cyl ↑X) (anchor (X ↓∩ A))}»
 \end{minted}
-
+Question: I modified the output of the check by adding the type of r by hand. Should I mark that?
 % habe den Typ von r ergänzt  
 % ToDo: diesem Output einen Namen geben und dann nach retractioncriterionclosed' darauf verweisen
-
-While this does yield a retraction for the spaces in question, it is not formulated in the spirit of \lean{HEP'}: the retraction still lives on \lean{X × ℝ} for a type \lean{X}, whereas \lean{HEP'} is stated for subsets of an ambient type. We therefore also formalised the lemma \lean{retraction_criterion_closed'}, in which the retraction is a map from the ambient space $\times\, \mathbb{R}$ to itself. As before, the Lean file contains the forward implication without the closedness assumption.
+While this does yield a retraction for the spaces in question, it is not formulated in the spirit of \lean{HEP'}: the retraction still lives on \lean{↑X × ℝ} for a subtype \lean{↑X}, whereas \lean{HEP'} is stated for subsets of an ambient type. We therefore also formalised the lemma \lean{retraction_criterion_closed'}, in which the retraction is a self-map of \lean{Y × ℝ}, where \lean{Y} is the ambient space. As before, the Lean file contains the forward implication without the closedness assumption as well as the equivalence under the assumption.
 
 \begin{minted}{lean4}
 lemma retraction_criterion_closed' (A X : Set Y) (hAX : A ⊆ X)
     (hA1 : IsClosed A) : HEP' X A ↔ ∃ s : Y × ℝ → Y × ℝ, RetractionOn s (smalcyl X) (smalanchor X A)
     := by ...
 \end{minted}
-
 At this point the ambient-space formulation introduces a discrepancy with the informal statement, which went unnoticed during the formalisation. In \cref{lem:HEPextension} and \cref{prop:retractioncriterion} the hypothesis is that $A$ is closed in $X$, that is, in the subspace topology of $X$. In \lean{retraction_criterion_closed'}, however, both $A$ and $X$ are subsets of the ambient type \lean{Y}, and \lean{hA1 : IsClosed A} asserts that $A$ is closed in
 \lean{Y}. This is strictly stronger. \\
 In practice this turned out to be convenient rather than restrictive, since all closedness facts we need are available in the ambient space anyway: the skeleta of a relative CW-complex are closed in the ambient type, as is the sphere $S^{m-1}$ in $\mathbb{R}^m$. Ideally one would drop the assumption entirely. Hatcher \cite{HAT01} states the retraction criterion without it, the general case being proved in the appendix following an argument of \cite{STM}. Formalising that argument would remove the discrepancy, but it is considerably more involved than the proof we give. \\
-
 We proved \lean{retraction_criterion_closed'} from \lean{retraction_criterion_closed}. For the forward direction we obtain a retraction \lean{r} as in the \lean{#check} above. In order to extend this map \lean{r : ↑X × ℝ → ↑X × ℝ} to a map \lean{s : Y × ℝ → Y × ℝ}, we precomposed in the first component with a map \lean{mapYX : Y → X}, which is the identity on \lean{X} and sends all other points of \lean{Y} to an arbitrary junk value, and postcomposed with \lean{Subtype.val}, which sends \lean{(r x).1 ∈ X} back to the corresponding point of \lean{Y}. It remains to confirm that this newly defined map is again a retraction, that is, that it is continuous on the relevant set, maps into the required one, and leaves the necessary values unchanged. \\
-For the backward direction we start with a retraction \lean{s : Y × ℝ → Y × ℝ} and want to construct \lean{r : ↑X × ℝ → ↑X × ℝ}, so that \lean{retraction_criterion_closed} gives the claim. One might expect this direction to be the easier one, since no new values have to be constructed and \lean{s} only needs to be restricted to the desired space. This expectation is disappointed at the point where the codomain of \lean{r} is required to be $X \times \mathbb{R} \subseteq Y \times \mathbb{R}$. All we know about the range of \lean{s} is that its codomain is $Y \times \mathbb{R}$ and that it is a retraction on \lean{smalcyl X}, so the field \lean{RetractionOn.mapsTo} gives no information about where in $Y \times \mathbb{R}$ a point is sent once its second coordinate lies outside the unit interval. We resolved this by precomposing the real coordinate with \lean{ProjIcc : ℝ → ℝ := fun t ↦ Set.projIcc (0 : ℝ) 1 zero_le_one t}, where \lean{Set.projIcc} is a continuous map from mathlib that retracts a linearly ordered type onto a closed interval in it. After this precomposition the \lean{mapsTo} field of \lean{s} is applicable to every point we feed into it. This extra work is a consequence of working with types rather than subtypes; it could have been avoided by defining homotopies on \lean{Y × unitInterval} instead of \lean{Y × ℝ}.  \\ 
+For the backward direction we start with a retraction \lean{s : Y × ℝ → Y × ℝ} and want to construct \lean{r : ↑X × ℝ → ↑X × ℝ}, so that \lean{retraction_criterion_closed} gives the claim. One might expect this direction to be the easier one, since no new values have to be constructed and \lean{s} only needs to be restricted to the desired space. This expectation is disappointed at the point where the codomain of \lean{r} is required to be $X \times \mathbb{R} \subseteq Y \times \mathbb{R}$. All we know about the range of \lean{s} is that its codomain is $Y \times \mathbb{R}$ and that it is a retraction on \lean{smalcyl X}, so the field \lean{RetractionOn.mapsTo} gives no information about where in $Y \times \mathbb{R}$ a point from \lean{X × ℝ} is sent once its second coordinate lies outside the unit interval. We resolved this by precomposing the real coordinate with
+\begin{minted}{lean4}
+    ProjIcc : ℝ → ℝ := fun t ↦ Set.projIcc (0 : ℝ) 1 zero_le_one t,
+\end{minted} 
+where \lean{Set.projIcc} is a continuous map from mathlib that retracts a linearly ordered type onto a closed interval in it. After this precomposition the \lean{mapsTo} field of \lean{s} is applicable to every point we feed into it. This extra work is a consequence of working with types rather than subtypes; it could have been avoided by defining homotopies on \lean{Y × unitInterval} instead of \lean{Y × ℝ}.\\ 
 The two versions of the criterion differ in two independet aspects, which are worth keeping apart. The first is which definition of HEP appears in the statement. As \lean{#check} above shows, this is a matter of style. \lean{HEP} and \lean{HEP'} are definitionally equal, so either criterion could have been stated in terms of either definition. The second aspect is where the retraction lives, on \lean{↑X × ℝ} for a type \lean{X} or on \lean{Y × ℝ} for an ambient type \lean{Y}, and here the two forms are not interchangeable. While we prefered working with tyes instead of subtypes for the definition of the homotopy extension property, here we experienced both versions valuable in practice. I will give an example for each version: \\
 The unprimed version \lean{retraction_criterion_closed} is what the proof for two consecutive skeleta needs, where we construct a retraction \lean{r : (skeletonLT X m) × ℝ → (skeletonLT X m) × ℝ}. The key ingredient for the continuity of this map is \lean{Topology.IsQuotientMap.continuous_lift_prod_left}, mathlib's formalisation of \cref{thm:quotientproduct} on products of quotient maps with a locally compact factor. Working with an ambient space here would have destroyed the surjectivity of the quotient map, and the theorem could not have been applied in the form in which mathlib provides it. \\
-The primed version on the other hand is what \lean{PartialHomeomorph_HEP'} needs, which we discuss in \cref{sec:preservation}: a partial homeomorphism is a map between two ambient types, so a retraction defined on the ambiend product can be used more directly.  
+The primed version on the other hand is what \lean{PartialHomeomorph_HEP'} needs, as we discuss in \cref{subsec:lean:preservation}. A partial homeomorphism is a map between two ambient types, so a retraction defined on the type rather than on a subtype can be used more directly.  
 
 
-\subsection{Preservation of the HEP} \label{sec:preservation}
+\subsection{Preservation of the HEP}  \label{subsec:lean:preservation}
 Besides the retraction criterion we formalised two more results that are useful for proving that a pair of topological spaces has the HEP. The first is that the HEP is preserved under partial homeomorphisms.  \\
 
 \begin{minted}{lean4}
 lemma PartialHomeomorph_HEP' {X1 X2 : Set X} (hX : X2 ⊆ X1) {Y1 Y2 : Set Y} (hY : Y2 ⊆ Y1) (hHEP : HEP' X1 X2) (f : PartialHomeomorph X Y) (source : X1 = f.source) (target : Y1 = f.target) (h2 : f '' X2 = Y2) (hY2closed : IsClosed Y2) : HEP' Y1 Y2 := by ...    
 \end{minted}
-A \lean{PartialHomeomorph X Y} in mathlib is a map between the ambient types \lean{X} and \lean{Y} together with a distinguished source and target on which it is a homeomorphism. The hypotheses \lean{source}, \lean{target} and \lean{h2} identify the two pairs of spaces with these data, and they are stated as equations so that they can be removed by \lean{subst} in the first step of the proof. Afterwards the whole argument is phrased in terms of \lean{f.source}, \lean{f.target} and \lean{f'' X2}, and no transport along the equations is needed anywhere else. Here the ambient formulation of the retraction criterion pays off. We apply \lean{if_HEP_then_retraction'} to \lean{hHEP} and obtain a retraction of \lean{smalcyl f.source} onto \lean{smalanchor f.source X2}. Since this retraction is  a self map of \lean{X × ℝ}, we can conjugate it with with the partial homeomorphism, which is likewise a between the ambient types. In the first coordinate we precompose with \lean{f.symm} and postcompose with \lean{f}. If only the unprimed criterion were available, the retraction would live on \lean{↑X1 × ℝ}, and we would first have to turn \lean{f} into a homeomorphism \lean{↑f.source ≃ₜ ↑f.target} and work with subtype coercions. \\
+A \lean{PartialHomeomorph X Y} in mathlib is a map between the ambient types \lean{X} and \lean{Y} together with a distinguished source and target on which it is a homeomorphism. The hypotheses \lean{source}, \lean{target} and \lean{h2} identify the two pairs of spaces with these data, and they are stated as equations so that they can be removed by \lean{subst} in the first step of the proof. Afterwards the whole argument is phrased in terms of \lean{f.source}, \lean{f.target} and \lean{f'' X2}, and no transport along the equations is needed anywhere else. Here the ambient formulation of the retraction criterion pays off. We apply \lean{if_HEP_then_retraction'} to \lean{hHEP} and obtain a retraction of \lean{smalcyl f.source} onto \lean{smalanchor f.source X2}. Since this retraction is  a self map of \lean{X × ℝ}, we can conjugate it with with the partial homeomorphism, which is likewise a map between the ambient types. In the first coordinate we precompose with \lean{f.symm} and postcompose with \lean{f}. If only the unprimed criterion were available, the retraction would live on \lean{↑X1 × ℝ}, and we would first have to turn \lean{f} into a homeomorphism \lean{↑f.source ≃ₜ ↑f.target} and work with subtype coercions. \\
 Note, that only \lean{Y2} is required to be closed. This is because extracting the retraction from \lean{hHEP} is the forward implication of the retraction criterion, which does not require closedness.
 
 The second result is a transitivity property: if the pairs $(A_1,A_2)$ and $(A_2,A_3)$ both satisfy the HEP, then so does the pair $(A_1,A_3)$.
 \begin{minted}{lean4}
-lemma HEP_trans (A1 A2 A3 : Set X) (h21_sub : A2 ⊆ A1) (h12_hep : HEP' A1 A2) (h32_sub : A3 ⊆ A2)     (h23_hep : HEP' A2 A3) : HEP' A1 A3 := by ...
+lemma HEP_trans (A1 A2 A3 : Set X) (h21_sub : A2 ⊆ A1) (h12_hep : HEP' A1 A2) (h32_sub : A3 ⊆ A2) (h23_hep : HEP' A2 A3) : HEP' A1 A3 := by ...
 \end{minted}
 
 For the formalisation of this proof we had a choice between two approaches. Instead of applying the retraction criterion to all three \lean{HEP} statements and constructing the desired retraction from the two given ones, we proved the lemma directly from the definition. This turned out to be the shorter way, and a further advantage of the choice is that no closedness assumptions are needed, whereas applying the retraction criterion would have required them. \\
 
 In retrospect, \lean{PartialHomeomorph_HEP'} could be proven in the same manner, by checking the definition and construction the extenden homotopy explicitly rather than going through the retraction criterion. In that case the closedness assumption on \lean{Y2} could be dropped as well. With the current definition of \lean{HEP'}, however, in which the maps we wish to extend live on subtypes, such a proof would be less pleasant to carry out.
 
-\subsection{HEP for discs and cubes}
+\subsection{HEP for balls and cubes} \label{subsec:lean:ballcube}
 
-The goal of the file \lean{HEP_ball_cube.lean } is to prove the homotopy extension property for balls and cubes relative to their boundary. These are not only the first interesting pairs of spaces for which we want to prove the HEP, but also the first step in the proof of the \emph{homotopy extension property} for relative CW complexes. \\
-We start with the balls. As in the proof of \cref{thm:HepDisc}, we first construct the auxiliary functionion \lean{aux_fun}, which combines the information of the given maps \lean{f} and \lean{H}. This function is then used to define the desired homotopy \lean{H'} explicitly, with which we cab check the definition of \lean{HEP}.
+The goal of the file \lean{HEP_ball_cube.lean} is to prove the homotopy extension property for balls and cubes relative to their boundary. These are not only the first interesting pairs of spaces for which we want to prove the HEP, but also the first step in the proof of the homotopy extension property for relative CW complexes. \\
+We start with the balls. As in the proof of \cref{thm:HEPball}, we first construct the auxiliary functionion \lean{aux_fun}, which combines the information of the given maps \lean{f} and \lean{H}. This function is then used to define the desired homotopy \lean{H'} explicitly, with which we can check the definition of \lean{HEP}.
 
 \begin{minted}{lean4}
 variable {m : ℕ} {Y : Type} (C : Set Y)
@@ -853,15 +864,15 @@ lemma HEP_disc_boundary' : ∀ (m : ℕ),
   HEP' (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) (sphere 0 1) := HEP_disc_boundary
 \end{minted}
 
-The \lean{Metric.sphere} in Lean has type \lean{Set α}, where \lean{α} is the type of the center, in our case the zero of an $m-$dimenstional Euclidian space. By the way \lean{HEP} is defined, the sphere in \lean{HEP_disc_boundary} is a subset of the closed ball. so we have to add the \lean{by simp} proof in order to construct the element of the subtype. For \lean{HEP'}, on the other hand, both spaces live in the same ambient space. Np proof has to be supplied, and  Lean interprets the zero as the origin of $\mathbb{R}^m$. Here we see an advantage of the \lean{HEP'} definition in action, since we can reduce the use of subtypes. \\
-In the formalisation of (relative) CW-complexes, each cell is the image of a closed ball in \lean{Fin m → ℝ} for some \lean{m} under a characteristic map. Like \lean{EuclideanSpace ℝ (Fin m)}, the type \lean{Fin m → ℝ} is a way of formalising an $m-$dimenstional real vector space. The relevant difference between them is that \lean{EuclidianSpace} comes with the Euclidean norm, whereas on the other version the default norm is the maximum norm. So the closed ball that is the preimage of a closed cell in a CW-complex is something we would usually call a cube rather than a ball. To prove the \lean{HEP} for these cubes, we want to use the fact that an $m-$dimensional ball is homeomorphic to a cube of the same dimension. \\
-Instead of constructiong this homeomorphism explicitly, we obtain it from the following mathlib lemma. It states that for a convex bounded set with nonempty interior in a real normed space there is a homeomorphism of the ambient space with itself that carries the interior, the closure and the frontier of the set onto the open unit ball, the closure and the unit sphere respectively.  ToDo indirektes Zitat aus Mathlib (auch das folgende lemma) -- Quelle hinzufuegen
+The \lean{Metric.sphere} in Lean has type \lean{Set α}, where \lean{α} is the type of the center, in our case the zero of an $m-$dimenstional Euclidian space. By the way \lean{HEP} is defined, the sphere in \lean{HEP_disc_boundary} is a subset of the closed ball. so we have to add the \lean{by simp} proof in order to construct the element of the subtype. For \lean{HEP'}, on the other hand, both spaces live in the same ambient space. No proof has to be supplied, and  Lean interprets the zero as the origin of $\mathbb{R}^m$. Here we see an advantage of the \lean{HEP'} definition in action, since we can reduce the use of subtypes. \\
+In \cref{subsubsec:mathlibCW} we saw that the preimage of a closed cell in a CW-complex is a cube not a ball. To prove the \lean{HEP} for these cubes, we want to use the fact that an $m-$dimensional ball is homeomorphic to a cube of the same dimension. \\
+Instead of constructiong this partial homeomorphism explicitly, we obtain it from the following mathlib lemma. It states that for a convex bounded set with nonempty interior in a real normed space there is a homeomorphism of the ambient space with itself that carries the interior, the closure and the frontier of the set onto the open unit ball, the closure and the unit sphere respectively. ToDo indirektes Zitat aus Mathlib (auch das folgende lemma) -- Quelle hinzufuegen
 \begin{minted}{lean4}
 exists_homeomorph_image_interior_closure_frontier_eq_unitBall.{u_1} {E : Type u_1} [NormedAddCommGroup E][NormedSpace ℝ E] {s : Set E} (hc : Convex ℝ s) (hne : (interior s).Nonempty) (hb : Bornology.IsBounded s) :
   ∃ h, ↑h '' interior s = ball 0 1 ∧ ↑h '' closure s = closedBall 0 1 ∧ ↑h '' frontier s = sphere 0 1
 \end{minted}
 
-The \lean{Metric.closedBall} for which we already proved the \lean{HEP}, is convex, bounded and has nonempty interior, so it satisfies all three assumptions. Applying the lemma to it directly would nevertheless gain us nothing: inside \lean{EuclideanSpace ℝ (Fin m)} this set already is the closed unit all, so the lemma would be only produce a homeomorphism carrying it onto itself, and no cube would appear anywhere. What makes the cube appear is that in \lean{Fin m → ℝ} it is the closed unit ball which is the cube. We therefore first transoort our closed ball into that space along the homeomorphism 
+The \lean{Metric.closedBall} for which we already proved the \lean{HEP}, is convex, bounded and has nonempty interior, so it satisfies all three assumptions. Applying the lemma to it directly would nevertheless gain us nothing: inside \lean{EuclideanSpace ℝ (Fin m)} this set already is the closed unit ball, so the lemma would be only produce a homeomorphism carrying it onto itself, and no cube would appear anywhere. What makes the cube appear is that in \lean{Fin m → ℝ} the closed unit ball is the cube. We therefore first transport our closed ball into that space along the homeomorphism 
 \begin{minted}{lean4}
 def homeo_euclid_max : EuclideanSpace ℝ (Fin m)  ≃ₜ (Fin m → ℝ) where
   toFun := fun p ↦ p
@@ -884,7 +895,7 @@ lemma HEP_cube_boundary (m : ℕ) : HEP (closedBall (0 : (Fin m → ℝ)) 1) (sp
 
 Before concluding this section, we want to point out that here the definition of \lean{HEP'} matches the structure of a partial homeomorphism particularly well. When we first proved this result for \lean{HEP}, before \lean{HEP'} was defined we had to show that the \lean{Subtype.val} image of a sphere in the closed ball is the same as the sphere in the ambient space, and likewise for the closed ball itself. With \lean{HEP'} these subtype coercions are avoided and the proof is more straightforward. From this result the statement for \lean{HEP} follows directly.
 
-\subsection{HEP for consecutive skeletons}
+\subsection{HEP for consecutive skeletons}  \label{subsec:lean:skel}
 
 %(Relative) CW complexes are formalised as a subset of an ambient space. The topology is given by explicitly saying, a closed set needs to be closed, when intersected with the base space or any closed cell it is closed in those spaces. On a skeleton or any finite dimensonal CW complex is the same topology, which we also obtain from gluing together discs along their boundary and then considering the quotient topology on the complex. \\
 % -- stimmt das so? allgemein fuer CW complexe oder nur endlichdimensional?
@@ -897,9 +908,9 @@ theorem Topology.IsQuotientMap.continuous_lift_prod_left {X₀ : Type u_1} {X : 
 \end{minted}
 
 The theorem tells us that a map \lean{g} defined on the product of a quotient space with a locally compact space is continuous, provided that its composition with the quotient map in the first factor is. We want this \lean{g} to be the map that yields the HEP for two consecutive seketons. Mathematically it is the retraction $X_m \times [0,1]$ onto $X_m \times \{0\} \cup X_{m-1} \times [0,1]$. In the formalisation it takes the shape \lean{skeletonLT X (m+1) × unitInterval → skeletonLT X (m+1) × ℝ}, which will be discussed later on. For now, let us take a closer look at which functions we need to define and which results we have to proof in order to get there. \\
-A remark on the indices before we start. Throughout the project we work with \lean{skeletonLT}, which collects the cells of dimension strictly less than its argument, so that \lean{skeletonLT X (m+1)} is the $m-$skeleton $X_m$. The parameter of the maps \lean{r}, \lean{sumMap} and \lean{cubesretract}, which will be intruduced in this chapter, is therefore the top dimension $m$ of the pair, and \lean{Fin (m+1)} is exactly the index type of the dimensions occuring in $X_m$. Using \lean{skeletonLT} rather than \lean{skeleton} also avoids truncated subtracions on \lean{ℕ} and coverts the $(-1)-$skeleton, which makes it convenient for the induction in \cref{sec:hepfindim}.
+% A remark on the indices before we start. Throughout the project we work with \lean{skeletonLT}, which collects the cells of dimension strictly less than its argument, so that \lean{skeletonLT X (m+1)} is the $m-$skeleton $X_m$. The parameter of the maps \lean{r}, \lean{sumMap} and \lean{cubesretract}, which will be intruduced in this chapter, is therefore the top dimension $m$ of the pair, and \lean{Fin (m+1)} is exactly the index type of the dimensions occuring in $X_m$. Using \lean{skeletonLT} rather than \lean{skeleton} also avoids truncated subtracions on \lean{ℕ} and coverts the $(-1)-$skeleton, which makes it convenient for the induction in \cref{subsec:lean:relCW}.
 
-\subsubsection{Skeleton is a quotient space}
+\subsubsection{Skeleton is a quotient space}  \label{subsubsec:lean:skel:quotient}
 First of all we need a quotient map onto the skeleton \lean{skeletonLT X m} called \lean{f} in the theorem above. For this we use the fact that we can "unglue" the skeleton into the base space and the disjoint union of closed balls, or cubes to be precise, in all dimensions less than $m$. The identity map on the base space and the caracteristic maps on the closed balls assemble into the map \lean{SkeletonProjection}.
 
 \begin{minted}{lean4}
@@ -915,7 +926,7 @@ To prove that this indeed defines a quotient map, we have to check that it is su
 \\ 
 The surjectivity proof is straightforward. A point of the skeleton lies either in the base space or in an open cell, and in the two cases it has a preimage in \lean{C} respectively in the closed ball belonging to that cell. Continuity is not much work either, since \lean{SkeletonProjection} is assembled from continuous functions on a disjoint union. Proving that the topology on the skeleton is the induced one required more effort. \\
 
-We start with a set \lean{S} of Type \lean{Set (skeletonLT X ↑m)} and the assumption that its preimage under \lean{SkeletonProjection} is closed in the unglued skeleton. The goal is to show that \lean{S} is closed in the skeleton. In mathlib the results about closed sets are always phrased for subsets of the ambient space, together with the assumption that the set is contained in the CW complex or in the subcomplex. To get into this setting, we need the following lines in the proof: 
+We start with a set \lean{S} of type \lean{Set (skeletonLT X ↑m)} and the assumption that its preimage under \lean{SkeletonProjection} is closed in the unglued skeleton. The goal is to show that \lean{S} is closed in the skeleton. In mathlib the results about closed sets are always phrased for subsets of the ambient space, together with the assumption that the set is contained in the CW-complex or in the subcomplex. To get into this setting, we need the following lines in the proof: 
 \begin{minted}{lean4}
     set S' : Set Y := Subtype.val '' S with hS'def
     have hS'sub : S' ⊆ (skeletonLT X m):= by
@@ -925,11 +936,10 @@ We start with a set \lean{S} of Type \lean{Set (skeletonLT X ↑m)} and the assu
 
 Now we can apply the lemma \lean{Topology.RelCWComplex.isClosed_of_isClosed_inter_openCell_or_isClosed_inter_closedCell}, which states that \lean{S'} is closed in the relative CW-complex if its intersection with the base space is closed and if for every cell either \lean{S' ∩ openCell n j} or \lean{S' ∩ closedCell n j} is closed. We prove the case of the base space in \lean{hClosedBase} and the case of cells of dimension less than $m$ in \lean{hClosedLT}. For higher dimensions the intersection of \lean{S'} with the open cell is empty and hence closed. \\
 
-\subsubsection{Construction of the retraction}
+\subsubsection{Construction of the retraction} \label{subsubsec:lean:skel:constructionretraction}
 The next preparation is the construction of the map \lean{r}, which is to be the retraction for two consecutive skeletons. As in the mathematical proof, we do not define the retraction map \lean{r} on \lean{skeletonLT X (m + 1) × [0,1]} directly. Instead we say what it should do on the unglued skeleton, where the base space and the individual cubes are still separate, and then push the resulting map down along the quotient map \lean{SkeletonProjection}. We build this up from the bottom: first the map on all single cubes, calles \lean{cubesretract}, then the map on the product of the whole unglued skeleton and the unit interval, which is called \lean{sumMap} and was called $f$ in the mathematical section, and finally \lean{r} itself.\\
 
-On a cube of top dimension the retraction we need is already available. It is the map \lean{r_cube} that the retraction criterion provides from \lean{HEP_cube_boundary}, the HEP of a cube relative to its boundary proved in \cref{sec:hepballcube}. On cubes of lower dimension nothing should happen. The map \lean{cubesretract} combines the two cases. Apart from the case distinction it only coerces the second coordinate from the unit interval to \lean{ℝ}.
-
+On a cube of top dimension the retraction we need is already available. It is the map \lean{r_cube} that the retraction criterion provides from \lean{HEP_cube_boundary}, the HEP of a cube relative to its boundary proved in \cref{subsec:lean:ballcube}. On cubes of lower dimension nothing should happen. The map \lean{cubesretract} combines the two cases. Apart from the case distinction it only coerces the second coordinate from the unit interval to \lean{ℝ}.
 \begin{minted}{lean4}
 def cubesretract {m : ℕ} (n : Fin (m + 1)) :
     (closedBall (0 : Fin (n : ℕ) → ℝ) 1) × unitInterval →
@@ -963,7 +973,7 @@ def sumMap (m : ℕ) :
       (fun ⟨n, i, x⟩ => (⟨map n i (cubesretract n (x,p.2)).1, cubesretract_mapsto_weak n i (x,p.2)⟩, (cubesretract n (x,p.2)).2))
 \end{minted}
 
-The map \lean{sumMap} is defined using \lean{Sum.elim}, which performs a case analysis on a sum type and applies the corresponding function depending on which constructor is present (ToDo : indirektes Zitat. Quelle - Dokumentation von Lean), that is, on wether the first coordinate of the point \lean{p} lies in the base space \lean{C} or in a closed ball. In the first case we want to do nothing except apply \lean{SkeletonProjection} to that coordinate, which on the base space is just the identity. We send the point \lean{c : C} to itself, but regarded as an element of the skeleton. Since the proof that a point of the base space lies in any given skeleton is needed repeatedly, we made it a lemma of its own, called \lean{memBase_memSkeletonLT}.\\ 
+The map \lean{sumMap} is defined using \lean{Sum.elim}, which performs a case analysis on a sum type and applies the corresponding function depending on which constructor is present (ToDo : indirektes Zitat. Quelle - Dokumentation von Lean), that is, on wether the first coordinate of the point \lean{p} lies in the base space \lean{C} or in a closed ball. In the first case we want to do nothing except apply \lean{SkeletonProjection} to that coordinate, which on the base space is just the identity. We send the point \lean{(c : C)} to itself, but regarded as an element of the skeleton. Since the proof that a point of the base space lies in any given skeleton is needed repeatedly, we made it a lemma of its own, called \lean{memBase_memSkeletonLT}.\\ 
 In the second case, where the first coordinate of \lean{p} comes from a closed ball, we first apply \lean{cubesretract} to the point and then postcompose with what \lean{SkeletonProjection × id} would do to a such point. Since the first coordinate, still lies in a closed ball after \lean{cubesretract} has been applied, \lean{SkeletonProjection} amounts to applying the charakteristic map of that closed ball. We have to supply a poof, that the image of this characteristic map really lies in the skeleton.This proof is again a lemma of its own, called \lean{cubesretract_mapsto_weak}, which is derived from the two \lean{mapsto} statements above. \\
 
 It remains to push \lean{sumMap} down from the unglued skeleton to the skeleton itself, which is what \lean{Function.extend} does.
@@ -988,18 +998,17 @@ lemma sumMap_eq_SkelProj_sphereLT {m : ℕ}
     sumMap m (Sum.inr ⟨n, ⟨i, x'⟩⟩, t) = Prod.map (SkeletonProjection X (m + 1)) Subtype.val (Sum.inr ⟨n, ⟨i, x'⟩⟩, t) := by …
 \end{minted}
 
-\subsubsection{Continuity of the retraction}
-Now that all relevant maps are defined, we can turn to the proof tat \lean{r} is continuous. As announced, the continuity comes from the theorem \lean{Topology.IsQuotientMap.continuous_lift_prod_left}. Let us see what is left to prove: 
+\subsubsection{Continuity of the retraction} \label{subsubsec:lean:skel:continuityretraction}
+Now that all relevant maps are defined, we can turn to the proof that \lean{r} is continuous. As announced, the continuity comes from the theorem \lean{Topology.IsQuotientMap.continuous_lift_prod_left}. Let us see what is left to prove: 
 
 \begin{minted}{lean4}
 lemma continuousRetract (m : ℕ) : Continuous (r (X := X) m) := by
   refine (SkeletonProjectionIsQuotientMap (m +1) X).continuous_lift_prod_left ?_
   …  
 \end{minted}
- 
 After this first line of the proof the current goal becomes
 \begin{minted}{lean4}
-    Continuous fun (p : (ungluedSkel X C m) × [0,1]) => r (SkeletonProjection p.1, p.2) 
+    Continuous fun (p : (ungluedSkel X C m) × [0,1]) => r (SkeletonProjection X (m + 1) p.1, p.2) 
 \end{minted} 
 Showing this comes down to two major steps. The fist is that \lean{sumMap} factors through \lean{(fun p ↦ ((SkeletonProjection X (m + 1) p.1), p.2))}, from which it follows easily that the continuity goal is equivalent to the continuity of \lean{sumMap} is continuous. That continuity is then the second step.\\
 We start with 
@@ -1008,7 +1017,7 @@ lemma factors (m : ℕ) : (sumMap m).FactorsThrough (fun p ↦ ((SkeletonProject
     intro x y hxy 
     ...
 \end{minted}
-Here \lean{x} and \lean{y} are two points of \lean{ungluedSkel × [0,1]} whose second coordinates agree and which have the same image under \lean{SkeletonProjection}. We have to show that \lean{sumMap X m x = sumMap X m y}. In \lean{sumMap_eq_SkelProj_C}, and \lean{sumMap_eq_SkelProj_sphereLT} we already have useful for this this goal. One part that required some work is the following: 
+Here \lean{x} and \lean{y} are two points of \lean{ungluedSkel × [0,1]} whose second coordinates agree and which have the same image under \lean{SkeletonProjection}. We have to show that \lean{sumMap X m x = sumMap X m y}. In \lean{sumMap_eq_SkelProj_C}, and \lean{sumMap_eq_SkelProj_sphereLT} we already have useful tools for this this goal. One part that required some work is the following: 
 \begin{minted}{lean4}
 lemma SkeletonProj_inj_top {m : ℕ} {n : Fin (m + 1)} (hnm : ↑n = m) (i : cell X n)
     (x' : closedBall (0 : Fin n → ℝ) 1) (x_ball : x'.1 ∈ ball (0 : Fin n → ℝ) 1)
@@ -1018,7 +1027,7 @@ lemma SkeletonProj_inj_top {m : ℕ} {n : Fin (m + 1)} (hnm : ↑n = m) (i : cel
 \end{minted}
 The lemma \lean{SkeletonProj_inj_top} says that if \lean{x} lies in a specific open ball of top dimension and \lean{y} is any other point of \lean{ungledSkel} with the same image under \lean{SkeletonProjection}, then \lean{y} is that very point \lean{x}. \\
 The proof of \lean{factors} is long because it splits into many case distinctions, begining with whether \lean{x} lies in the base space or in a closed ball, and considering in each case the same two options for \lean{y} separately. In the case where \lean{x} lies in a closed ball we distinguish further whether it lies in the top-dimesnioal open cell or not. Most of these cases are quite short in themselves. \\
-In the mathematical argument it was enough to destinguish whether a point lies in the top-dimensional cell or not. So one may ask why the formalisation splots the situation up so much further. The reason is that we cannot simply say that a point lies in the base space. A point of \lean{ungluedSkel} is given by a constructor, either as \lean{Sum.inl c} for some \lean{c : C} or as as \lean{Sum.inr ⟨n, i, x⟩}, so the case analysis over the construtors has to be made anyway, and it is then easier to treat the resulting combinations seperately. -- ToDo / Question : Ist das verstaendlich?  \\
+In the mathematical argument it was enough to destinguish whether a point lies in the top-dimensional cell or not. So one may ask why the formalisation splots the situation up so much further. The reason is that we cannot simply say that a point lies in the base space. A point of \lean{ungluedSkel} is given by a constructor, either as \lean{Sum.inl c} for some \lean{c : C} or as as \lean{Sum.inr ⟨n, i, x⟩}, so the case analysis over the construtors has to be made anyway, and it is then easier to treat the resulting combinations seperately. % ToDo / Question : Ist das verstaendlich?  \\
 For the continuity of \lean{SumMap} we precompose the map with the homeomorphism 
 \begin{minted}{lean4}
 def homeoProd (m : ℕ) :
@@ -1028,8 +1037,8 @@ def homeoProd (m : ℕ) :
 \end{minted}
 The domain of this composite is no longer a product, but a disjoint union, and on each summand the continuity goal is proved by combining results established earlier such as \lean{cubesretract_continuous} and the continuity of the characteristic maps. Since continuity is preserved under precomposition with a homeomorphism, this yields that \lean{sumMap}, and finally also \lean{r}, is continuous.  
 
-\subsubsection {Properties of the retraction}
-In this section we conclude the proof of the HEP for consecutive skeletons. For the proof via the retraction criterion we have to make a small adjustment to the map \lean{r}. As mentioned above the desired retraction sould have \lean{(skeletonLT X (m + 1)) × ℝ} as its domain, whereas \lean{r} is only defined on the unit interval in the second component. The easiest way to extend \lean{r} turned out to be precomposing the second coordinate with the map \lean{ProjIcc}, which was defined in the very first file. The final definition therefore looks as follows.
+\subsubsection {Properties of the retraction} \label{subsubsec:lean:skel:propertiesretraction}
+In this section we conclude the proof of the HEP for consecutive skeletons. For the proof via the retraction criterion we have to make a small adjustment to the map \lean{r}. As mentioned above the desired retraction sould have \lean{(skeletonLT X (m + 1)) × ℝ} as its domain, whereas \lean{r} is only defined on the unit interval in the second component. The easiest way to extend \lean{r} turned out to be precomposing the second coordinate with the map \lean{ProjIcc}, which was defined in the first file \lean{HEP_definition.lean}. The final definition therefore looks as follows.
 
 \begin{minted}{lean4}
 def retr_skeleton (m : ℕ) : (skeletonLT X (m + 1)) × ℝ → (skeletonLT X (m + 1)) × ℝ := fun p ↦
@@ -1037,7 +1046,7 @@ def retr_skeleton (m : ℕ) : (skeletonLT X (m + 1)) × ℝ → (skeletonLT X (m
 \end{minted}
 
 It only remains to show that \lean{retr_skeleton} is continuous, maps into the right set and is fixed where required. The continuity follows directly from all the work done before and the claims about \lean{mapsTo} and \lean{fixedOn} are first proved for \lean{sumMap} and then transferred to \lean{retr_skel}. 
-(ToDo: man könnte hier noch auf subst eingehen, weil das ein game changer war.)
+%(ToDo: man könnte hier noch auf subst eingehen, weil das ein game changer war.)
 Altogether this results in the following lemma. 
 
 \begin{minted}{lean4}
@@ -1049,7 +1058,7 @@ lemma HEP'_skeleton (m : ℕ) : HEP' (skeletonLT X (m + 1)).carrier (skeletonLT 
 
 Note that although the statement is phrased in terms of \lean{HEP'} since both skeleta live in the ambient type, the proof applies the unprimed \lean{retraction_criterion_closed}, which is possible because the two definitions are definitionally equal. 
 
-\subsection{HEP for finite dimensional relative CW complexes}
+\subsection{HEP for finite dimensional relative CW complexes} \label{subsec:lean:relCW}
 In this last part of the formalisation we arrive at the result that finite dimensional relative CW complexes satisfy the HEP. As the mathematical chapter already showed, the finite dimensional case follows from what we have proven so far by a straightforward induction, whereas the general case requires considerably more work. Due to the limited time for this thesis I had to stop at this point. \\
 We first run the induction over the skeleta, and then show that a finite dimensional complex is one of its own skeleta. The induction looks in Lean as follows.
 
@@ -1094,15 +1103,8 @@ lemma HEP_RelCWFinite (hX : FiniteDimensional X) : HEP' X C := by
 
 This completes the three steps announced at the beginning: the \emph{HEP} for a ball and a cube relative to their boundary, for two consecutive skeleta, and finally for a finite dimensional relative CW complex relative to its base space.
 
-
-
-ToDo Ausblick:
-In the prvious secion, where we proved the \emph{HEP} for consecutive sekeltons, I used the lemma \lean{retractioncriterionclosed}, where the retraction map is defined on the Type 
-
-ToDo SkelLT und skel erklären
-
 \clearpage
-\section{Methodes and Usage of AI}
+\section{Methodes and Usage of AI} \label{section:methodes}
 The use of AI as an aid for this thesis was agreed upon in advance with my supervisor, Floris van Doorn, on the condition that it be made transparent here and that any code not written by myself be marked as such in the formalisation. My methods, and with them the usage of AI, differed between the formalisation project and the writing of the text. In both cases, whenever AI was used, it was the latest version of Anthropic's Claude Opus model (as of August 2026: Opus 5).\\
 All submitted Lean code is written by myself, except a short definition together with a related lemma in the file \lean{HEP_skeleton.lean}. These approximatly twenty lines marked accordingly in the formalisation. This lemma was a tool that could have been a part of mathlib. It is not specific to the constructions of this project.\\
 The rest of the formalisation is my own work, but it would in some parts look different without the use of AI. I frequently asked Claude when a proof got stuck or an error message was difficult to interpret. One example is the tactic \lean{subst}, which simplified the proof of \lean{SkeletonProjectionIsQuotientMap} a lot and later allowed me to shorten several earlier drafts by a noticeable number of lines. Another is the observation that consecutive \lean{exact} statements can be combined into a single \lean{exacts [...]}. \\
@@ -1110,8 +1112,14 @@ For larger design questions I found AI less helpful. The pushout construction fo
 I wrote the text of this thesis in full myself in a first step. In a second pass I went through it paragraph by paragraph and improved the language, along with some inaccuracies, with the help of Claude. Every reformulation was reviewed before I adopted it, and I discarded those that shifted the meaning of what I had written. AI was also used to set up the configuration for typesetting Lean code in this \LaTeX{} document.
 
 \clearpage
-\section{Ausblick}
+\section{Conlusion} \label{section:conclusion}
+We tried different ways of formalising the definition of the homotopz extensionproperty and the retraction criterion. The main subject of discussion was, the consideration of how much to work with subtypes. Where it brings advantages and for which applications a phrasing with subtypes is more applicable. \\ 
+ 
+There are the two versions \lean{HEP} and \lean{HEP'}, both of which are used in this formalisation project. \lean{HEP} is applied to a type together with a subset of it, whereas for \lean{HEP'} both spaces are subsets of the same ambient type. We consider the primed version \lean{HEP'} to be more usefull one to work with, optionally with the modification discussed of spelling it out with maps defined on the ambient space. This does not mean that \lean{HEP'} is preferable on counts, since the statements become longer and also the proof of the retraction criterion would have been longer and more tedious than the presented one.\\
+For the retraction criterion there are two versions aswell. In \lean{retraction_criterion_closed}, the retraction lives on the product with the bigger space of the HEP, whereas in \lean{retraction_criterion_closed'} the retraction is defined on a product with the ambient type. As discussed in \cref{subsec:lean:retractioncriterion}, both versions are used in this project in a way where they clearly outstand the other version. 
 
+The most obvious point to continue this project would be to generalize the HEP for all relative CW complexes. To formalise the inductive construction of the retraction maps in (ToDo: cref: HEP fuer rel CW), I would recommend working with retractions on the ambient space, which can be composed well together without any coercions. This will give another application of \lean{retraction_criterion_closed'}, where we benefit from the formulation avoiding subtypes. \\
+Furthermore one could formalise the retraction criterion without closedness assumption. A consequence of this would be, that we can also drop the assumption in \lean{PartialHomeomorph_HEP'}. 
 
 \clearpage
 \addcontentsline{toc}{section}{Literatur}

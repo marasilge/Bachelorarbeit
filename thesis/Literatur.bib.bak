@@ -4,19 +4,16 @@
 % https://hbz-ulb.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991009987839706467&context=L&vid=49HBZ_ULB:DEFAULT&lang=de&search_scope=MyInst_and_CI&adaptor=Local%20Search%20Engine&isFrbr=true&tab=Everything&query=any,contains,general%20Topology,%20Ryszard%20Engelking&sortby=date_d&facet=frbrgroupid,include,9035791847587913213&offset=0
 % http://thales.doa.fmph.uniba.sk/sleziak/texty/rozne/engel/engel.pdf
 
-% -- transitive cofibration: 
-% https://hbz-ulb.primo.exlibrisgroup.com/discovery/fulldisplay?docid=cdi_springer_books_10_1007_BFb0083031&context=PC&vid=49HBZ_ULB:DEFAULT&lang=de&search_scope=MyInst_and_CI&adaptor=Primo%20Central&tab=Everything&query=any,contains,tom%20Dieck,%20Algebraic%20Topology
-
-% -- uni Bielefeld Skript:
+-- uni Bielefeld Skript:
 @online{WAL,
-  author = {Friedhelm Waldhausen},
-  title = {Algebraische Topologie},
+  autohor = {Friedhelm Waldhausen},
+  titlel = {Algebraische Topologie},
   url = {https://www.math.uni-bielefeld.de/~fw/},
   urldate = "2026-08-14"
 }
 
-% -- hatcher verweißt auf das fuer retraction criterion ohne closed bedingung
-@article{STM,
+-- hatcher verweißt auf das fuer retraction criterion ohne closed bedingung
+@article{StromArne1968NoCI,
 author = {Strom, Arne},
 pages = {130-142},
 publisher = {Mathematica Scandinavica},
@@ -28,7 +25,7 @@ journal = {Mathematica scandinavica},
 language = {eng},
 }
 
-% -- kommentare zu hatchers nulltem kapitel
+-- kommentare zu hatchers nulltem kapitel
 @online{JHU,
   author = {Boardman, J. Michael},
   title = {The Homotopy Extension Property},
@@ -37,23 +34,8 @@ language = {eng},
   urldate = "2026-07-13",
 }
 
-% -- CW complex ist ein Quotientenrau.
-@book{SZ,
-author = {Stöcker, Ralph and Zieschang, Heiner},
-address = {Stuttgart},
-booktitle = {Algebraische Topologie eine Einführung ; mit zahlreichen Bildern, Beispielen und Übungsaufgaben},
-publisher = {Teubner},
-series = {Mathematische Leitfäden},
-title = {Algebraische Topologie : eine Einführung ; mit zahlreichen Bildern, Beispielen und Übungsaufgaben},
-year = {1988},
-isbn = {3519022265},
-keywords = {Algebraische Topologie},
-language = {ger},
-}
 
-
-
-% -- historische Definition CW complex
+-- historische Definition CW complex
 @article{WH,
 number = {3},
 pages = {213-245},
@@ -65,7 +47,7 @@ issn = {0273-0979},
 journal = {Bulletin (new series) of the American Mathematical Society},
 }
 
-% -- Hatcher
+-- Hatcher
 @book {HAT01,
     AUTHOR = {Hatcher, Allen},
      TITLE = {Algebraic topology},
@@ -80,7 +62,7 @@ MRREVIEWER = {Michael Cowling},
 }
 
 
-% -- Hannahs Bachelorarbeit
+-- Hannahs Bachelorarbeit
 @mastersthesis{SCH01,
   author = {Scholz, Hannah},
   school = {Rheinischen Friedrich-Wilhelms-Universität Bonn},
@@ -90,7 +72,7 @@ MRREVIEWER = {Michael Cowling},
   url = {https://florisvandoorn.com/theses/HannahScholz.pdf}
 }
 
-% -- reden über Junk values
+-- reden über Junk values
 @misc{Meiburg,
       title={A Formalization of the Generalized Quantum Stein's Lemma in Lean}, 
       author={Alex Meiburg and Leonardo A. Lessa and Rodolfo R. Soldati},
@@ -128,7 +110,6 @@ title = "FRO - About us"
 @online{MStats,
 url = "https://leanprover-community.github.io/mathlib_stats.html",
 urldate = "2026-07-02",
-author = "{Mathlib Community}",
 title = "Mathlib Statistics"
 }
 
