@@ -26,3 +26,6 @@ _minted/
 *.ilg
 
 .DS_Store
+
+# lokal behaltene Altstaende (nicht versioniert)
+/BachelorarbeitLean/not relevant/
