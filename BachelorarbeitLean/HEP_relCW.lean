@@ -8,7 +8,13 @@ open RelCWComplex
 
 noncomputable section
 
-variable {Y : Type*} [TopologicalSpace Y] [T2Space Y] (X : Set Y) {C : Set Y} [RelCWComplex X C]
+/- The notation follows the convention fixed in `HEP_definition`: `Y` is the ambient type,
+`X : Set Y` the relative CW-complex and `C : Set Y` its base. The dimensions `m` and `n` are
+bound in each declaration separately. -/
+
+universe u
+
+variable {Y : Type u} [TopologicalSpace Y] [T2Space Y] (X : Set Y) {C : Set Y} [RelCWComplex X C]
 
 -- Every skeleton relative to its base has the `HEP'`:
 lemma HEP_skelLT_base (m : ℕ) : HEP' (skeletonLT X m) C := by
@@ -81,7 +87,7 @@ lemma HEP_RelCWFinite (hX : FiniteDimensional X) : HEP' X C := by
 lemma ex_r_skel' (m : ℕ) : ∃ r,
     RetractionOn r (smalcyl (skeletonLT X (↑m + 1)).carrier)
     (smalanchor ↑(skeletonLT X (↑m + 1)) ↑(skeletonLT X ↑m)) :=
-  (retraction_criterion_closed' (skeletonLT X m).carrier (skeletonLT X (m+1)).carrier
+  (retraction_criterion_closed' (skeletonLT X (m + 1)).carrier (skeletonLT X m).carrier
     (skeletonLT_mono le_self_add) ((skeletonLT X ↑m).closed')).1 (HEP'_skeleton (X := X) m)
 
 def r_skel' (m : ℕ) : Y × ℝ → Y × ℝ := (ex_r_skel' X m).choose

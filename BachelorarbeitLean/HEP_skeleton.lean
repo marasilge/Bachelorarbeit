@@ -10,7 +10,13 @@ open RelCWComplex
 
 noncomputable section
 
-variable {Y : Type*} [TopologicalSpace Y] [T2Space Y] (X : Set Y) {C : Set Y} [RelCWComplex X C]
+/- The notation follows the convention fixed in `HEP_definition`: `Y` is the ambient type,
+`X : Set Y` the relative CW-complex and `C : Set Y` its base. The dimensions `m` and `n` are
+bound in each declaration separately. -/
+
+universe u
+
+variable {Y : Type u} [TopologicalSpace Y] [T2Space Y] (X : Set Y) {C : Set Y} [RelCWComplex X C]
 
 /- `SkeletonProjection (m : ℕ)` is a quotient map from the `ungluedSkel` to the (m-1)-skeleton of a
   relative CW complex. After the construction of the map, I proved surjectivity, continuity and that
@@ -234,8 +240,8 @@ def sumMap (m : ℕ) :
     (ungluedSkel X (m + 1)) × unitInterval → skeletonLT X (m+1) × ℝ := fun p ↦
     p.1.elim
       (fun c => (⟨c.val, memBase_memSkeletonLT X c.prop (m + 1)⟩, p.2))
-      (fun ⟨n, i, x⟩ => (⟨map n i (cubesretract n (x,p.2)).1, cubesretract_mapsto_weak X n i (x,p.2)⟩,
-        (cubesretract n (x,p.2)).2))
+      (fun ⟨n, i, x⟩ => (⟨map n i (cubesretract n (x,p.2)).1,
+        cubesretract_mapsto_weak X n i (x,p.2)⟩, (cubesretract n (x,p.2)).2))
 
 lemma sumMap_eq_SkelProj_C (m : ℕ)
     (x : C) (t : unitInterval) : sumMap X m (Sum.inl x, t) =
@@ -267,9 +273,11 @@ lemma sumMap_top_open_apply (m : ℕ)
  -- to shorten
 lemma FinNeq_lt {n : ℕ} (m : Fin (n + 1)) (hnm : m ≠ n) : m < n := Nat.lt_of_le_of_ne m.is_le hnm
 
--- lemma xx {m : ℕ} (n : Fin (m + 1)) (hnm : n = m) (i : cell X n) (x' : ↑(closedBall 0 1)) (hx' : x' ∉ sphere ⟨0, by simp⟩ 1)
---   (n_y : Fin (m + 1)) (j_y : cell X ↑n_y) (y' : ↑(closedBall 0 1) ):
---   Sum.inr (⟨n_y, ⟨j_y, y'⟩⟩: (n : ℕ) × cell X n × (closedBall ⟨0 , by simp⟩ 1)) = Sum.inr ⟨n, ⟨i, x'⟩⟩ := sorry
+-- lemma xx {m : ℕ} (n : Fin (m + 1)) (hnm : n = m) (i : cell X n)
+--   (x' : ↑(closedBall 0 1)) (hx' : x' ∉ sphere ⟨0, by simp⟩ 1)
+--   (n_y : Fin (m + 1)) (j_y : cell X ↑n_y) (y' : ↑(closedBall 0 1) ) :
+--   Sum.inr (⟨n_y, ⟨j_y, y'⟩⟩: (n : ℕ) × cell X n × (closedBall ⟨0 , by simp⟩ 1))
+--   = Sum.inr ⟨n, ⟨i, x'⟩⟩ := sorry
 
 lemma topopen_notLT {n : ℕ} (i : cell X n)
     (x' : closedBall (0 : Fin n → ℝ) 1) (hx : x'.1 ∈ ball (0 : Fin n → ℝ) 1) (m : Fin (n + 1)) :
@@ -279,6 +287,7 @@ lemma topopen_notLT {n : ℕ} (i : cell X n)
   have le : (m : ℕ∞) ≤ n := ENat.coe_le_coe.mpr (Order.lt_add_one_iff.1 m.isLt )
   exact fun mem ↦ h ((skeletonLT_mono le) mem)
 
+omit [T2Space Y] in
 lemma same_point {m : ℕ} (n_y : Fin (m + 1)) (j_y : cell X ↑n_y) (y' : (closedBall 0 1))
     (i : cell X ↑n_y) (x' : (closedBall 0 1)) (x_ball : ↑x' ∈ ball (0 : Fin n_y → ℝ) 1)
     (y_ball : y' ∈ ball (⟨0, by simp⟩ : closedBall (0 : Fin n_y → ℝ) 1) 1)
@@ -420,12 +429,13 @@ def homeoProd (m : ℕ) :
     ((Homeomorph.refl _ ).sumCongr (Homeomorph.sigmaProdDistrib.trans
     (Homeomorph.sigmaCongrRight' fun _ ↦ Homeomorph.sigmaProdDistrib)))).symm
 
-@[simp] lemma homeoProd_inl {Y : Type*} [TopologicalSpace Y] (X C : Set Y) [RelCWComplex X C]
-  (m : ℕ) (c : C) (t : unitInterval) :
-    (homeoProd (X := X) m) (Sum.inl (c, t)) =  (Sum.inl c, t) := rfl
+omit [T2Space Y] in
+@[simp] lemma homeoProd_inl (m : ℕ) (c : C) (t : unitInterval) :
+    (homeoProd (X := X) m) (Sum.inl (c, t)) = (Sum.inl c, t) := rfl
 
-@[simp] lemma homeoProd_inr {Y : Type*} [TopologicalSpace Y] (X C : Set Y) [RelCWComplex X C]
-  (m : ℕ) (n : Fin (m + 1)) (i : cell X n) (x : closedBall (0 : Fin n → ℝ) 1) (t : unitInterval) :
+omit [T2Space Y] in
+@[simp] lemma homeoProd_inr (m : ℕ) (n : Fin (m + 1)) (i : cell X n)
+    (x : closedBall (0 : Fin n → ℝ) 1) (t : unitInterval) :
     (homeoProd (X := X) m) (Sum.inr ⟨n, i, (x, t)⟩) = (Sum.inr ⟨n, i, x⟩, t) := rfl
 
 -- Here my own code continues:
@@ -434,7 +444,8 @@ lemma cts_sumMap_prehomeo (m : ℕ) : Continuous ((sumMap X m) ∘ (homeoProd (X
   have : (Sum.elim
     (fun (q : C × unitInterval) ↦ sumMap X m ((Sum.inl q.1), q.2))
     (fun (q : Σ (n : Fin (m + 1)) (_ : cell X n), (closedBall (0 : Fin n → ℝ) 1 × unitInterval)) ↦
-    sumMap X m ((Sum.inr ⟨q.1 , ⟨q.2.1, q.2.2.1⟩⟩), q.2.2.2))) = (sumMap X m) ∘ (homeoProd X m) := by
+    sumMap X m ((Sum.inr ⟨q.1 , ⟨q.2.1, q.2.2.1⟩⟩), q.2.2.2)))
+    = (sumMap X m) ∘ (homeoProd X m) := by
     ext x <;>
     · obtain ⟨_ ,_ ⟩ | ⟨_ ,_ ,_ ,_ ⟩ := x
       · simp only [Sum.elim_inl, Function.comp_apply, homeoProd_inl]
@@ -473,7 +484,8 @@ def retr_skeleton (m : ℕ) : (skeletonLT X (m + 1)) × ℝ → (skeletonLT X (m
   (r X m) (p.1, ⟨ProjIcc p.2, proj_mem p.2 ⟩)
 
 lemma sumMap_mapsTo (m : ℕ) (x : (ungluedSkel X (m + 1)) × ↑unitInterval) :
-  (sumMap X m x).2 = 0 ∨ ↑(sumMap X m x).1 ∈ skeletonLT X ↑m ∧ ↑(sumMap X m x).2 ∈ unitInterval := by
+    (sumMap X m x).2 = 0 ∨
+    ↑(sumMap X m x).1 ∈ skeletonLT X ↑m ∧ ↑(sumMap X m x).2 ∈ unitInterval := by
   obtain ⟨c |⟨n, i, x'⟩, t⟩ := x
   · simp only [sumMap, Sum.elim_inl, Subtype.coe_prop, and_true]
     exact Or.inr (mem_skeletonLT_iff.mpr (Or.inl c.prop))

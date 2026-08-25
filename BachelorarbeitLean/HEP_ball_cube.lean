@@ -21,12 +21,17 @@ We then use aux_fun to define the extended homotopy.
 
 open Metric
 
-variable {m : ℕ} {Y : Type} [TopologicalSpace Y] (C : Set Y)
-  (f : (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) → Y)
-  (H : (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) × ℝ → Y)
+/- The notation follows the convention fixed in `HEP_definition`: `Z` is the target type of the
+maps `f`, `H`, `H'` and `rangeH' ⊆ Z` constrains their range. Here `Z` has to live in `Type 0`,
+since
+the pair of this section is a pair of types in `Type 0`. -/
+
+variable {m : ℕ} {Z : Type} [TopologicalSpace Z] (rangeH' : Set Z)
+  (f : (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) → Z)
+  (H : (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) × ℝ → Z)
 
 -- definition of the auxilliar function:
-def aux_fun : EuclideanSpace ℝ (Fin m) → Y := fun p =>
+def aux_fun : EuclideanSpace ℝ (Fin m) → Z := fun p =>
   if hp : norm p ≤ 1 then f ⟨p, by simp[hp]⟩
   else H (⟨((norm p)⁻¹ : ℝ) • p, inv_norm_smul_mem_unitClosedBall p⟩, norm p - 1)
 
@@ -88,7 +93,7 @@ lemma aux_contOn (hf_cont : Continuous f)
       exact isClosed_closure
 
 -- Defining the extended homotopy via the auxilliar function:
-def H' : (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) × ℝ → Y :=
+def H' : (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) × ℝ → Z :=
   fun p => (aux_fun f H ) ((1 + p.2) • p.1)
 
 -- checking, that this homotopy H' satisfies all required properties: (ContinuousOn, MapsTo, ...)
@@ -110,10 +115,10 @@ lemma H'_ContinuousOn (hf_cont : Continuous f)
   simp only [Nat.ofNat_pos, mul_le_iff_le_one_right]
   apply mem_closedBall_zero_iff.1 (Subtype.coe_prop x.1)
 
-omit [TopologicalSpace Y] in
-lemma H'_MapsTo (hf_range : Set.range f ⊆ C)
-    (hH_mapsto : Set.MapsTo H (smalcyl (sphere ⟨0, by simp⟩ 1)) C) :
-    (cyl (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1)).MapsTo (H' f H) C := by
+omit [TopologicalSpace Z] in
+lemma H'_MapsTo (hf_range : Set.range f ⊆ rangeH')
+    (hH_mapsto : Set.MapsTo H (smalcyl (sphere ⟨0, by simp⟩ 1)) rangeH') :
+    (cyl (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1)).MapsTo (H' f H) rangeH' := by
   unfold H' aux_fun
   intro x hx
   by_cases hp : ‖(1 + x.2) • x.1.val‖ ≤ 1
@@ -137,6 +142,7 @@ lemma H'_MapsTo (hf_range : Set.range f ⊆ C)
       grw[ tsub_le_iff_left, one_add_one_eq_two, le_two]
       exact mul_le_of_le_one_right zero_le_two (mem_closedBall_zero_iff.1 x.1.2)
 
+omit [TopologicalSpace Z] in
 lemma H'_agreeH
     (hAgree : agreeOn f H (sphere ⟨0, by simp⟩ 1)) :
     ∀ (a : (sphere ⟨0, by simp⟩ 1)) (t : unitInterval), H (a, t) = (H' f H) (a.1, t.1) := by
@@ -169,7 +175,7 @@ lemma H'_agreeH
 -- combining the above results to the desired claim
 lemma HEP_disc_boundary : ∀ (m : ℕ),
     HEP (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) (sphere ⟨0, by simp⟩ 1) := by
-  intro m Y hY rangeH' f H hf_cont hf_range hH_cont hH_range hAgree
+  intro m Z hZ rangeH' f H hf_cont hf_range hH_cont hH_range hAgree
   refine ⟨H' f H, H'_ContinuousOn f H hf_cont hH_cont hAgree, ?_ , ?_ , H'_agreeH f H hAgree ⟩
   · exact fun _ hx => H'_MapsTo rangeH' f H hf_range hH_range hx
   · exact fun x => by simp [H', aux_fun, mem_closedBall_zero_iff.mp x.prop]

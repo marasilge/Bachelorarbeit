@@ -1,7 +1,4 @@
 
-% -- whiteheads theorem (identity mal quotientenmap):
-% hier link zur MNL Seite
-% https://hbz-ulb.primo.exlibrisgroup.com/discovery/fulldisplay?docid=alma991009987839706467&context=L&vid=49HBZ_ULB:DEFAULT&lang=de&search_scope=MyInst_and_CI&adaptor=Local%20Search%20Engine&isFrbr=true&tab=Everything&query=any,contains,general%20Topology,%20Ryszard%20Engelking&sortby=date_d&facet=frbrgroupid,include,9035791847587913213&offset=0
 % http://thales.doa.fmph.uniba.sk/sleziak/texty/rozne/engel/engel.pdf
 
 % -- transitive cofibration: 
@@ -51,6 +48,33 @@ keywords = {Algebraische Topologie},
 language = {ger},
 }
 
+% -- whiteheads theorem (identity mal quotientenmap):
+@book{RYS,
+author = {Engelking, Ryszard},
+address = {Berlin},
+publisher = {Heldermann},
+series = {Sigma series in pure mathematics 6},
+title = {General topology},
+year = {1989},
+edition = {Rev. and completed ed.},
+isbn = {3885380064},
+keywords = {Topologie},
+language = {eng},
+}
+
+-- (cube relative boundary has the HEP)
+@book{Tammo,
+author = {Tom Dieck, Tammo},
+address = {Zürich},
+publisher = {European Math. Soc.},
+series = {EMS textbooks in mathematics},
+title = {Algebraic topology},
+year = {2008},
+isbn = {9783037190487},
+keywords = {Algebraische Topologie},
+language = {eng},
+}
+
 
 
 % -- historische Definition CW complex
@@ -67,18 +91,23 @@ journal = {Bulletin (new series) of the American Mathematical Society},
 
 % -- Hatcher
 @book {HAT01,
-    AUTHOR = {Hatcher, Allen},
-     TITLE = {Algebraic topology},
- PUBLISHER = {Cambridge University Press},
-   ADDRESS = {Cambridge},
-      YEAR = {2002},
-     PAGES = {xii+544},
-      ISBN = {0-521-79540-0},
-   MRCLASS = {42-02 (35Sxx 43-02 47G30)},
+
   MRNUMBER = {1232192},
 MRREVIEWER = {Michael Cowling},
 }
 
+@book{HAT01,
+  author    = {Hatcher, Allen},
+  title     = {Algebraic Topology},
+  publisher = {Cambridge University Press},
+  address   = {Cambridge},
+  year      = {2002},
+  isbn      = {0-521-79540-0},
+  mrnumber  = {1232192},
+  url       = {https://pi.math.cornell.edu/~hatcher/AT/AT.pdf},
+  urldate   = {2026-08-24},
+  note      = {Cited according to the electronic version, which contains material not included in any printing}
+}
 
 % -- Hannahs Bachelorarbeit
 @mastersthesis{SCH01,
@@ -142,10 +171,33 @@ title = "Mathlib Statistics"
       url={https://arxiv.org/abs/2510.15924}, 
 }
 
-@misc{TPIL,
+@online{TPIL,
   author       = {Jeremy Avigad and  Leonardo de Moura and Soonho Kong and Sebastian Ullrich},
   title        = {Theorem Proving in {Lean 4}},
-  howpublished = {\url{https://leanprover.github.io/theorem_proving_in_lean4/}},
+  url          = {https://leanprover.github.io/theorem_proving_in_lean4/},
   year         = {2024},
-  note         = {Zugriff am 2. Juli 2026},
+  urldate         = {2026-07-02},
 }
+
+%mathlib: 
+@inproceedings{mathlibPaper,
+  author    = {{The mathlib Community}},
+  title     = {The {L}ean {M}athematical {L}ibrary},
+  booktitle = {Proceedings of the 9th {ACM} {SIGPLAN} International Conference
+               on Certified Programs and Proofs},
+  series    = {CPP 2020},
+  publisher = {ACM},
+  address   = {New Orleans, LA, USA},
+  year      = {2020},
+  month     = jan,
+  doi       = {10.1145/3372885.3373824},
+  url       = {https://doi.org/10.1145/3372885.3373824}
+}
+
+@online{mathlib,
+  author  = {{The Mathlib Community}},
+  title   = {Mathlib: The {L}ean {M}athematical {L}ibrary},
+  url     = {https://github.com/leanprover-community/mathlib4},
+  urldate = {2026-08-24}
+}
+https://leanprover-community.github.io/mathlib4_docs/Mathlib
