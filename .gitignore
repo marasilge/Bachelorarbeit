@@ -1,6 +1,8 @@
 /.lake
 /CWComplexes
 /.claude
+/.vscode
+/SeminarTalk1
 
 # LaTeX-Build-Artefakte (PDFs bleiben absichtlich versioniert)
 *.aux
@@ -18,6 +20,8 @@
 *.run.xml
 *.snm
 *.synctex.gz
+*.synctex(busy)
+*.pdfsync
 *.toc
 *.vrb
 
@@ -28,4 +32,7 @@ _minted/
 .DS_Store
 
 # lokal behaltene Altstaende (nicht versioniert)
-/BachelorarbeitLean/not relevant/
+/Altstaende/
+
+# Abgabeversion (nicht versioniert)
+/Abgabe_Arbeit.pdf

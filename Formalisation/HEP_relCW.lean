@@ -1,7 +1,13 @@
+/-
+Copyright (c) 2026 Mara Silge. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Mara Silge
+-/
+
 import Mathlib.Topology.CWComplex.Classical.Basic
 import Mathlib.Topology.CWComplex.Classical.Subcomplex
 import Mathlib.Topology.Constructions.SumProd
-import BachelorarbeitLean.HEP_skeleton
+import Formalisation.HEP_skeleton
 
 open Topology
 open RelCWComplex
@@ -85,13 +91,13 @@ lemma HEP_RelCWFinite (hX : FiniteDimensional X) : HEP' X C := by
 
 -- für die zukunft
 lemma ex_r_skel' (m : ℕ) : ∃ r,
-    RetractionOn r (smalcyl (skeletonLT X (↑m + 1)).carrier)
-    (smalanchor ↑(skeletonLT X (↑m + 1)) ↑(skeletonLT X ↑m)) :=
+    RetractionOn r (smallcyl (skeletonLT X (↑m + 1)).carrier)
+    (smallanchor ↑(skeletonLT X (↑m + 1)) ↑(skeletonLT X ↑m)) :=
   (retraction_criterion_closed' (skeletonLT X (m + 1)).carrier (skeletonLT X m).carrier
     (skeletonLT_mono le_self_add) ((skeletonLT X ↑m).closed')).1 (HEP'_skeleton (X := X) m)
 
 def r_skel' (m : ℕ) : Y × ℝ → Y × ℝ := (ex_r_skel' X m).choose
 
 lemma r_skel'_IsRetactionOn (m : ℕ) : RetractionOn (r_skel' X m)
-  (smalcyl (skeletonLT X (m + 1))) (smalanchor (skeletonLT X (m + 1)) (skeletonLT X m)) :=
+  (smallcyl (skeletonLT X (m + 1))) (smallanchor (skeletonLT X (m + 1)) (skeletonLT X m)) :=
   (ex_r_skel' X m).choose_spec

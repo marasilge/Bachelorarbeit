@@ -1,3 +1,9 @@
+/-
+Copyright (c) 2026 Mara Silge. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Mara Silge
+-/
+
 import Mathlib.Topology.CWComplex.Classical.Basic
 import Mathlib.Topology.CWComplex.Classical.Subcomplex
 import Mathlib.Topology.Constructions.SumProd
@@ -5,6 +11,10 @@ import Mathlib.Analysis.InnerProductSpace.PiL2
 import Mathlib.Analysis.Convex.GaugeRescale
 import Mathlib.Data.Set.Subset
 import Mathlib.Topology.Basic
+
+/-!
+We define the homotopy extension property. 
+-/
 
 open Set.Notation
 
@@ -33,14 +43,14 @@ universe u
 abbrev cyl (X : Type*) : Set (X × ℝ) := {p | p.2 ∈ unitInterval}
 
 -- `A × I ⊆ X × ℝ` is the cylinder over a subset `A ⊆ X`.
-abbrev smalcyl {X : Type*} (A : Set X) : Set (X × ℝ) := {p | p.1 ∈ A ∧ p.2 ∈ unitInterval}
+abbrev smallcyl {X : Type*} (A : Set X) : Set (X × ℝ) := {p | p.1 ∈ A ∧ p.2 ∈ unitInterval}
 
 -- `X × {0} ∪ A × I ⊆ X × ℝ`
 abbrev anchor {X : Type*} (A : Set X) : Set (X × ℝ) :=
   {p | p.2 = 0 ∨ p.1 ∈ A ∧ p.2 ∈ unitInterval}
 
 --`X × {0} ∪ A × I ⊆ Y × ℝ` in an ambient space `Y`.
-abbrev smalanchor {Y : Type*} (X A : Set Y) : Set (Y × ℝ) :=
+abbrev smallanchor {Y : Type*} (X A : Set Y) : Set (Y × ℝ) :=
   {p | p.1 ∈ X ∧ p.2 = 0 ∨ p.1 ∈ A ∧ p.2 ∈ unitInterval}
 
 
@@ -67,8 +77,8 @@ structure HomotopyExtension (H' : X × ℝ → Z) (f : X → Z) (H : X × ℝ �
 
 def HEP (X : Type u) [TopologicalSpace X] (A : Set X) : Prop :=
   ∀ (Z : Type u) [TopologicalSpace Z] (rangeH' : Set Z), ∀ (f : X → Z), ∀ (H : X × ℝ → Z),
-  Continuous f → Set.range f ⊆ rangeH' → ContinuousOn H (smalcyl A) →
-  (smalcyl A).MapsTo H rangeH' → agreeOn f H A → ∃ H' : X × ℝ → Z,
+  Continuous f → Set.range f ⊆ rangeH' → ContinuousOn H (smallcyl A) →
+  (smallcyl A).MapsTo H rangeH' → agreeOn f H A → ∃ H' : X × ℝ → Z,
   HomotopyExtension H' f H A rangeH'
 
 -- This is the version, without `rangeH'`:
@@ -79,7 +89,7 @@ structure HomotopyExtensionY (H' : X × ℝ → Z) (f : X → Z) (H : X × ℝ �
 
 def HEPY (X : Type u) [TopologicalSpace X] (A : Set X) : Prop :=
   ∀ (Z : Type u) [TopologicalSpace Z], ∀ (f : X → Z), ∀ (H : X × ℝ → Z), Continuous f →
-  ContinuousOn H (smalcyl A) → agreeOn f H A
+  ContinuousOn H (smallcyl A) → agreeOn f H A
   → ∃ (H' : X × ℝ → Z), HomotopyExtensionY H' f H A
 
 --Third version, where both X and A are sets of the same Type:
@@ -126,7 +136,7 @@ lemma HEP_iff_HEPY (X : Type u) [TopologicalSpace X] (A : Set X) : HEP X A ↔ H
     obtain ⟨H', hH'⟩ := h Z (@Set.univ Z) f H hf (by simp) hH (by simp) hfH
     use H'
     exact ⟨hH'.ContinuousOn, hH'.agreef , hH'.agreeH⟩
-  · intro h Z hZ rangeH' f H hf1 hf2 hH1 hH2 hfH
+  · intro h Z _ rangeH' f H hf1 hf2 hH1 hH2 hfH
     let fr : X → rangeH' := fun p ↦ ⟨f p, hf2 (Set.mem_range_self p)⟩
     by_cases hX : Nonempty X
     · have hrange : Nonempty rangeH' := by
@@ -134,9 +144,9 @@ lemma HEP_iff_HEPY (X : Type u) [TopologicalSpace X] (A : Set X) : HEP X A ↔ H
         use f x
         exact hf2 (Set.mem_range_self x)
       let Hr : X × ℝ → rangeH' := fun p ↦
-        if hp : p ∈ (smalcyl A) then ⟨H p, hH2 hp⟩
+        if hp : p ∈ (smallcyl A) then ⟨H p, hH2 hp⟩
         else Classical.choice hrange
-      have Hr_continuousOn : ContinuousOn Hr (smalcyl A) := by
+      have Hr_continuousOn : ContinuousOn Hr (smallcyl A) := by
         rw [Topology.IsInducing.subtypeVal.continuousOn_iff]
         refine hH1.congr ?_
         intro p hp
@@ -148,10 +158,8 @@ lemma HEP_iff_HEPY (X : Type u) [TopologicalSpace X] (A : Set X) : HEP X A ↔ H
           ↓reduceDIte, Subtype.mk.injEq, fr, Hr]
         exact hfH a ha
       obtain ⟨H', hH1', hH2', hH3'⟩  := h rangeH' fr Hr (by fun_prop) Hr_continuousOn agree_r
-      use (fun p ↦ H' p)
-      refine ⟨by fun_prop, ?_ , ?_ , ?_ ⟩
-      · intro x hx
-        exact Subtype.coe_prop (H' x)
+      use fun p ↦ H' p
+      refine ⟨by fun_prop, fun x _ => Subtype.coe_prop (H' x), ?_ , ?_ ⟩
       · intro x
         have := hH2' x
         rw [← SetCoe.ext_iff] at this
@@ -164,13 +172,13 @@ lemma HEP_iff_HEPY (X : Type u) [TopologicalSpace X] (A : Set X) : HEP X A ↔ H
     · rw [not_nonempty_iff] at hX
       obtain ⟨H', hH1', hH2', hH3'⟩ := h Z f H hf1 hH1 hfH
       use H'
-      refine ⟨hH1', ?_ , hH2' , hH3'⟩
-      have : (cyl X) = ∅ := by
+      refine ⟨hH1', ?_ , hH2', hH3'⟩
+      have : cyl X = ∅ := by
         have := @Prod.isEmpty_left X ℝ hX
         rw [← Set.univ_eq_empty_iff] at this
         exact  Set.subset_eq_empty (Set.setOf_subset.mpr fun x a ↦ trivial) this
-      rw[this]
-      exact (Set.mapsTo_empty H' rangeH')
+      rw [this]
+      exact Set.mapsTo_empty H' rangeH'
 
 /-
   **Corollary 2.25** for closed: Let A be a closed subset of a topological space X.
@@ -217,7 +225,7 @@ lemma g_apply_of_ne_zero (f : X → Z) (H : X × ℝ → Z) {q : X × ℝ} (h : 
     g f H q = H q := if_neg h
 
 lemma continuousOn_g {A : Set X} (hA : IsClosed A) (f : X → Z) (H : X × ℝ → Z) (hf1 : Continuous f)
-  (hH1 : ContinuousOn H (smalcyl A)) (hAgree : agreeOn f H A) :
+  (hH1 : ContinuousOn H (smallcyl A)) (hAgree : agreeOn f H A) :
     ContinuousOn (@g X Z f H) (anchor A) := by
   refine ContinuousOn.union_of_isClosed ?_ ?_ (isClosed_eq continuous_snd continuous_const) ?_
   · have congrcts : ContinuousOn (fun (p : X × ℝ) ↦ f p.1) {p | p.2 = 0} := by fun_prop
@@ -323,7 +331,7 @@ lemma retraction_criterion_closed (hA1 : IsClosed A) :
 
 -- nützlich?
 omit [TopologicalSpace X] in
-lemma zeroOrI_subset_I : (anchor A) ⊆ (cyl X) := by
+lemma anchor_subset_cyl : (anchor A) ⊆ (cyl X) := by
   intro y hy
   obtain h0 | hA := hy
   · rw [Set.mem_setOf, h0]
@@ -372,19 +380,19 @@ lemma proj_id {t : ℝ} (ht : t ∈ unitInterval) : ProjIcc t = t :=
 lemma proj_cont : Continuous ProjIcc := continuous_subtype_val.comp continuous_projIcc
 
 lemma if_HEP_then_retraction' (X A : Set Y) (hAX : A ⊆ X) :
-    HEP' X A → ∃ r : Y × ℝ → Y × ℝ, RetractionOn r (smalcyl X) (smalanchor X A) := by
+    HEP' X A → ∃ r : Y × ℝ → Y × ℝ, RetractionOn r (smallcyl X) (smallanchor X A) := by
   intro h_hep
   obtain ⟨r, hr⟩ := if_HEP_then_retraction h_hep
   wlog hX : Nonempty X
   · rw [Set.not_nonempty_iff_eq_empty'] at hX
     have hA : A = ∅ := Set.subset_eq_empty hAX hX
-    exact ⟨id, by simp [smalcyl, smalanchor, hX, hA], continuous_id.continuousOn,
-      by simp [smalcyl, smalanchor, hX, hA], by simp [smalanchor, hX, hA]⟩
+    exact ⟨id, by simp [smallcyl, smallanchor, hX, hA], continuous_id.continuousOn,
+      by simp [smallcyl, smallanchor, hX, hA], by simp [smallanchor, hX, hA]⟩
   let s : Y × ℝ → Y × ℝ :=
     fun p ↦ (Subtype.val (r ((mapYX hX) p.1, p.2)).1, (r ((mapYX hX) p.1, p.2)).2)
   refine ⟨s, by grind, ?_, ?_ , ?_ ⟩
   · have cts_mapYX : ContinuousOn (fun (p : Y × ℝ) ↦ r ((mapYX hX) p.1, p.2))
-      (smalcyl X) := by
+      (smallcyl X) := by
       refine hr.continuousOn.comp ?_ (fun _ hy => hy.2)
       refine ContinuousOn.prodMk ?_ continuousOn_snd
       exact (ctsOn_mapYX hX).comp continuousOn_fst (fun _ hy => hy.1)
@@ -405,12 +413,12 @@ lemma if_HEP_then_retraction' (X A : Set Y) (hAX : A ⊆ X) :
     simp only [hX, ↓reduceDIte, s, mapYX,  hr.fixesOn (⟨y.1, hX⟩, y.2) y_mem, Prod.mk.eta]
 
 lemma retraction_criterion_closed' (X A : Set Y) (hAX : A ⊆ X)
-    (hA1 : IsClosed A) : HEP' X A ↔ ∃ s : Y × ℝ → Y × ℝ, RetractionOn s (smalcyl X) (smalanchor X A)
+    (hA1 : IsClosed A) : HEP' X A ↔ ∃ s : Y × ℝ → Y × ℝ, RetractionOn s (smallcyl X) (smallanchor X A)
     := by
   refine ⟨fun h_HEP' ↦ if_HEP_then_retraction' X A hAX h_HEP', ?_ ⟩
   intro h_retract
   obtain ⟨s, hs⟩ := h_retract
-  have mem_source (p : X × ℝ) : ((p.1 : Y), ProjIcc p.2) ∈ (smalcyl X) :=
+  have mem_source (p : X × ℝ) : ((p.1 : Y), ProjIcc p.2) ∈ (smallcyl X) :=
     ⟨Subtype.coe_prop p.1, proj_mem p.2⟩
   have MapsTo1_s (p : X × ℝ) : (s ((p.1 : Y), ProjIcc p.2)).1 ∈ X := by
     obtain h1 | h2 := hs.mapsTo (mem_source p)
@@ -432,13 +440,12 @@ lemma retraction_criterion_closed' (X A : Set Y) (hAX : A ⊆ X)
     simp [Set.mem_setOf_eq, Set.mem_preimage, r, proj_id hx]
     grind [hs.mapsTo (mem_source x)]
   · intro x hx
-    have : (x.1.1,x.2) ∈ (smalanchor X A) := by
+    have : (x.1.1,x.2) ∈ (smallanchor X A) := by
       simp only [Set.mem_setOf_eq, Subtype.coe_prop, true_and]
       obtain h0 | hA := hx
       · exact Or.inl h0
       · refine Or.inr ⟨by exact Set.mem_preimage.mp hA.1, hA.2 ⟩
-    have := hs.fixesOn (x.1.1,x.2) this
-    simp[r, proj_id (zeroOrI_subset_I hx), this]
+    simp[r, proj_id (anchor_subset_cyl hx), hs.fixesOn (x.1.1,x.2) this]
 
 /-
 HEP is `preserved under homeomorphisms`:
@@ -458,19 +465,19 @@ lemma PartialHomeomorph_HEP' {Y' : Type u} [TopologicalSpace Y'] {X A : Set Y} (
   use r'
   constructor
   · grind
-  · have hr_comp_fsymm : ContinuousOn r_comp_fsymm (smalcyl f.target) := by
+  · have hr_comp_fsymm : ContinuousOn r_comp_fsymm (smallcyl f.target) := by
       apply hr.2.comp ?_ (fun _ hx => ⟨f.map_target hx.1 , hx.2⟩)
       refine ContinuousOn.prodMk ?_ continuousOn_snd
       exact f.continuousOn_symm.comp continuousOn_fst (fun _ hx => hx.1)
     refine ContinuousOn.prodMk ?_ ?_
     · apply f.continuousOn.comp (continuous_fst.comp_continuousOn' hr_comp_fsymm) ?_
       intro x hx
-      have : (f.symm x.1, x.2) ∈ (smalcyl f.source) := ⟨f.map_target hx.1, hx.2⟩
+      have : (f.symm x.1, x.2) ∈ (smallcyl f.source) := ⟨f.map_target hx.1, hx.2⟩
       obtain h0 | h1 := hr.3 this
       exacts [h0.1, hA h1.1]
     exact hr_comp_fsymm.snd
   · intro _ hy
-    have : (smalcyl f.target).MapsTo r_comp_fsymm (smalanchor f.source A) :=
+    have : (smallcyl f.target).MapsTo r_comp_fsymm (smallanchor f.source A) :=
       fun _ h => hr.3 ⟨f.mapsTo_symm h.1, h.2⟩
     obtain h0 | h1 := this hy
     exacts [Or.inl ⟨f.mapsTo h0.1 , h0.2⟩, Or.inr ⟨ Set.mem_image_of_mem f h1.1 , h1.2⟩]
@@ -489,7 +496,6 @@ lemma PartialHomeomorph_HEP' {Y' : Type u} [TopologicalSpace Y'] {X A : Set Y} (
     refine Prod.ext (f.right_inv ?_ ) rfl
     obtain h0 | h1 := hy
     exacts [h0.1, hA' h1.1]
-
 
 /-
 HEP is `transitive`:
@@ -520,7 +526,7 @@ lemma HEP_trans (A1 A2 A3 : Set Y) (h21_sub : A2 ⊆ A1) (h12_hep : HEP' A1 A2) 
     (by
       rw [continuousOn_iff_continuous_restrict]
       let projfun : (A1 ↓∩ A2) → A2 := fun p ↦ ⟨p, Set.mem_preimage.2 p.prop⟩
-      let congrfun: (smalcyl (A1 ↓∩ A2)) → Z :=
+      let congrfun: (smallcyl (A1 ↓∩ A2)) → Z :=
         fun p ↦ H2' (projfun ⟨p.1.1, p.prop.1⟩, p.1.2 )
       have ctscongr: Continuous congrfun := by
         unfold congrfun projfun
@@ -581,7 +587,7 @@ end PairLargeSet
 --   · unfold HX
 --     have : ContinuousOn (fun (p : homeo.source × ℝ) ↦
 --       ((⟨ homeo.toPartialEquiv p.1.1, homeo.mapsTo p.1.prop⟩ : { x // x ∈ homeo.target }), p.2))
---       (smalcyl (homeo.source ↓∩ X2)) := by
+--       (smallcyl (homeo.source ↓∩ X2)) := by
 --       refine ContinuousOn.prodMk ?_ continuousOn_snd
 --       simp only [PartialHomeomorph.toFun_eq_coe]
 --       sorry

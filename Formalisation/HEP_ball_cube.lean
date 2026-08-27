@@ -1,3 +1,14 @@
+/-
+Copyright (c) 2026 Mara Silge. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Mara Silge
+-/
+
+/- copyright
+licence  -/
+
+
+
 import Mathlib.Topology.CWComplex.Classical.Basic
 import Mathlib.Topology.CWComplex.Classical.Subcomplex
 import Mathlib.Topology.Constructions.SumProd
@@ -5,8 +16,11 @@ import Mathlib.Analysis.InnerProductSpace.PiL2
 import Mathlib.Analysis.Convex.GaugeRescale
 import Mathlib.Data.Set.Subset
 import Mathlib.Topology.Defs.Filter
-import BachelorarbeitLean.HEP_definition
+import Formalisation.HEP_definition
 
+/-!
+was wird passieren
+-/
 noncomputable section
 
 /-
@@ -36,7 +50,7 @@ def aux_fun : EuclideanSpace ℝ (Fin m) → Z := fun p =>
   else H (⟨((norm p)⁻¹ : ℝ) • p, inv_norm_smul_mem_unitClosedBall p⟩, norm p - 1)
 
 lemma aux_contOn_ring
-    (hH_cont : ContinuousOn H (smalcyl (sphere ⟨0, by simp⟩ 1)))
+    (hH_cont : ContinuousOn H (smallcyl (sphere ⟨0, by simp⟩ 1)))
     (hAgree : agreeOn f H (sphere ⟨0, by simp⟩ 1)) :
     ContinuousOn (aux_fun f H) {p | 1 ≤ dist 0 p ∧ dist 0 p ≤ 2} := by
   rw [continuousOn_iff_continuous_restrict]
@@ -70,7 +84,7 @@ lemma aux_contOn_ring
 
 -- Continuity on the ball with radius 2 of the auxilliar function:
 lemma aux_contOn (hf_cont : Continuous f)
-    (hH_cont : ContinuousOn H (smalcyl (sphere ⟨0, by simp⟩ 1)))
+    (hH_cont : ContinuousOn H (smallcyl (sphere ⟨0, by simp⟩ 1)))
     (hAgree : agreeOn f H (Metric.sphere ⟨0, mem_closedBall_self zero_le_one⟩ 1)) :
     ContinuousOn (aux_fun f H) (closedBall 0 2) := by
   have domain_union : Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 2 =
@@ -98,7 +112,7 @@ def H' : (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) × ℝ → Z :=
 
 -- checking, that this homotopy H' satisfies all required properties: (ContinuousOn, MapsTo, ...)
 lemma H'_ContinuousOn (hf_cont : Continuous f)
-    (hH_cont : ContinuousOn H (smalcyl (sphere ⟨0, by simp⟩ 1)))
+    (hH_cont : ContinuousOn H (smallcyl (sphere ⟨0, by simp⟩ 1)))
     (hAgree : agreeOn f H (Metric.sphere ⟨0, by simp⟩ 1)) :
     ContinuousOn (H' f H) (cyl (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1)) := by
   refine ContinuousOn.comp (aux_contOn f H hf_cont hH_cont hAgree) (by fun_prop ) ?_
@@ -117,7 +131,7 @@ lemma H'_ContinuousOn (hf_cont : Continuous f)
 
 omit [TopologicalSpace Z] in
 lemma H'_MapsTo (hf_range : Set.range f ⊆ rangeH')
-    (hH_mapsto : Set.MapsTo H (smalcyl (sphere ⟨0, by simp⟩ 1)) rangeH') :
+    (hH_mapsto : Set.MapsTo H (smallcyl (sphere ⟨0, by simp⟩ 1)) rangeH') :
     (cyl (closedBall (0 : EuclideanSpace ℝ (Fin m)) 1)).MapsTo (H' f H) rangeH' := by
   unfold H' aux_fun
   intro x hx
