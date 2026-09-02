@@ -9,6 +9,26 @@ import Mathlib.Topology.CWComplex.Classical.Subcomplex
 import Mathlib.Topology.Constructions.SumProd
 import Formalisation.HEP_skeleton
 
+/-!
+# HEP for finite dimensional relative CW-complexes
+
+This file proves that a finite dimensional relative CW-complex `(X, C)` has the HEP relative to
+its base. This is the final result of the formalisation. The general case, in which the complex
+need not be finite dimensional, is not covered here.
+
+The proof has two steps. First an induction over the skeleta, whose base case is the HEP of a
+space relative to itself and whose inductive step combines the HEP for two consecutive skeleta
+with the transitivity of the HEP. Second, the observation that a finite dimensional complex is
+one of its own skeleta.
+
+## Main results
+
+* `HEP_skelLT_base` and `HEP_skel_base`: every skeleton has the HEP relative to the base, stated
+  for both notions of skeleton that Mathlib provides.
+* `RelCWFinite_eq_SkelLT`: a finite dimensional complex equals one of its skeleta.
+* `HEP_RelCWFinite`: a finite dimensional relative CW-complex has the HEP relative to its base.
+-/
+
 open Topology
 open RelCWComplex
 
@@ -22,7 +42,7 @@ universe u
 
 variable {Y : Type u} [TopologicalSpace Y] [T2Space Y] (X : Set Y) {C : Set Y} [RelCWComplex X C]
 
--- Every skeleton relative to its base has the `HEP'`:
+-- Every skeleton relative to its base has the `HEP'`. The proof is an induction over `m`.
 lemma HEP_skelLT_base (m : ℕ) : HEP' (skeletonLT X m) C := by
   induction m with
   | zero =>
@@ -33,14 +53,14 @@ lemma HEP_skelLT_base (m : ℕ) : HEP' (skeletonLT X m) C := by
       le_self_add)  ?_ (Subcomplex.base_subset (skeletonLT X ↑n)) n_ih
     exact HEP'_skeleton X n
 
--- Transfered the result from `skeletonLT` to `skeleton
+-- The same result transferred from `skeletonLT` to `skeleton`, using that `skeleton X m` is by
+-- definition `skeletonLT X (m + 1)`.
 lemma HEP_skel_base (m : ℕ) : HEP' (skeleton X m) C := by
   rw [skeleton.congr_simp X m m rfl]
   exact HEP_skelLT_base X (m + 1)
 
-/- We can split the union over all open cells in the union over all open cells up to dimension
-  m and a second onion over all remaining higher dimensional cells.
--/
+/- We can split the union over all open cells into the union over all open cells of dimension
+  less than `m` and a second union over all remaining cells of higher dimension.-/
 omit [T2Space Y] in
 lemma splitUnionAtLt (m : ℕ) : ⋃ (n : ℕ), ⋃ (j : cell X n), openCell n j =
     (⋃ n ∈ {x | x < m}, ⋃ (j : cell X n), openCell n j) ∪
@@ -54,8 +74,8 @@ lemma splitUnionAtLt (m : ℕ) : ⋃ (n : ℕ), ⋃ (j : cell X n), openCell n j
   · exact Set.mem_union_left _ hnm
   · apply Set.mem_union_right _ (Std.not_lt.mp hnm)
 
-/- We can write a relatice CW-complex as the union of an (m-1)-skeleton and all open cells
-  of dimension m or higher -/
+/- We can write a relative CW-complex as the union of an (m-1)-skeleton and all open cells
+  of dimension `m` or higher. -/
 lemma RelCW_eq_UnionSkelLtCell (m : ℕ) : X = ↑(skeletonLT X m) ∪ (⋃ n ≥ m, ⋃ (j : cell X n),
     openCell n j) := by
   simp only [← union_iUnion_openCell_eq_complex (C := X) (D := C)]
@@ -66,8 +86,8 @@ lemma RelCW_eq_UnionSkelLtCell (m : ℕ) : X = ↑(skeletonLT X m) ∪ (⋃ n �
   rw [Nat.cast_lt]
 
 /-
-For a finite dimensional relative CW-complex (X,C) we can find a natural number m, such that
-X equals the (m-1)-skeleton
+For a finite dimensional relative CW-complex (X,C) we can find a natural number `m` such that
+X equals the (m-1)-skeleton.
 -/
 lemma RelCWFinite_eq_SkelLT (hX : FiniteDimensional X) : ∃ (m : ℕ), X = skeletonLT X m := by
   obtain ⟨m, hm⟩ := Filter.eventually_atTop.1 hX.eventually_isEmpty_cell
@@ -81,23 +101,9 @@ lemma RelCWFinite_eq_SkelLT (hX : FiniteDimensional X) : ∃ (m : ℕ), X = skel
   specialize hm b hb
   simp only [Set.iUnion_of_empty]
 
--- every finite dimensional CW complex has the `HEP'`
+-- The final result: every finite dimensional relative CW-complex has the `HEP'` relative to its
+-- base.
 lemma HEP_RelCWFinite (hX : FiniteDimensional X) : HEP' X C := by
   obtain ⟨m, hm⟩ := RelCWFinite_eq_SkelLT X hX
   rw[hm]
   exact HEP_skelLT_base X m
-
-
-
--- für die zukunft
-lemma ex_r_skel' (m : ℕ) : ∃ r,
-    RetractionOn r (smallcyl (skeletonLT X (↑m + 1)).carrier)
-    (smallanchor ↑(skeletonLT X (↑m + 1)) ↑(skeletonLT X ↑m)) :=
-  (retraction_criterion_closed' (skeletonLT X (m + 1)).carrier (skeletonLT X m).carrier
-    (skeletonLT_mono le_self_add) ((skeletonLT X ↑m).closed')).1 (HEP'_skeleton (X := X) m)
-
-def r_skel' (m : ℕ) : Y × ℝ → Y × ℝ := (ex_r_skel' X m).choose
-
-lemma r_skel'_IsRetactionOn (m : ℕ) : RetractionOn (r_skel' X m)
-  (smallcyl (skeletonLT X (m + 1))) (smallanchor (skeletonLT X (m + 1)) (skeletonLT X m)) :=
-  (ex_r_skel' X m).choose_spec

@@ -13,7 +13,27 @@ import Mathlib.Data.Set.Subset
 import Mathlib.Topology.Basic
 
 /-!
-We define the homotopy extension property. 
+# The homotopy extension property
+
+We define the homotopy extension property in two ways, called `HEP` and `HEP'`. In `HEP` the
+larger space of the pair is a type and the subspace is a set in it, whereas in `HEP'` both
+spaces are sets of a common ambient type. The two definitions are definitionally equal, so
+results transfer between them for free.
+
+## Main definitions
+
+* `HEP` and `HEP'`: the homotopy extension property for a pair of spaces, in the two shapes
+  described above.
+* `HEPY`: the variant without the auxiliary set `rangeH'`, proved to be equivalent to `HEP`
+  in `HEP_iff_HEPY`.
+* `RetractionOn`: the properties that make a self-map a retraction of one set onto another.
+
+## Main results
+
+* `retraction_criterion_closed` and `retraction_criterion_closed'`: the retraction criterion,
+  once with the retraction living on `X × ℝ` for the larger space `X` of the pair, and once on
+  `Y × ℝ` for the ambient type `Y`.
+* `PartialHomeomorph_HEP'` and `HEP_trans`: preservation results about the HEP.
 -/
 
 open Set.Notation
@@ -25,7 +45,7 @@ universe u
 /-
 **Notation** used throughout the whole project, i.e. in the files `HEP_definition`,
 `HEP_ball_cube`, `HEP_skeleton` and `HEP_relCW`:
-· `X` : the larger space of a pair `(X, A)`. a type in the section `PairLargeType`
+· `X` : the larger space of a pair `(X, A)`. A type in the section `PairLargeType`
         and a set in the section `PairLargeSet`
 · `A` : the subspace of the pair, `A ⊆ X`
 · `Y` : the ambient type in which the sets `X` and `A` live
@@ -59,12 +79,13 @@ section PairLargeType
 variable {X Z : Type u} [TopologicalSpace X] [TopologicalSpace Z] {A : Set X}
 
 /-
-Definitions :
-· agreeOn: f and H are compatible in a sense, that they agree on the Set A × {0}.
-  We need this to ensure, it makes sence to search for a function H' which extends f and H
-· HomotopyExtension combines all the properties, which the extended Homotopy on X × [0,1] should
+Definitions:
+· `agreeOn`: f and H are compatible in the sense that they agree on the set A × {0}.
+  We need this to ensure that it makes sense to search for a function H' which extends
+  f and H.
+· `HomotopyExtension` combines all the properties that the extended homotopy on X × [0,1] should
   have.
-· Definition of the homotopy extension property.
+· Definition of the `homotopy extension property`.
 -/
 def agreeOn (f : X → Z) (H : X × ℝ → Z) (A : Set X) : Prop := ∀ (a : X), a ∈ A → f a = H (a,0)
 
@@ -81,7 +102,7 @@ def HEP (X : Type u) [TopologicalSpace X] (A : Set X) : Prop :=
   (smallcyl A).MapsTo H rangeH' → agreeOn f H A → ∃ H' : X × ℝ → Z,
   HomotopyExtension H' f H A rangeH'
 
--- This is the version, without `rangeH'`:
+-- This is the version without `rangeH'`:
 structure HomotopyExtensionY (H' : X × ℝ → Z) (f : X → Z) (H : X × ℝ → Z) (A : Set X) : Prop where
   ContinuousOn : ContinuousOn H' (cyl X)
   agreef : ∀ (x : X), f x = H' (x, 0)
@@ -95,13 +116,16 @@ def HEPY (X : Type u) [TopologicalSpace X] (A : Set X) : Prop :=
 --Third version, where both X and A are sets of the same Type:
 def HEP' {Y : Type u} [TopologicalSpace Y] (X A : Set Y) : Prop := HEP X (X ↓∩ A)
 
+/- `HEP` and `HEP'` describe the same property, only in the two different shapes of a pair.
+  We register the translation as a `simp` lemma so that a goal stated in one shape can be
+  rewritten into the other automatically.-/
 @[simp]
 lemma HEP_HEP' {Y : Type u} [TopologicalSpace Y] (X : Set Y) (A : Set (Set.Elem X)) :
     HEP (X.Elem) A ↔ HEP' X (Subtype.val '' A) := by
   unfold HEP'
   rw [Set.preimage_val_image_val_eq_self]
 
--- The pair (X,X) has the HEP :
+-- The pair (X,X) has the HEP:
 lemma HEP_self : HEP X (@Set.univ X) := by
   intro Z hZ rangeH' f H hf1 hf2 hH1 hH2 hAgree
   use H
@@ -128,7 +152,7 @@ lemma HEP_empty : HEP X ∅ := by
     rfl
   · simp only [H', Subtype.forall, IsEmpty.forall_iff,]
 
--- Proof, that it is equivalent to define the HEP with `rangeH'` or without:
+-- Proof that it is equivalent to define the HEP with `rangeH'` or without:
 open Classical in
 lemma HEP_iff_HEPY (X : Type u) [TopologicalSpace X] (A : Set X) : HEP X A ↔ HEPY X A := by
   constructor
@@ -209,7 +233,12 @@ lemma if_HEP_then_extension :
   | inl _ => grind
   | inr hA => exact hGH ⟨q.1, hA.1⟩ ⟨q.2, hA.2⟩
 
--- reverse direction:
+/-
+Reverse direction of the extension property.
+Starting from a map `f` and a homotopy `H` that agree on `A × {0}`, we glue them into a single
+map `g f H` on the anchor `X × {0} ∪ A × I`. Applying the extension property to `g f H` then
+produces the homotopy required by the HEP.
+-/
 
 def g (f : X → Z) (H : X × ℝ → Z) : X × ℝ → Z := fun q =>
   if q.2 = 0 then f q.1
@@ -224,6 +253,9 @@ omit [TopologicalSpace X] [TopologicalSpace Z] in
 lemma g_apply_of_ne_zero (f : X → Z) (H : X × ℝ → Z) {q : X × ℝ} (h : q.2 ≠ 0) :
     g f H q = H q := if_neg h
 
+/- Continuity of the glued map. The anchor is covered by the two closed sets `X × {0}` and
+  `A × I`, on each of which `g f H` agrees with one of the two given maps, so the pasting
+  lemma applies. This is the one place where `A` has to be closed.-/
 lemma continuousOn_g {A : Set X} (hA : IsClosed A) (f : X → Z) (H : X × ℝ → Z) (hf1 : Continuous f)
   (hH1 : ContinuousOn H (smallcyl A)) (hAgree : agreeOn f H A) :
     ContinuousOn (@g X Z f H) (anchor A) := by
@@ -250,15 +282,17 @@ This is the `agreeH` field of `HomotopyExtension`, extracted from an extension o
 lemma agreeH_of_eq_g (f : X → Z) (H : X × ℝ → Z) (H' : X × ℝ → Z)
   (hAgree : agreeOn f H A) (hgH' : ∀ q ∈ (anchor A), g f H q = H' q)
   (a : X) (ha : a ∈ A) (t : ℝ) (ht : t ∈ unitInterval) :
-  H (↑a, ↑t) = H' (↑a, ↑t) := by
+  H (a, t) = H' (a, t) := by
   by_cases h : t = 0
   · rw [h, ← hgH' (a, 0) (Or.inl rfl), g_apply_zero]
     exact (hAgree a ha).symm
   · rw [← hgH' (a, t) (Or.inr ⟨ha, ht⟩), g_apply_of_ne_zero _ _ h]
 
+-- Backward direction, which needs `A` closed. We feed the glued map `g f H` into the
+-- extension property and read off the fields of `HomotopyExtension` from the extension it
+-- returns.
 lemma if_extension_then_HEP {A : Set X} (hA : IsClosed A) :
-    ExtensionProperty X A
-    → HEP X A := by
+    ExtensionProperty X A → HEP X A := by
   intro h_extend Z hZ rangeH' f H hf1 hf2 hH1 hH2 hAgree
   obtain ⟨G, hGcts, hGrange, hGg⟩ := h_extend Z rangeH' (g f H)
     (continuousOn_g hA f H hf1 hH1 hAgree)
@@ -329,7 +363,6 @@ lemma retraction_criterion_closed (hA1 : IsClosed A) :
   obtain ⟨G, hG1, hG2, hG3⟩ := (extension_iff_retract hr.subset).2 ⟨r, hr⟩ Z rangeG g hg1 hg2
   exact ⟨G, hG1, hG2, fun a ha => hG3 a ha⟩
 
--- nützlich?
 omit [TopologicalSpace X] in
 lemma anchor_subset_cyl : (anchor A) ⊆ (cyl X) := by
   intro y hy
@@ -369,6 +402,7 @@ lemma ctsOn_mapYX {X : Set Y} (hX : Nonempty X) :
 
 def ProjIcc : ℝ → ℝ := fun t ↦ (Set.projIcc (0 : ℝ) 1 zero_le_one t)
 
+-- The three properties of `ProjIcc` that we use.
 lemma proj_mem (t : ℝ) : ProjIcc t ∈ unitInterval :=
   Subtype.coe_prop (Set.projIcc 0 1  zero_le_one t)
 
@@ -412,9 +446,8 @@ lemma if_HEP_then_retraction' (X A : Set Y) (hAX : A ⊆ X) :
       · exact Or.inr hA
     simp only [hX, ↓reduceDIte, s, mapYX,  hr.fixesOn (⟨y.1, hX⟩, y.2) y_mem, Prod.mk.eta]
 
-lemma retraction_criterion_closed' (X A : Set Y) (hAX : A ⊆ X)
-    (hA1 : IsClosed A) : HEP' X A ↔ ∃ s : Y × ℝ → Y × ℝ, RetractionOn s (smallcyl X) (smallanchor X A)
-    := by
+lemma retraction_criterion_closed' (X A : Set Y) (hAX : A ⊆ X) (hA1 : IsClosed A) :
+    HEP' X A ↔ ∃ s : Y × ℝ → Y × ℝ, RetractionOn s (smallcyl X) (smallanchor X A) := by
   refine ⟨fun h_HEP' ↦ if_HEP_then_retraction' X A hAX h_HEP', ?_ ⟩
   intro h_retract
   obtain ⟨s, hs⟩ := h_retract
@@ -448,9 +481,12 @@ lemma retraction_criterion_closed' (X A : Set Y) (hAX : A ⊆ X)
     simp[r, proj_id (anchor_subset_cyl hx), hs.fixesOn (x.1.1,x.2) this]
 
 /-
-HEP is `preserved under homeomorphisms`:
-Let (X,A) and (Y,B) be pairs of topological spaces with A and B closed, and let f : X → Y be a
-homeomorphism with f(A) = B. If (X,A) has the HEP, then so does (Y,B).-/
+The HEP is preserved under partial homeomorphisms of pairs:
+Let (X,A) be a pair of sets in the ambient type Y and (X',A') a pair in the ambient type Y',
+and let f be a partial homeomorphism from Y to Y' whose source is X, whose target is X' and
+which maps A onto A'. If (X,A) has the HEP, then so does (X',A').
+The proof uses the retaction criterion. 
+-/
 
 lemma PartialHomeomorph_HEP' {Y' : Type u} [TopologicalSpace Y'] {X A : Set Y} (hA : A ⊆ X)
     {X' A' : Set Y'} (hA' : A' ⊆ X') (hHEP : HEP' X A) (f : PartialHomeomorph Y Y')
@@ -498,11 +534,10 @@ lemma PartialHomeomorph_HEP' {Y' : Type u} [TopologicalSpace Y'] {X A : Set Y} (
     exacts [h0.1, hA' h1.1]
 
 /-
-HEP is `transitive`:
-Prop: If (A1,A2) and (A2,A3) are pairs of topological spaces and both of them satisfy the HEP,
-   then also the pair (A1,A3) has the HEP.
-   The prove is checking the definition of HEP'. We construct the extended homotopy in two steps,
-   first using the HEP for (A2,A3) and afterward for (A1,A2).
+The HEP is transitive:
+If (A1,A2) and (A2,A3) are pairs of topological spaces and both of them satisfy the HEP,
+then so does the pair (A1,A3).
+The proof checks the definition of HEP' directly.
  -/
 
 open Classical in
@@ -548,57 +583,3 @@ lemma HEP_trans (A1 A2 A3 : Set Y) (h21_sub : A2 ⊆ A1) (h12_hep : HEP' A1 A2) 
     ← hH2'.agreeH ⟨⟨ a.1.1, h32_sub a.prop⟩, a.prop⟩ t]
 
 end PairLargeSet
-
--- Partial homeomorph ohne retraction criterion
-
--- lemma PartialHomeomorph_HEP'' {X Y : Type u} [TopologicalSpace X] [TopologicalSpace Y]
---     {X1 X2 : Set X} (hX : X2 ⊆ X1) {Y1 Y2 : Set Y} (hY : Y2 ⊆ Y1) (hHEP : HEP' X1 X2)
---     (homeo : PartialHomeomorph X Y) (source : X1 = homeo.source) (target : Y1 = homeo.target)
---     (h2 : homeo '' X2 = Y2) (hX2closed : IsClosed (X2 : Set X))
---     (hY2closed : IsClosed (Y2 : Set Y)) :
---     HEP' Y1 Y2 := by
---   intro Z _ rangeH' f H hf1 hf2 hH1 hH2 hagree
---   subst target source
---   let fX : homeo.source → Z := fun p ↦ f ⟨(homeo.toFun p), homeo.mapsTo p.prop⟩
---   let HX : homeo.source × ℝ → Z := fun p ↦ H (⟨(homeo.toFun p.1), homeo.mapsTo p.1.prop⟩, p.2)
---   have := hHEP Z rangeH' fX HX ?_ ?_ ?_ ?_ ?_
---   · obtain ⟨HX', hHX'⟩ := this
---     let homeo_prod : ↑homeo.target × ℝ → ↑homeo.source × ℝ  :=
---       (fun p ↦ (⟨(homeo.symm p.1), homeo.map_target p.1.2⟩, p.2))
---     use HX' ∘ homeo_prod
---     constructor
---     · have := hHX'.ContinuousOn
---       apply hHX'.ContinuousOn.comp (by
---         refine Continuous.continuousOn ?_
---         simp only [continuous_prodMk, homeo_prod]
---         refine ⟨?_, continuous_snd⟩
---         sorry)
---       intro x
---       simp [homeo_prod]
---     · sorry
---     · sorry
---     · sorry
---   · refine hf1.comp ?_
---     have cts_homeo := homeo.continuousOn
---     apply continuousOn_iff_continuous_restrict.1 at cts_homeo
---     exact (cts_homeo).subtype_mk  fun x ↦ homeo.mapsTo (Subtype.prop x)
---   · apply Set.Subset.trans ?_ hf2
---     exact Set.range_comp_subset_range _ _
---   · unfold HX
---     have : ContinuousOn (fun (p : homeo.source × ℝ) ↦
---       ((⟨ homeo.toPartialEquiv p.1.1, homeo.mapsTo p.1.prop⟩ : { x // x ∈ homeo.target }), p.2))
---       (smallcyl (homeo.source ↓∩ X2)) := by
---       refine ContinuousOn.prodMk ?_ continuousOn_snd
---       simp only [PartialHomeomorph.toFun_eq_coe]
---       sorry
---     apply hH1.comp this ?_
---     intro _ hz
---     simp only [Set.mem_preimage, PartialHomeomorph.toFun_eq_coe, Set.mem_setOf_eq]
---     refine ⟨?_, hz.2⟩
---     rw[← h2]; exact Set.mem_image_of_mem (↑homeo) hz.1
---   · apply Set.MapsTo.comp hH2 ?_
---     intro _ hz
---     refine ⟨ ?_, hz.2⟩
---     rw[← h2]
---     exact Set.mem_image_of_mem (↑homeo) hz.1
---   · sorry

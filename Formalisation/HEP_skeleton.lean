@@ -9,6 +9,35 @@ import Mathlib.Topology.CWComplex.Classical.Subcomplex
 import Mathlib.Topology.Constructions.SumProd
 import Formalisation.HEP_ball_cube
 
+/-!
+# HEP for two consecutive skeleta
+
+In this file we prove that the pair (X_m, X_{m-1}) of consecutive skeleta of a relative
+CW-complex satisfies the HEP. We do so with the retraction criterion, that is, by constructing a
+retraction of `skeletonLT X (m + 1) × ℝ` onto its anchor.
+
+The retraction is not defined on the skeleton directly. Instead we unglue the skeleton into its
+base space and the closed cubes of its cells, say what the map should do there, and push the
+result down along the quotient map `SkeletonProjection`.
+
+## Main definitions
+
+* `ungluedSkel` and `SkeletonProjection`: the disjoint union of the base space with the closed
+  cubes of all cells of dimension less than `m`, and the map from it onto the skeleton.
+* `cubesretract`: on a cube of top dimension the retraction coming from the HEP for cubes, and
+  the identity on all cubes of lower dimension.
+* `sumMap`: the map on the unglued skeleton assembled from `cubesretract` and the base space.
+* `r` and `retr_skeleton`: the induced map on the skeleton, and its extension to all of `ℝ` in
+  the second coordinate.
+
+## Main results
+
+* `SkeletonProjectionIsQuotientMap`: every skeleton is a quotient of its unglued version. This
+  is what makes the construction above possible and has no counterpart in Mathlib, where the
+  topology of a complex is described through its closed sets.
+* `HEP'_skeleton`: the pair of two consecutive skeleta has the HEP.
+-/
+
 open Metric
 open Set.Notation
 open Topology
@@ -25,12 +54,15 @@ universe u
 variable {Y : Type u} [TopologicalSpace Y] [T2Space Y] (X : Set Y) {C : Set Y} [RelCWComplex X C]
 
 /- `SkeletonProjection (m : ℕ)` is a map from the `ungluedSkel` to the (m-1)-skeleton of a
-  relative CW complex. After the construction of the map, we proved that it is a quotient map,
-  namely its surjectivity, continuity and that a set is closed, if its preimage is closed.
+  relative CW-complex. After constructing the map we prove that it is a quotient map, that is,
+  that it is surjective and continuous and that a set is closed whenever its preimage is closed.
 -/
 abbrev ungluedSkel (m : ℕ) :=
   C ⊕ (Σ (n : Fin m) (_ : cell X n), (closedBall (0 : Fin n → ℝ) 1))
 
+/-  The map itself: the identity on the base space, and the characteristic map of the cell on
+  each closed cube. The two `by` blocks supply the proofs that the values really land in the
+  skeleton.-/
 def SkeletonProjection (m : ℕ) :
   ungluedSkel X m → skeletonLT X m :=
   Sum.elim
@@ -44,6 +76,7 @@ def SkeletonProjection (m : ℕ) :
     apply closedCell_subset_skeletonLT n i
     exact Set.mem_image_of_mem ↑(map (↑n) i) x.prop⟩)
 
+-- Surjectivity of `SkeletonProjection`.
 lemma SkeletonProjection_Surjective (m : ℕ) : (SkeletonProjection X m).Surjective := by
   intro ⟨y, yprop⟩
   rw [mem_skeletonLT_iff] at yprop
@@ -61,6 +94,7 @@ lemma SkeletonProjection_Surjective (m : ℕ) : (SkeletonProjection X m).Surject
     use ⟨Fin.mk n (ENat.coe_lt_coe.mp hn1), i, (⟨x, hx1⟩ : closedBall (0 : Fin n → ℝ) 1)⟩
     exact SetLike.coe_eq_coe.mp hx2
 
+-- Continuity of `SkeletonProjection`.
 lemma SkeletonProjection_Continuous (m : ℕ) : Continuous (SkeletonProjection X m) := by
   refine continuous_sum_dom.mpr ⟨?_, ?_ ⟩
   · simp only [SkeletonProjection, Sum.elim_comp_inl]
@@ -70,10 +104,13 @@ lemma SkeletonProjection_Continuous (m : ℕ) : Continuous (SkeletonProjection X
     rw [continuous_induced_rng]
     apply ContinuousOn.restrict (continuousOn n j)
 
--- to shorten
+-- A point of the base space lies in every skeleton. This is needed repeatedly below, so we
+-- give it a name of its own.
 lemma memBase_memSkeletonLT {y : Y} (hC : y ∈ C) (m : ℕ) :
   y ∈ skeletonLT X m := mem_skeletonLT_iff.mpr (Or.inl hC)
 
+-- First of the two conditions of the closedness characterisation: the intersection of `S` with
+-- the base space is closed. It corresponds to the `Sum.inl` part of the preimage.
 lemma hClosedBase (m : ℕ) {S : Set (skeletonLT X m)}
     (hBase : IsClosed (Sum.inl ⁻¹' SkeletonProjection X m ⁻¹' S))
     (S' : Set Y) (hS'def : S' = Subtype.val '' S) : IsClosed (S' ∩ C) := by
@@ -90,6 +127,9 @@ lemma hClosedBase (m : ℕ) {S : Set (skeletonLT X m)}
   · intro ⟨⟨_ , _ ⟩, hs_memC⟩
     use hs_memC
 
+-- Second condition, for the cells of dimension less than `m`. The intersection with a closed
+-- cell is the image of a closed subset of the compact cube under the characteristic map, hence
+-- closed. It corresponds to the `Sum.inr` part of the preimage.
 lemma hClosedLT (m : ℕ) {S : Set (skeletonLT X m)}
     (hBall : ∀ (k : Fin m) (j : cell X k),
       IsClosed ((fun x => SkeletonProjection X m (Sum.inr ⟨k, j, x⟩)) ⁻¹' S))
@@ -116,6 +156,9 @@ lemma hClosedLT (m : ℕ) {S : Set (skeletonLT X m)}
     apply Set.mem_preimage.1 at hx
     exact (Subtype.val_injective.mem_set_image).2 hx
 
+/-The main result of this part: every skeleton is a quotient of its unglued version.
+It is what lets us construct a map out of a skeleton by prescribing it
+on the base space and on each cube separately, which is exactly how `r` is built below. -/
 lemma SkeletonProjectionIsQuotientMap (m : ℕ) :
     IsQuotientMap (SkeletonProjection X m) := by
   refine (isQuotientMap_iff (SkeletonProjection X m)).mpr  ⟨?_ , SkeletonProjection_Surjective X m⟩
@@ -141,11 +184,14 @@ lemma SkeletonProjectionIsQuotientMap (m : ℕ) :
         (disjoint_skeletonLT_openCell (ENat.coe_le_coe.mpr h)))
   · exact fun hS => hS.preimage (SkeletonProjection_Continuous X m)
 
+-- On the base space the projection does not depend on the dimension `m`,
+-- since it is the identity there.
 lemma SkeletonProj_const_C (m : ℕ) (n : ℕ) (c : C) :
     (SkeletonProjection X m (Sum.inl c)).1 = (SkeletonProjection X n (Sum.inl c)).1 := rfl
 /-
-`r_cube` are retractions obtained from the HEP for cubes relative boundary. They are used to define
-the retraction on the skeleton. In a first step we define `SumMap` on the unglued Skeleton
+`r_cube` are the retractions obtained from the HEP for cubes relative to their boundary. They are
+used to define the retraction on the skeleton. In a first step we define `sumMap` on the unglued
+skeleton.
 -/
 def r_cube (m : ℕ) : (closedBall (0 : Fin m → ℝ) 1) × ℝ → (closedBall (0 : Fin m → ℝ) 1) × ℝ :=
   Exists.choose ((retraction_criterion_closed isClosed_sphere).mp
@@ -156,14 +202,15 @@ lemma r_cube_RetractionOn (m : ℕ) : RetractionOn (r_cube m) (cyl _)
   Exists.choose_spec ((retraction_criterion_closed isClosed_sphere).mp
   (HEP_cube_boundary m))
 
--- `cubesretract` is on top dimesnional cell `r_cube` and in all other dimensions the identity
+-- On a cell of top dimension `cubesretract` is `r_cube`, and in all other dimensions it is the
+-- identity.
 def cubesretract {m : ℕ} (n : Fin (m + 1)) :
     (closedBall (0 : Fin (n : ℕ) → ℝ) 1) × unitInterval →
     (closedBall (0 : Fin (n : ℕ) → ℝ) 1) × ℝ := fun p ↦
   if n = m then (r_cube n (p.1, Subtype.val p.2))
   else (p.1, Subtype.val p.2)
 
--- We prove usefull lemma about `cubestract`
+-- We prove useful lemmas about `cubesretract`.
 lemma cubesretract_continuous {m : ℕ} (n : Fin (m + 1)) : Continuous (cubesretract n) := by
   unfold cubesretract
   by_cases hnm : n =  m
@@ -189,8 +236,8 @@ lemma cubesretract_fixedOn {m : ℕ} {n : Fin (m + 1)}
   · simp[cubesretract, h]
 
 /-
-The following `MapsTo` results will be used later one, here we derive the weaker version
-  `cubesretract_mapsto_weak` from it, that proofs that the image of `SumMap`
+The following `MapsTo` results will be used later on. Here we derive the weaker version
+  `cubesretract_mapsto_weak` from them, which proves that the image of `sumMap`
   lies in the required codomain.
 -/
 lemma cubesretract_mapsto_lt {m : ℕ} (n : Fin (m + 1)) (i : cell X n)
@@ -222,6 +269,8 @@ lemma cubesretract_mapsto_top {m : ℕ} (n : Fin (m + 1)) (i : cell X n)
     apply Set.mem_image_of_mem
     exact h1.1
 
+-- An element of `Fin (n + 1)` that is not `n` is smaller than `n`. Used to turn the negation of
+-- the top-dimension case into the hypothesis of `cubesretract_mapsto_lt`.
 lemma FinNeq_lt {n : ℕ} (m : Fin (n + 1)) (hnm : m ≠ n) : m < n := Nat.lt_of_le_of_ne m.is_le hnm
 
 lemma cubesretract_mapsto_weak {m : ℕ} (n : Fin (m + 1)) (i : cell X n)
@@ -236,6 +285,9 @@ lemma cubesretract_mapsto_weak {m : ℕ} (n : Fin (m + 1)) (i : cell X n)
   · exact skeletonLT_mono le_self_add
       (cubesretract_mapsto_lt X n i p (FinNeq_lt n hn)).1
 
+/- The map on the unglued skeleton, called `f_m` in the thesis. On the base space it is the
+   identity, regarded as a map into the skeleton. On a cube it first applies `cubesretract` and
+   then the characteristic map of that cell.-/
 def sumMap (m : ℕ) :
     (ungluedSkel X (m + 1)) × unitInterval → skeletonLT X (m+1) × ℝ := fun p ↦
     p.1.elim
@@ -243,9 +295,9 @@ def sumMap (m : ℕ) :
       (fun ⟨n, i, x⟩ => (⟨map n i (cubesretract n (x,p.2)).1,
         cubesretract_mapsto_weak X n i (x,p.2)⟩, (cubesretract n (x,p.2)).2))
 
-/- On the base space C, on balls, which are not in the top dimension, as well as in the sphere
-of top dimensional balls, `sumMap` is "the same" as applying the `SkeletonProjection` to the
-first coordinate -/
+/- On the base space C, on balls that are not of top dimension, and on the sphere of a ball of
+top dimension, `sumMap` does the same as applying `SkeletonProjection` to the first coordinate,
+at least once the subtype coercions are ignored. -/
 
 lemma sumMap_eq_SkelProj_C (m : ℕ)
     (x : C) (t : unitInterval) : sumMap X m (Sum.inl x, t) =
@@ -264,25 +316,8 @@ lemma sumMap_eq_SkelProj_LtOrSphere {m : ℕ}
   · have := (cubesretract_fixedOn (x', t)).2 hx_eq (Or.inr hx_sphere)
     simp [sumMap, this, SkeletonProjection]
     rfl
-/-
--- eventuell unnötig, weil kaum erkennisse -- möchte man vielleicht sinnvoller abändern
-lemma sumMap_top_open_apply (m : ℕ)
-    (n : Fin (m + 1)) (i : cell X n) (x' : closedBall (0 : Fin n → ℝ) 1) (t : unitInterval)
-   -- (hnm : n = m) (hx : x' ∉ sphere ⟨0, by simp⟩ 1)
-    :
-    sumMap m ((Sum.inr ⟨n, ⟨i, x'⟩⟩, t)) = (⟨map n i (cubesretract n (x',t)).1,
-    cubesretract_mapsto n i (x',t)⟩, (cubesretract n (x',t)).2) := by simp[sumMap, cubeMap]
--/
 
- -- to shorten
-
--- lemma xx {m : ℕ} (n : Fin (m + 1)) (hnm : n = m) (i : cell X n)
---   (x' : ↑(closedBall 0 1)) (hx' : x' ∉ sphere ⟨0, by simp⟩ 1)
---   (n_y : Fin (m + 1)) (j_y : cell X ↑n_y) (y' : ↑(closedBall 0 1) ) :
---   Sum.inr (⟨n_y, ⟨j_y, y'⟩⟩: (n : ℕ) × cell X n × (closedBall ⟨0 , by simp⟩ 1))
---   = Sum.inr ⟨n, ⟨i, x'⟩⟩ := sorry
-
--- Points from the open m-dimensional ball are not maped to the (m-1) skeleton:
+-- Points of the open m-dimensional ball are not mapped into the (m-1)-skeleton:
 lemma topopen_notLT {n : ℕ} (i : cell X n)
     (x' : closedBall (0 : Fin n → ℝ) 1) (hx : x'.1 ∈ ball (0 : Fin n → ℝ) 1) (m : Fin (n + 1)) :
     (map n i ↑x') ∉ skeletonLT X m := by
@@ -291,6 +326,8 @@ lemma topopen_notLT {n : ℕ} (i : cell X n)
   have le : (m : ℕ∞) ≤ n := ENat.coe_le_coe.mpr (Order.lt_add_one_iff.1 m.isLt )
   exact fun mem ↦ h ((skeletonLT_mono le) mem)
 
+-- Two points of the same open cell with the same image under the characteristic map are equal,
+-- since that map is injective on the open ball.
 omit [T2Space Y] in
 lemma same_point {m : ℕ} (n_y : Fin (m + 1)) (j_y : cell X ↑n_y) (y' : (closedBall 0 1))
     (i : cell X ↑n_y) (x' : (closedBall 0 1)) (x_ball : x'.1 ∈ ball (0 : Fin n_y → ℝ) 1)
@@ -302,8 +339,8 @@ lemma same_point {m : ℕ} (n_y : Fin (m + 1)) (j_y : cell X ↑n_y) (y' : (clos
   · rw [source_eq]; exact y_ball
   · rw [source_eq]; exact x_ball
 
-/- If a point `x` from a top dimensional open ball has the same image under `SkeletonProjection`
-  as a point `y` from `ungluedSkel`, the `y = Sum.inr ⟨n, i, x⟩`  -/
+/- If a point `x` of an open ball of top dimension has the same image under `SkeletonProjection`
+  as a point `y` of `ungluedSkel`, then `y` is that very point, that is, `y = Sum.inr ⟨n, i, x⟩`. -/
 lemma SkeletonProj_inj_top {m : ℕ} {n : Fin (m + 1)} (hnm : ↑n = m) (i : cell X n)
     (x : closedBall (0 : Fin n → ℝ) 1) (x_ball : x.1 ∈ ball (0 : Fin n → ℝ) 1)
     (y : ungluedSkel X (m + 1))
@@ -340,6 +377,9 @@ lemma SkeletonProj_inj_top {m : ℕ} {n : Fin (m + 1)} (hnm : ↑n = m) (i : cel
       rw [← Metric.closedBall_sdiff_ball]
       exact ⟨y'.prop, y_ball⟩
 
+/- The negation of the case distinction used twice in `factors`: if a point is neither of
+ dimension less than `m` nor on the sphere of a top-dimensional cube, then it lies in the open
+ cube of top dimension. -/
 lemma TopOpen {m : ℕ} (n_y : Fin (m + 1)) (y' : closedBall 0 1)
     (h : ¬(n_y < m ∨ n_y = m ∧ y' ∈ sphere (⟨0, by simp⟩ : closedBall (0 : Fin n_y → ℝ) 1) 1)) :
     n_y = m ∧ y' ∈ ball ⟨0, by simp⟩ 1 := by
@@ -395,11 +435,15 @@ lemma factors (m : ℕ) : (sumMap X m).FactorsThrough
       rw [← closedBall_sdiff_sphere]
       exact ⟨x'.prop, hxLtSphere.2 n_eq_m⟩
 
+/- Pushing `sumMap` down to the skeleton with `Function.extend`.
+Since `SkeletonProjection × id` is surjective, that second branch never applies, so one may read the
+definition simply as: take any preimage and apply `sumMap`. -/
 def r (m : ℕ) : skeletonLT X (m + 1) × unitInterval → skeletonLT X (m + 1) × ℝ :=
   Function.extend (fun p ↦ ((SkeletonProjection X (m + 1) p.1), p.2)) (sumMap X m)
   (Prod.map id Subtype.val)
 
-
+-- Every point of the skeleton has a preimage, and on it `r` is given by `sumMap`.
+-- This is how the properties of `r` are derived from those of `sumMap` below.
 lemma r_apply_SumMap (m : ℕ) (p : skeletonLT X (m + 1) × unitInterval) :
     ∃ (s : (ungluedSkel X (m + 1)) × unitInterval),
     SkeletonProjection X (m+1) s.1 = p.1 ∧ s.2 = p.2 ∧
@@ -414,8 +458,8 @@ lemma r_apply_SumMap (m : ℕ) (p : skeletonLT X (m + 1) × unitInterval) :
   · rw[inv]
     exact (factors X m).extend_apply (Prod.map id Subtype.val) (s, p.2)
 
--- the next two defintions and two simp-lemma are written by claude (Opus 5)
--- (I made smal changes)
+-- The next two definitions and the two simp lemmas following them were written by Claude
+-- (Opus 5). I made small changes to them.
 def Homeomorph.sigmaCongrRight' {ι : Type*} {σ τ : ι → Type*} [∀ i, TopologicalSpace (σ i)]
   [∀ i, TopologicalSpace (τ i)] (F : ∀ i, σ i ≃ₜ τ i) : (Σ i, σ i) ≃ₜ Σ i, τ i where
   toEquiv := Equiv.sigmaCongrRight (fun i ↦ F i)
@@ -426,6 +470,8 @@ def Homeomorph.sigmaCongrRight' {ι : Type*} {σ τ : ι → Type*} [∀ i, Topo
     rw [continuous_sigma_iff]
     exact fun i ↦ continuous_sigmaMk.comp (F i).symm.continuous
 
+-- Pulling the product with the unit interval inside the disjoint union, so that `sumMap` can be
+-- treated as a map out of a disjoint union when proving continuity.
 def homeoProd (m : ℕ) :
   (C × unitInterval) ⊕ (Σ (n : Fin (m + 1)) (_ : cell X n),
     (closedBall (0 : Fin n → ℝ) 1) × unitInterval) ≃ₜ
@@ -445,7 +491,10 @@ omit [T2Space Y] in
 
 -- Here my own code continues:
 
-lemma cts_sumMap_prehomeo (m : ℕ) : Continuous ((sumMap X m) ∘ (homeoProd (X := X) m))  := by
+/- Continuity of `sumMap` after precomposition with that homeomorphism. On each summand the goal
+ reduces to results established earlier, in particular `cubesretract_continuous` and the
+ continuity of the characteristic maps. -/
+lemma cts_sumMap_prehomeo (m : ℕ) : Continuous ((sumMap X m) ∘ (homeoProd (X := X) m)) := by
   have : (Sum.elim
     (fun (q : C × unitInterval) ↦ sumMap X m ((Sum.inl q.1), q.2))
     (fun (q : Σ (n : Fin (m + 1)) (_ : cell X n), (closedBall (0 : Fin n → ℝ) 1 × unitInterval)) ↦
@@ -471,6 +520,7 @@ lemma cts_sumMap_prehomeo (m : ℕ) : Continuous ((sumMap X m) ∘ (homeoProd (X
         exact Subtype.coe_prop (cubesretract n x).1
     · exact continuous_snd.comp (cubesretract_continuous n)
 
+-- Continuity of `r`.
 lemma continuousRetract (m : ℕ) : Continuous (r (X := X) m) := by
   refine (SkeletonProjectionIsQuotientMap X (m +1)).continuous_lift_prod_left ?_
   have cts_sumMap : Continuous (sumMap (X := X) m) :=
@@ -481,13 +531,16 @@ lemma continuousRetract (m : ℕ) : Continuous (r (X := X) m) := by
   rfl
 
 /-
-r ist now almost the retraction, we need for the retraction criterion. Only we have to extend the
-second coordinate onto all of ℝ and then proof, it satisfies all conditions of a retraction:
+`r` is now almost the retraction that we need for the retraction criterion. It only remains to
+extend the second coordinate  with `ProjIcc` to all of ℝ and then to prove that it satisfies all
+conditions of a retraction:
 -/
 
 def retr_skeleton (m : ℕ) : (skeletonLT X (m + 1)) × ℝ → (skeletonLT X (m + 1)) × ℝ := fun p ↦
   (r X m) (p.1, ⟨ProjIcc p.2, proj_mem p.2 ⟩)
 
+-- The `mapsTo` field, first proved for `sumMap` and then transferred to `retr_skeleton` through
+-- `r_apply_SumMap`.
 lemma sumMap_mapsTo (m : ℕ) (x : (ungluedSkel X (m + 1)) × ↑unitInterval) :
     (sumMap X m x).2 = 0 ∨
     ↑(sumMap X m x).1 ∈ skeletonLT X ↑m ∧ ↑(sumMap X m x).2 ∈ unitInterval := by
@@ -506,7 +559,8 @@ lemma sumMap_fixedOn (m : ℕ) {s : ↑(skeletonLT X (↑m + 1)).carrier × ℝ}
   (hxproj2 : t = ⟨s.2, hs2⟩) : sumMap X m (Sum.inr ⟨n, ⟨i, x'⟩⟩, t) = s := by
   simp only [sumMap, Sum.elim_inr]
   have cubesFixed : cubesretract n (x', t) = ((x', t).1, ↑(x', t).2) := by
-    by_cases h : n = Fin.last m
+    wlog h : n = Fin.last m
+    · exact (cubesretract_fixedOn (x', t)).1 (Fin.val_lt_last h)
     · subst h
       apply (cubesretract_fixedOn (x', t)).2 (Fin.val_last m)
       rcases hs with hs0 | hs1
@@ -519,12 +573,13 @@ lemma sumMap_fixedOn (m : ℕ) {s : ↑(skeletonLT X (↑m + 1)).carrier × ℝ}
         have := topopen_notLT X i x' (by rw [← closedBall_sdiff_sphere]; exact ⟨x'.prop, notSphere⟩)
           (Fin.last m)
         exact this hs1.1
-    · exact (cubesretract_fixedOn (x', t)).1 (Fin.val_lt_last h)
   simp only [cubesFixed]
   refine Prod.ext_iff.mpr ⟨ ?_, SetCoe.ext_iff.2 hxproj2 ⟩
   simp only [SkeletonProjection, Sum.elim_inr] at hxproj1
   exact hxproj1
 
+/- The result of this file. We check the four fields of `RetractionOn` for `retr_skeleton` and
+-- conclude with the retraction criterion, which applies since the smaller skeleton is closed. -/
 lemma HEP'_skeleton (m : ℕ) : HEP' (skeletonLT X (m + 1)).carrier (skeletonLT X m).carrier := by
   apply (retraction_criterion_closed (skeletonLT X ↑m).closed'.preimage_val).2
   use retr_skeleton X m
@@ -543,7 +598,7 @@ lemma HEP'_skeleton (m : ℕ) : HEP' (skeletonLT X (m + 1)).carrier (skeletonLT 
     simp only [ProjId s hs, Set.mem_preimage, Set.mem_setOf_eq, hxsum]
     exact sumMap_mapsTo X m x
   · intro s hs
-    have hs2 : s.2 ∈ unitInterval := by -- shorten
+    have hs2 : s.2 ∈ unitInterval := by
       rcases hs with h0 | hI
       · rw[h0]
         exact unitInterval.zero_mem
