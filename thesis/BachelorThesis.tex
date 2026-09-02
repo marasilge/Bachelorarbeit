@@ -1,5 +1,5 @@
 \documentclass[11pt, a4paper, english]{article}
-\usepackage[english]{babel}
+\usepackage[main=english, ngerman, shorthands=off]{babel}
 \usepackage{BA_Titelseite}
 \usepackage{fontspec}
 \usepackage{xcolor}
@@ -1189,6 +1189,22 @@ In \lean{retraction_criterion_closed'} the hypothesis \lean{IsClosed A} asks for
 The most obvious point to continue this project would be to generalise the HEP to all relative CW-complexes. For the inductive construction of the retraction maps in \Cref{HEP_CW} we would recommend working with retractions on the ambient space, which compose well without any coercions. This would give a further application of \lean{retraction_criterion_closed'}, where we benefit from the formulation using the ambient type. That result could then be used towards proving the theorems mentioned in the introduction, such as Whitehead's theorem \Cref{Whitehead}. A second direction is to formalise the retraction criterion without the closedness assumption, following the argument of \cite{STM} given in the appendix of \cite{HAT01}. Since the assumption appears in a number of other results, dropping it there would remove it also from \lean{PartialHomeomorph_HEP'} and everything else proved in the same way. 
 
 I want to end on a personal note. Formalising these arguments made me understand them far more deeply and precisely than following them in a lecture had. The retraction criterion is my clearest example. Only while formalising it did I notice that the closedness assumption in the argument we follow is needed in one of the two directions and not in the other. This is something I had not been aware of before, and it is why the corresponding lemma is split in two.  %ToDo: auch in mehreren Lehrbüchern ungenau formuliert. 
+
+\clearpage
+\section{German Summary}
+\begin{otherlanguage}{ngerman}
+
+In dieser Arbeit formalisieren wir die Homotopieerweiterungseigenschaft (HEE) im Beweisassistenten Lean. Ziel ist der Beweis, dass relative CW-Komplexe diese Eigenschaft besitzen. Dieses bekannte Resultat der algebraischen Topologie ist unter anderem ein wesentlicher Schritt im Beweis des Satzes von Whitehead. 
+
+Das erste Kapitel gibt einen Überblick über die Arbeit und motiviert das Projekt von zwei Seiten: warum die HEE mathematisch interessant ist und was durch ihre Formalisierung gewonnen wird. Im zweiten Kapitel wird die Mathematik hinter der Formalisierung ausführlich dargestellt. Nach der Definition der HEE folgt das Retraktionskriterium, mit dem wir zeigen können, dass ein Paar topologischer Räume die HEE hat. Außerdem wird gezeigt, dass die HEE unter Homöomorphismen erhalten bleibt und dass aus der HEE für $(X,A)$ und für $(A,B)$ auch die HEE für $(X,B)$ folgt.
+
+Im dritten Kapitel wird Lean vorgestellt und die für diese Arbeit wichtigsten Konzepte werden zusammengefasst. Die mathematische Bibliothek Mathlib wird eingeführt und die dortige Formalisierung von CW-Komplexen wird in den Aspekten erläutert, die für die eigene Formalisierung relevant sind.
+
+Im vierten Kapitel wird die Formalisierung anhand von Auszügen aus dem Lean-Code erklärt. Es wird auf Designentscheidungen eingegangen und das Vorgehen begründet. Das Kapitel folgt der Struktur der Formalisierung, welche vier Dateien umfasst. Die erste enthält die Definition und allgemeine Aussagen über die HEE. Die Dateien zwei bis vier beweisen schrittweise die HEE für verschiedene Paare. Diese Schritte stammen aus dem Beweis der HEE für relative CW-Komplexe. Zuerst wird die Eigenschaft für Bälle und Würfel relativ zu ihren Rändern gezeigt, anschließend für zwei aufeinanderfolgende Skeleta eines relativen CW-Komplexes. Die letzte Datei zeigt mithilfe dieser Ergebnisse die HEE für endlichdimensionale relative CW-Komplexe. Der allgemeine Fall relativer CW-Komplexe ist nicht abgedeckt.
+
+Anschließend wird die Nutzung von KI für diese Arbeit erläutert. Zuletzt werden die wichtigsten Ergebnisse der Arbeit zusammengefasst und in einem Ausblick wird beschrieben, wie das Projekt fortgesetzt werden kann.
+
+\end{otherlanguage}
 
 \clearpage
 \printbibliography[heading=bibintoc, title={References}]
