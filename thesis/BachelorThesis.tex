@@ -142,11 +142,12 @@
 \begin{document}
 
 \maketitle
-\begin{flushright}
-\end{flushright}
 
-\clearpage
 \tableofcontents
+
+% Leerseite nach dem Inhaltsverzeichnis, damit die Einleitung auf Seite 3 beginnt.
+\clearpage
+\thispagestyle{empty}\mbox{}
 
 \clearpage
 \section{Introduction} \label{section:Introduction}
@@ -175,7 +176,7 @@ Formalising a proof has several benefits, and they carry different weight here. 
 
 \Cref{section:Lean} is about Lean and Mathlib. Apart from  a short general overview, we highlight three concepts that are relevant for this project, namely the difference between sets and subtypes, structures, and junk values. We briefly introduce Mathlib itself and the part of it concerning relative CW-complexes, which our own formalisation builds on. 
 
-The formalisation is the subject of \Cref{section:formalisation} and makes up the main part of this thesis. Based on short excerpts of the Lean code, we explain and assess the decisions made along the way. We formalise all of the mathematical results from \cref{section:math} up until the proof of the homotopy extension property for finite dimensional relative CW complexes. The general case is not covered. \Cref{section:methodes} documents how AI was used for this project, and \Cref{section:conclusion} summarises what was achieved and indicates where the project could be continued.
+The formalisation is the subject of \Cref{section:formalisation} and makes up the main part of this thesis. Based on short excerpts of the Lean code, we explain and assess the decisions made along the way. We formalise the results of \cref{section:math} up to the homotopy extension property for finite dimensional relative CW-complexes, but not the general case. \Cref{section:methodes} documents how AI was used for this project, and \Cref{section:conclusion} summarises what was achieved and indicates where the project could be continued.
 
 The complete Lean code accompanying this thesis can be found at \url{https://github.com/marasilge/Bachelorarbeit}.
 

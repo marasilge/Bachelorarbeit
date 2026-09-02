@@ -485,7 +485,7 @@ The HEP is preserved under partial homeomorphisms of pairs:
 Let (X,A) be a pair of sets in the ambient type Y and (X',A') a pair in the ambient type Y',
 and let f be a partial homeomorphism from Y to Y' whose source is X, whose target is X' and
 which maps A onto A'. If (X,A) has the HEP, then so does (X',A').
-The proof uses the retaction criterion. 
+The proof uses the retraction criterion.
 -/
 
 lemma PartialHomeomorph_HEP' {Y' : Type u} [TopologicalSpace Y'] {X A : Set Y} (hA : A ⊆ X)
