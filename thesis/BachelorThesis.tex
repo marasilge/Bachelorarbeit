@@ -694,7 +694,7 @@ variable {Y : Type u} [TopologicalSpace Y] [T2Space Y] (X : Set Y) {C : Set Y}
   [RelCWComplex X C]
 \end{minted}
 
-Throughout the formalisation we use the following abbreviations \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_definition.lean#L40}{\popout}.
+Throughout the formalisation we use the following abbreviations \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_definition.lean#L63}{\popout}.
 
 \begin{minted}{lean4}
 abbrev cyl (X : Type*) : Set (X × ℝ) := {p | p.2 ∈ unitInterval}
@@ -709,7 +709,7 @@ abbrev smallanchor {Y : Type*} (X A : Set Y) : Set (Y × ℝ) :=
 These four abbreviations name the subsets that occur in the definition of the HEP and in the retraction criterion. The set \lean{cyl X} is the cylinder of height one over the type \lean{X}, whereas \lean{smallcyl A} is the cylinder only over a set \lean{A} of type \lean{Set X}. The set \lean{anchor A} is the union of the cylinder over \lean{(A : Set X)} with the bottom of the cylinder \lean{cyl X}. Finally, \lean{smallanchor X A} is the corresponding set for the case that \lean{(X A : Set Y)} are subsets of an ambient type \lean{Y}. It  is the union of the cylinder over \lean{A} with the bottom of \lean{smallcyl X}. All four are declared as \lean{abbrev} rather than \lean{def} and are therefore reducible, so that elaboration and \lean{simp} see through them.  
 
 \subsection{HEP Definition} \label{subsec:lean:definition}
-Already in the mathematical part, the definition of the homotopy extension property was long and technical, and its formalisation is no shorter. We can now turn to it. \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_definition.lean#L69}{\popout}
+Already in the mathematical part, the definition of the homotopy extension property was long and technical, and its formalisation is no shorter. We can now turn to it. \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_definition.lean#L90}{\popout}
 
 \begin{minted}{lean4}
 def agreeOn (f : X → Z) (H : X × ℝ → Z) (A : Set X) : Prop := 
@@ -732,7 +732,7 @@ def HEP (X : Type u) [TopologicalSpace X] (A : Set X) : Prop :=
 To shorten the definition and make it more readable, we first define \lean{agreeOn}. It expresses that the map \lean{f} and the homotopy \lean{H} we wish to extend take the same values on \lean{A}, respectively \lean{A × {0}}, so that the two maps are compatible and asking for a common extension makes sense.
 Secondly, the structure \lean{HomotopyExtension} bundles the properties the desired homotopy should have: it is continuous on the cylinder, its values lie in the prescribed set, and it agrees with the two given maps. Using a structure rather than a conjunction has the advantage that it comes with projections for the individual fields, which is what makes the applications readable. 
 
-This definition of \lean{HEP} is close to the informal \Cref{def:HEP}, apart from three aspects elaborated below. Before turning to them, and as a first check that the definition is usable at all, we prove that every space has the HEP relative to itself and relative to the empty set. The lemma \lean{HEP_self} will serve as the base case of the induction in \Cref{subsec:lean:relCW}. \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_definition.lean#L105}{\popout}
+This definition of \lean{HEP} is close to the informal \Cref{def:HEP}, apart from three aspects elaborated below. Before turning to them, and as a first check that the definition is usable at all, we prove that every space has the HEP relative to itself and relative to the empty set. The lemma \lean{HEP_self} will serve as the base case of the induction in \Cref{subsec:lean:relCW}. \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_definition.lean#L129}{\popout}
 \begin{minted}{lean4} 
 lemma HEP_self : HEP X (@Set.univ X) := by ...
   
@@ -750,7 +750,7 @@ The set \lean{rangeH'} has no equivalent in the informal \Cref{def:HEP}. It is a
 
 The gain of carrying this set along is that it lets us apply the HEP with a \emph{subset} of a type as codomain without ever forming the corresponding subtype. The application we have in mind is the retraction criterion. There the HEP is applied with \lean{Z := X × ℝ} and \lean{rangeH' := anchor A}, so that the extension it produces is a self-map of \lean{X × ℝ} whose image lies in the anchor. This is precisely what the formalisation of a retraction onto the anchor requires, as discussed later on. In most applications one takes \lean{rangeH'} to be the whole target type, written  \lean{@ Set.univ Z} in Lean. The two additional hypotheses become statements that \lean{tauto} solves. Since this extra work is negligible, we prefer this definition over the shorter variant discussed next. 
 
-Because \lean{rangeH'} has no informal counterpart, one could ask whether it changes the notion being defined. To settle this we also formalise the literal reading of \Cref{def:HEP}, in which the extension is only required to be a map into \lean{Z}.  \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_definition.lean#L85}{\popout} 
+Because \lean{rangeH'} has no informal counterpart, one could ask whether it changes the notion being defined. To settle this we also formalise the literal reading of \Cref{def:HEP}, in which the extension is only required to be a map into \lean{Z}.  \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_definition.lean#L106}{\popout} 
 \begin{minted}{lean4}
 structure HomotopyExtensionY (H' : X × ℝ → Z) (f : X → Z) (H : X × ℝ → Z) 
     (A : Set X) : Prop where
@@ -773,7 +773,7 @@ In the definition the target type \lean{Z} is quantified over Type u, the same u
 This raises the question whether restricting \lean{Z} to a single universe weakens the property. There is a short argument why the definition is equivalent to a more general one: the retraction criterion shows that \lean{HEP}, at least in the case that the subspace is closed, is equivalent to the existence of a retraction, and that statement does not mention the target type \lean{Z} or its universe at all. Hence the property for target types in \lean{Type u} already implies it for target types in any universe.
 
 \subsubsection*{The variant \lean{HEP'}}
-Let us now turn to the variant \lean{HEP'}, which changes the shape of the pair of spaces. \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_definition.lean#L96}{\popout}
+Let us now turn to the variant \lean{HEP'}, which changes the shape of the pair of spaces. \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_definition.lean#L117}{\popout}
 
 \begin{minted}{lean4}
 open Set.Notation
@@ -791,7 +791,7 @@ Note that in this definition the maps \lean{f} and \lean{H} to be extended are d
 
 \subsection{Retraction Criterion} \label{subsec:lean:retractioncriterion}
 
-Before turning to the formalisation of the retraction criterion itself, we look at the definition of a retraction. Classically, a retraction $r$ from $B$ onto $A$ is defined via precomposition with the inclusion $A \hookrightarrow B$, as in \Cref{def:retraction}. Formalising the retraction as a map from $B$ to $A$ would make the codomain a subtype, which is inconvenient to work with. Instead we let the retraction be a map from an ambient type $X$ to itself. The structure \lean{RetractionOn} bundles the properties that make such a map a retraction. \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_definition.lean#L277}{\popout} 
+Before turning to the formalisation of the retraction criterion itself, we look at the definition of a retraction. Classically, a retraction $r$ from $B$ onto $A$ is defined via precomposition with the inclusion $A \hookrightarrow B$, as in \Cref{def:retraction}. Formalising the retraction as a map from $B$ to $A$ would make the codomain a subtype, which is inconvenient to work with. Instead we let the retraction be a map from an ambient type $X$ to itself. The structure \lean{RetractionOn} bundles the properties that make such a map a retraction. \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_definition.lean#L311}{\popout} 
 
 \begin{minted}{lean4}
 structure RetractionOn (r : X → X) (B A : Set X) : Prop where
@@ -804,7 +804,7 @@ structure RetractionOn (r : X → X) (B A : Set X) : Prop where
 As the name \lean{RetractionOn} suggests, the map \lean{r} is a self-map of the
 type \lean{X} that need not be a retraction on all of its domain. It only \enquote{retracts} a subset \lean{B} onto a subset \lean{A}. The four fields translate the classical conditions as follows. The first property \lean{subset} states that \lean{A} is contained in \lean{B}. Note that omitting this property would define a more general class of self-maps that need not satisfy $r(B) = A$. The field \lean{continuousOn} requires continuity on the relevant subset $B$ only. Since the codomain of a retraction is supposed to be \lean{A}, the field \lean{mapsTo} requires that \lean{r} sends every element of \lean{B} to an element of \lean{A}. Finally, the classical definition demands that precomposition with the inclusion $A \hookrightarrow B$ gives the identity $id_A$. In our setting there is no inclusion map, since domain and codomain of \lean{r} are the same type \lean{X}, so the condition becomes the requirement that every element of \lean{A} is fixed by \lean{r}. This is the field \lean{fixesOn}. 
 
-Recall that the retraction criterion was obtained from two lemmas, and the formalisation follows the same structure. Since \Cref{lem:HEPextension} consists of two implications, only one of which requires closedness, we split it into two separate lemmas. The forward direction is called \lean{if_HEP_then_extension}, and the backward direction under the closedness assumption is called \lean{if_extension_then_HEP}. Their proofs are unspectacular and follow the argument in the mathematical section of \Cref{lem:HEPextension} closely. The same holds for the formalisations of \Cref{lem:retract} and of the retraction criterion \Cref{prop:retractioncriterion}. \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_definition.lean#L322}{\popout} 
+Recall that the retraction criterion was obtained from two lemmas, and the formalisation follows the same structure. Since \Cref{lem:HEPextension} consists of two implications, only one of which requires closedness, we split it into two separate lemmas. The forward direction is called \lean{if_HEP_then_extension}, and the backward direction under the closedness assumption is called \lean{if_extension_then_HEP}. Their proofs are unspectacular and follow the argument in the mathematical section of \Cref{lem:HEPextension} closely. The same holds for the formalisations of \Cref{lem:retract} and of the retraction criterion \Cref{prop:retractioncriterion}. \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_definition.lean#L356}{\popout} 
 
 \begin{minted}{lean4}
 lemma retraction_criterion_closed (hA1 : IsClosed A) : HEP X A ↔ 
@@ -819,7 +819,7 @@ variable (X A : Set Y) (hHEP' : HEP' X A)
 «\leanout{ if\_HEP\_then\_retraction hHEP' : ∃ (r : ↑X × ℝ → ↑X × ℝ), RetractionOn r (cyl ↑X)}»
 «\leanout{   (anchor (X ↓∩ A))}»
 \end{minted}
-While this does yield a retraction for the spaces in question, it is not formulated in the spirit of \lean{HEP'}: the retraction still lives on \lean{↑X × ℝ} for a subtype \lean{↑X}, whereas \lean{HEP'} is stated for subsets of an ambient type. We therefore also formalised the lemma \lean{retraction_criterion_closed'}, in which the retraction is a self-map of \lean{Y × ℝ}, where \lean{Y} is the ambient space. As before, the Lean file contains the forward implication without the closedness assumption as well as the equivalence under the assumption.  \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_definition.lean#L415}{\popout} 
+While this does yield a retraction for the spaces in question, it is not formulated in the spirit of \lean{HEP'}: the retraction still lives on \lean{↑X × ℝ} for a subtype \lean{↑X}, whereas \lean{HEP'} is stated for subsets of an ambient type. We therefore also formalised the lemma \lean{retraction_criterion_closed'}, in which the retraction is a self-map of \lean{Y × ℝ}, where \lean{Y} is the ambient space. As before, the Lean file contains the forward implication without the closedness assumption as well as the equivalence under the assumption.  \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_definition.lean#L449}{\popout} 
 
 \begin{minted}{lean4}
 lemma retraction_criterion_closed' (X A : Set Y) (hAX : A ⊆ X)
@@ -833,7 +833,7 @@ In practice this turned out to be convenient rather than restrictive, since all 
 
 We proved \lean{retraction_criterion_closed'} from \lean{retraction_criterion_closed}. For the forward direction we obtain a retraction \lean{r} as in the \lean{#check} above. In order to extend this map \lean{r : ↑X × ℝ → ↑X × ℝ} to a map \lean{s : Y × ℝ → Y × ℝ}, we precompose in the first component with a map \lean{mapYX : Y → X}, which is the identity on \lean{X} and sends all other points of \lean{Y} to an arbitrary junk value, and postcompose with \lean{Subtype.val}, which sends \lean{(r x).1 ∈ X} back to the corresponding point of \lean{Y}. It remains to confirm that this newly defined map is again a retraction, that is, that it is continuous on the relevant set, maps into the required one, and leaves the necessary values unchanged. 
 
-For the backward direction we start with a retraction \lean{s : Y × ℝ → Y × ℝ} and want to construct \lean{r : ↑X × ℝ → ↑X × ℝ}, so that \lean{retraction_criterion_closed} gives the claim. One might expect this direction to be the easier one, since no new values have to be constructed and \lean{s} only needs to be restricted to the desired space. This expectation is disappointed at the point at which the codomain of \lean{r} is required to be $X \times \mathbb{R} \subseteq Y \times \mathbb{R}$. All we know about the range of \lean{s} is that its codomain is $Y \times \mathbb{R}$ and that it is a retraction on \lean{smallcyl X}, so the field \lean{RetractionOn.mapsTo} gives no information about where in $Y \times \mathbb{R}$ a point from \lean{X × ℝ} is sent once its second coordinate lies outside the unit interval. We resolved this by precomposing the real coordinate with \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_definition.lean#L370}{\popout} 
+For the backward direction we start with a retraction \lean{s : Y × ℝ → Y × ℝ} and want to construct \lean{r : ↑X × ℝ → ↑X × ℝ}, so that \lean{retraction_criterion_closed} gives the claim. One might expect this direction to be the easier one, since no new values have to be constructed and \lean{s} only needs to be restricted to the desired space. This expectation is disappointed at the point at which the codomain of \lean{r} is required to be $X \times \mathbb{R} \subseteq Y \times \mathbb{R}$. All we know about the range of \lean{s} is that its codomain is $Y \times \mathbb{R}$ and that it is a retraction on \lean{smallcyl X}, so the field \lean{RetractionOn.mapsTo} gives no information about where in $Y \times \mathbb{R}$ a point from \lean{X × ℝ} is sent once its second coordinate lies outside the unit interval. We resolved this by precomposing the real coordinate with \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_definition.lean#L403}{\popout} 
 
 \begin{minted}{lean4}
 ProjIcc : ℝ → ℝ := fun t ↦ Set.projIcc (0 : ℝ) 1 zero_le_one t,
@@ -845,7 +845,7 @@ The unprimed version \lean{retraction_criterion_closed} is what the proof for tw
 The primed version, on the other hand, is what \lean{PartialHomeomorph_HEP'} needs, as we discuss in \Cref{subsec:lean:preservation}. A partial homeomorphism is a map between two ambient types, so a retraction defined on the ambient type rather than on the larger type can be used more directly.  
 
 \subsection{Preservation of the HEP}  \label{subsec:lean:preservation}
-Besides the retraction criterion we formalised two more results that are useful for proving that a pair of topological spaces has the HEP. The first is that the HEP is preserved under partial homeomorphisms.  \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_definition.lean#L455}{\popout} 
+Besides the retraction criterion we formalised two more results that are useful for proving that a pair of topological spaces has the HEP. The first is that the HEP is preserved under partial homeomorphisms.  \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_definition.lean#L491}{\popout} 
 
 \begin{minted}{lean4}
 lemma PartialHomeomorph_HEP' {Y' : Type u} [TopologicalSpace Y'] {X A : Set Y} 
@@ -858,7 +858,7 @@ The two pairs of this lemma are \lean{(X,A)} in the ambient type \lean{Y} and \l
 
 Note that only \lean{A'} is required to be closed. The two subspaces enter the proof through opposite implications of the retraction criterion: from \lean{hHEP} we extract a retraction, which is the forward implication and needs no closedness assumption, whereas for \lean{A'} we argue in the other direction and construct the HEP from a retraction, which is where closedness is needed.
 
-The second result is a transitivity property: if the pairs $(A_1,A_2)$ and $(A_2,A_3)$ both satisfy the HEP, then so does the pair $(A_1,A_3)$. \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_definition.lean#L509}{\popout} 
+The second result is a transitivity property: if the pairs $(A_1,A_2)$ and $(A_2,A_3)$ both satisfy the HEP, then so does the pair $(A_1,A_3)$. \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_definition.lean#L544}{\popout} 
 \begin{minted}{lean4}
 lemma HEP_trans (A1 A2 A3 : Set Y) (h21_sub : A2 ⊆ A1) (h12_hep : HEP' A1 A2) 
   (h32_sub : A3 ⊆ A2) (h23_hep : HEP' A2 A3) : HEP' A1 A3 := by ...
@@ -871,7 +871,7 @@ In retrospect, \lean{PartialHomeomorph_HEP'} could be proved in the same manner,
 \subsection{HEP for balls and cubes} \label{subsec:lean:ballcube}
 
 The goal of the file \lean{HEP_ball_cube.lean} is to prove the homotopy extension property for balls and cubes relative to their boundary. These are not only the first interesting pairs of spaces for which we want to prove the HEP, but also the first step in the proof of the homotopy extension property for relative CW-complexes. \\
-We start with the balls. As in the proof of \Cref{thm:HEPball}, we first construct the auxiliary function \lean{aux_fun}, which combines the information of the given maps \lean{f} and \lean{H}. This function is then used to define the desired homotopy \lean{H'} explicitly, with which we can check the definition of \lean{HEP}. Following the notation of \Cref{subsec:lean:notation}, the target type is \lean{Z} and \lean{rangeH' ⊆ Z} bounds the range of the maps; here \lean{Z} has to lie in \lean{Type 0}, since the pair of this section does. The maps \lean{f} and \lean{H} are declared as variables as well, because most lemmas of the first half of the file speak about them. \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_ball_cube.lean#L43}{\popout}
+We start with the balls. As in the proof of \Cref{thm:HEPball}, we first construct the auxiliary function \lean{aux_fun}, which combines the information of the given maps \lean{f} and \lean{H}. This function is then used to define the desired homotopy \lean{H'} explicitly, with which we can check the definition of \lean{HEP}. Following the notation of \Cref{subsec:lean:notation}, the target type is \lean{Z} and \lean{rangeH' ⊆ Z} bounds the range of the maps; here \lean{Z} has to lie in \lean{Type 0}, since the pair of this section does. The maps \lean{f} and \lean{H} are declared as variables as well, because most lemmas of the first half of the file speak about them. \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_ball_cube.lean#L73}{\popout}
 
 \begin{minted}{lean4}
 variable {m : ℕ} {Z : Type} [TopologicalSpace Z] (rangeH' : Set Z)
@@ -887,7 +887,7 @@ def H' : (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) 1) × ℝ → Z :=
   fun p => (aux_fun f H ) ((1 + p.2) • p.1)
 \end{minted}
 
-We split the \lean{ContinuousOn} proof of \lean{H'} into three steps. We start with a lemma stating that \lean{aux_fun} is continuous on the annulus $ \{ x \mid 1 \le \norm{x} \le 2  \} \subset \mathbb{R}^m$ and use it to prove continuity of \lean{aux_fun} on the ball of radius two. That ball can be written as the union of the ball of radius one with the annulus, and continuity on both of these closed subsets yields continuity on their union. The continuity of \lean{H'} then follows by composing two \lean{ContinuousOn} functions. The proofs of the remaining properties of \lean{H'} are not hard. Solving, rewriting and confirming inequalities make up a large part of them. All these results combined prove the lemma \lean{HEP_ball_boundary}. The primed version \lean{HEP_ball_boundary'} is definitionally equal. \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_ball_cube.lean#L190}{\popout} 
+We split the \lean{ContinuousOn} proof of \lean{H'} into three steps. We start with a lemma stating that \lean{aux_fun} is continuous on the annulus $ \{ x \mid 1 \le \norm{x} \le 2  \} \subset \mathbb{R}^m$ and use it to prove continuity of \lean{aux_fun} on the ball of radius two. That ball can be written as the union of the ball of radius one with the annulus, and continuity on both of these closed subsets yields continuity on their union. The continuity of \lean{H'} then follows by composing two \lean{ContinuousOn} functions. The proofs of the remaining properties of \lean{H'} are not hard. Solving, rewriting and confirming inequalities make up a large part of them. All these results combined prove the lemma \lean{HEP_ball_boundary}. The primed version \lean{HEP_ball_boundary'} is definitionally equal. \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_ball_cube.lean#L219}{\popout} 
 
 \begin{minted}{lean4}
 lemma HEP_ball_boundary : ∀ (m : ℕ),
@@ -912,13 +912,13 @@ exists_homeomorph_image_interior_closure_frontier_eq_unitBall.{u_1}
   ↑h '' frontier s = sphere 0 1
 \end{minted}
 
-The \lean{Metric.closedBall} for which we already proved the \lean{HEP} is convex, bounded and has nonempty interior, so it satisfies all three assumptions. Applying the lemma to it directly would nevertheless gain us nothing: inside \lean{EuclideanSpace ℝ (Fin m)} this set already is the closed unit ball, so the lemma would only produce a homeomorphism carrying it onto itself, and no cube would appear anywhere. What makes the cube appear is that in \lean{Fin m → ℝ} with maximum norm the closed unit ball is the cube. We therefore first transport our closed ball into that space along the homeomorphism \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_ball_cube.lean#L210}{\popout}
+The \lean{Metric.closedBall} for which we already proved the \lean{HEP} is convex, bounded and has nonempty interior, so it satisfies all three assumptions. Applying the lemma to it directly would nevertheless gain us nothing: inside \lean{EuclideanSpace ℝ (Fin m)} this set already is the closed unit ball, so the lemma would only produce a homeomorphism carrying it onto itself, and no cube would appear anywhere. What makes the cube appear is that in \lean{Fin m → ℝ} with maximum norm the closed unit ball is the cube. We therefore first transport our closed ball into that space along the homeomorphism \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_ball_cube.lean#L241}{\popout}
 \begin{minted}{lean4}
 def homeo_euclid_max : EuclideanSpace ℝ (Fin m)  ≃ₜ (Fin m → ℝ) where
   toFun := fun p ↦ p
   ...
 \end{minted}
-The map \lean{homeo_euclid_max} sends each point to itself and only changes the norm of the space. The image of the \lean{Metric.closedBall} is therefore still the same round convex set, even though it is no longer the closed unit ball of the codomain. Applying the lemma to this image yields a homeomorphism of \lean{Fin m → ℝ} to itself that carries the round set onto the cube: \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_ball_cube.lean#L249}{\popout}
+The map \lean{homeo_euclid_max} sends each point to itself and only changes the norm of the space. The image of the \lean{Metric.closedBall} is therefore still the same round convex set, even though it is no longer the closed unit ball of the codomain. Applying the lemma to this image yields a homeomorphism of \lean{Fin m → ℝ} to itself that carries the round set onto the cube: \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_ball_cube.lean#L287}{\popout}
 
 \begin{minted}{lean4}
 def G : (Fin m → ℝ) ≃ₜ (Fin m → ℝ):= 
@@ -928,7 +928,7 @@ def G : (Fin m → ℝ) ≃ₜ (Fin m → ℝ):=
 \end{minted}
 
 Since the lemma only asserts that such a homeomorphism exists, we use \lean{.choose} to fix and name one of them, and its three defining properties are then available through \lean{.choose_spec}. \\
-The composition of these two homeomorphisms is in particular a partial homeomorphism from \lean{EuclideanSpace ℝ (Fin m)} to \lean{Fin m → ℝ} with source the closed ball and target the closed cube. Applying the lemma \lean{PartialHomeomorph_HEP'} now proves \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_ball_cube.lean#L292}{\popout}
+The composition of these two homeomorphisms is in particular a partial homeomorphism from \lean{EuclideanSpace ℝ (Fin m)} to \lean{Fin m → ℝ} with source the closed ball and target the closed cube. Applying the lemma \lean{PartialHomeomorph_HEP'} now proves \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_ball_cube.lean#L331}{\popout}
 \begin{minted}{lean4}
 lemma HEP_cube_boundary' (m : ℕ) : HEP' (closedBall (0 : (Fin m → ℝ)) 1)
   (sphere 0 1) := by ...
@@ -939,7 +939,7 @@ lemma HEP_cube_boundary (m : ℕ) : HEP (closedBall (0 : (Fin m → ℝ)) 1)
 
 Before concluding this section, we want to point out that here the definition of \lean{HEP'} matches the structure of a partial homeomorphism particularly well. When we first proved this result for \lean{HEP}, before \lean{HEP'} was defined, we had to show that the \lean{Subtype.val} image of a sphere in the closed ball is the same as the sphere in the ambient space, and likewise for the closed ball itself. With \lean{HEP'} these subtype coercions are avoided and the proof is more straightforward. From this result the statement for \lean{HEP} follows directly.
 
-\subsection{HEP for consecutive skeleta}  \label{subsec:lean:skel}
+\subsection{HEP for consecutive skeleta} \label{subsec:lean:skel}
 
 %(Relative) CW complexes are formalised as a subset of an ambient space. The topology is given by explicitly saying, a closed set needs to be closed, when intersected with the base space or any closed cell it is closed in those spaces. On a skeleton or any finite dimensonal CW complex is the same topology, which we also obtain from gluing together discs along their boundary and then considering the quotient topology on the complex. \\
 % -- stimmt das so? allgemein fuer CW complexe oder nur endlichdimensional?
@@ -959,7 +959,7 @@ The theorem tells us that a map \lean{g} defined on the product of a quotient sp
 % A remark on the indices before we start. Throughout the project we work with \lean{skeletonLT}, which collects the cells of dimension strictly less than its argument, so that \lean{skeletonLT X (m+1)} is the $m-$skeleton $X_m$. The parameter of the maps \lean{r}, \lean{sumMap} and \lean{cubesretract}, which will be intruduced in this chapter, is therefore the top dimension $m$ of the pair, and \lean{Fin (m+1)} is exactly the index type of the dimensions occuring in $X_m$. Using \lean{skeletonLT} rather than \lean{skeleton} also avoids truncated subtracions on \lean{ℕ} and coverts the $(-1)-$skeleton, which makes it convenient for the induction in \cref{subsec:lean:relCW}.
 
 \subsubsection{Skeleton is a quotient space}  \label{subsubsec:lean:skel:quotient}
-First of all we need a quotient map onto the skeleton \lean{skeletonLT X m} called \lean{f} in the theorem above. For this we use the fact that we can \enquote{unglue} the skeleton into the base space and the disjoint union of closed balls, or cubes to be precise, in all dimensions less than $m$. The identity map on the base space and the characteristic maps on the closed balls assemble into the map \lean{SkeletonProjection}. \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_skeleton.lean#L31}{\popout}
+First of all we need a quotient map onto the skeleton \lean{skeletonLT X m} called \lean{f} in the theorem above. For this we use the fact that we can \enquote{unglue} the skeleton into the base space and the disjoint union of closed balls, or cubes to be precise, in all dimensions less than $m$. The identity map on the base space and the characteristic maps on the closed balls assemble into the map \lean{SkeletonProjection}. \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_skeleton.lean#L60}{\popout}
 
 \begin{minted}{lean4}
 abbrev ungluedSkel (m : ℕ) :=
@@ -972,7 +972,7 @@ def SkeletonProjection (m : ℕ) : ungluedSkel X m → skeletonLT X m :=
 To prove that this indeed defines a quotient map, we have to check that it is surjective, continuous and that it induces the topology on the skeleton. The skeleton is a subcomplex of the relative CW-complex, and its topology is described in terms of the closed sets: A subset of the subcomplex is closed precisely when its intersection with the base space is closed there and its intersection with each closed cell is closed in that cell. \\ 
 The surjectivity proof is straightforward. A point of the skeleton lies either in the base space or in an open cell, and in the first case it has a preimage in \lean{C}, in the second in the closed ball belonging to that cell. Continuity is not much work either, since \lean{SkeletonProjection} is assembled from continuous functions on a disjoint union. Proving that the topology on the skeleton is the induced one requires more effort. \\
 
-We start with a set \lean{S} of type \lean{Set (skeletonLT X ↑m)} and the assumption that its preimage under \lean{SkeletonProjection} is closed in the unglued skeleton. The goal is to show that \lean{S} is closed in the skeleton. In Mathlib the results about closed sets are always phrased for subsets of the ambient space, together with the assumption that the set is contained in the CW-complex or in the subcomplex. To get into this setting, we need the following lines in the proof: \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_skeleton.lean#L128}{\popout} 
+We start with a set \lean{S} of type \lean{Set (skeletonLT X ↑m)} and the assumption that its preimage under \lean{SkeletonProjection} is closed in the unglued skeleton. The goal is to show that \lean{S} is closed in the skeleton. In Mathlib the results about closed sets are always phrased for subsets of the ambient space, together with the assumption that the set is contained in the CW-complex or in the subcomplex. To get into this setting, we need the following lines in the proof: \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_skeleton.lean#L171}{\popout} 
 \begin{minted}{lean4}
     set S' : Set Y := Subtype.val '' S with hS'def
     have hS'sub : S' ⊆ (skeletonLT X m):= by
@@ -985,7 +985,7 @@ Now we can apply the lemma \lean{Topology.RelCWComplex.isClosed_of_disjoint_open
 \subsubsection{Construction of the retraction} \label{subsubsec:lean:skel:constructionretraction}
 The next preparation is the construction of the map \lean{r}, which is to be the retraction for two consecutive skeleta. As in the mathematical proof, we do not define the retraction map \lean{r} on \lean{skeletonLT X (m + 1) × I} directly. Instead we say what it should do on the unglued skeleton, where the base space and the individual cubes are still separate, and then push the resulting map down along the quotient map \lean{SkeletonProjection}. We build this up from the bottom: first the map on all single cubes, called \lean{cubesretract}, then the map on the product of the whole unglued skeleton and the unit interval, which is called \lean{sumMap} and was called $f_m$ in the mathematical section, and finally \lean{r} itself.
 
-On a cube of top dimension the retraction we need is already available. It is the map \lean{r_cube} that the retraction criterion provides from \lean{HEP_cube_boundary}, the HEP of a cube relative to its boundary proved in \Cref{subsec:lean:ballcube}. On cubes of lower dimension nothing should happen. The map \lean{cubesretract} combines the two cases. Apart from the case distinction it only coerces the second coordinate from the unit interval to \lean{ℝ}. \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_skeleton.lean#L160}{\popout}
+On a cube of top dimension the retraction we need is already available. It is the map \lean{r_cube} that the retraction criterion provides from \lean{HEP_cube_boundary}, the HEP of a cube relative to its boundary proved in \Cref{subsec:lean:ballcube}. On cubes of lower dimension nothing should happen. The map \lean{cubesretract} combines the two cases. Apart from the case distinction it only coerces the second coordinate from the unit interval to \lean{ℝ}. \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_skeleton.lean#L207}{\popout}
 \begin{minted}{lean4}
 def cubesretract {m : ℕ} (n : Fin (m + 1)) :
     (closedBall (0 : Fin (n : ℕ) → ℝ) 1) × unitInterval →
@@ -994,7 +994,7 @@ def cubesretract {m : ℕ} (n : Fin (m + 1)) :
   else (p.1, Subtype.val p.2)
 \end{minted}
 
-For \lean{cubesretract} we proved lemmas about its continuity, about which points it fixes, and about the set in which its image lies. The last one comes in a version for the lower dimensions and one for the top dimension, matching the two branches of the definition. \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_skeleton.lean#L167}{\popout}
+For \lean{cubesretract} we proved lemmas about its continuity, about which points it fixes, and about the set in which its image lies. The last one comes in a version for the lower dimensions and one for the top dimension, matching the two branches of the definition. \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_skeleton.lean#L214}{\popout}
 
 \begin{minted}{lean4}
 lemma cubesretract_continuous {m : ℕ} (n : Fin (m + 1)) : Continuous 
@@ -1017,7 +1017,7 @@ lemma cubesretract_mapsto_top {m : ℕ} (n : Fin (m + 1)) (i : cell X n)
   ∈ skeletonLT X m ∧ (cubesretract n p).2 ∈ unitInterval := by …
 \end{minted}
 
-Next we assemble these maps into a map on the product of the whole unglued skeleton with the unit interval. \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_skeleton.lean#L239}{\popout} 
+Next we assemble these maps into a map on the product of the whole unglued skeleton with the unit interval. \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_skeleton.lean#L291}{\popout} 
 \begin{minted}{lean4}
 def sumMap (m : ℕ) :
   (ungluedSkel X (m + 1)) × unitInterval → skeletonLT X (m+1) × ℝ := 
@@ -1030,7 +1030,7 @@ def sumMap (m : ℕ) :
 The map \lean{sumMap} is defined using \lean{Sum.elim}, which performs a case analysis on a sum type and applies the corresponding function depending on which constructor is present (cf. \lean{Init.Data.Sum.Basic} \cite{mathlib}), that is, on whether the first coordinate of the point \lean{p} lies in the base space \lean{C} or in a closed ball. In the first case we want to do nothing except apply \lean{SkeletonProjection} to that coordinate, which on the base space is just the identity. We send the point \lean{(c : C)} to itself, but regarded as an element of the skeleton. Since the proof that a point of the base space lies in any given skeleton is needed repeatedly, we made it a lemma of its own, called \lean{memBase_memSkeletonLT}.\\ 
 In the second case, where the first coordinate of \lean{p} comes from a closed ball, we first apply \lean{cubesretract} to the point and then postcompose with what \lean{SkeletonProjection × id} would do to such a point. Since the first coordinate still lies in a closed ball after \lean{cubesretract} has been applied, \lean{SkeletonProjection} amounts to applying the characteristic map of that closed ball. We have to proof that the image of this characteristic map really lies in the skeleton. This proof is again a lemma of its own, called \lean{cubesretract_mapsto_weak}, which is derived from the two \lean{mapsto} statements above. \\
 
-It remains to push \lean{sumMap} down from the unglued skeleton to the skeleton itself, which is what \lean{Function.extend} does. \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_skeleton.lean#L398}{\popout}
+It remains to push \lean{sumMap} down from the unglued skeleton to the skeleton itself, which is what \lean{Function.extend} does. \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_skeleton.lean#L441}{\popout}
 
 \begin{minted}{lean4}
 def r (m : ℕ) : skeletonLT X (m + 1) × unitInterval → skeletonLT X (m + 1) × ℝ 
@@ -1042,7 +1042,7 @@ def r (m : ℕ) : skeletonLT X (m + 1) × unitInterval → skeletonLT X (m + 1) 
 
 It may seem odd that \lean{r}, which is supposed to be a retraction, is formalised with the unit interval as the second factor of its domain, where we would usually take the real numbers, since our retractions are defined on a product with $\mathbb{R}$. But observe that the theorem \lean{Topology.IsQuotientMap.continuous_lift_prod_left} yields \lean{Continuous} and not \lean{ContinuousOn}. We should therefore not make the domain any bigger than what is mathematically relevant. In the codomain we do not have this kind of problem and can simply choose \lean{Z} to be the skeleton times the entire real line.
 
-Taking a closer look at the definition of \lean{sumMap}, one sees that in the case where \lean{p} comes from the base space or from a closed ball of dimension less than \lean{m}, it does the same as \lean{SkeletonProjection × id}, at least if one ignores the subtype coercions. It would have been inconvenient to write this application into the definition of \lean{sumMap}, so instead we proved the two lemmas that state exactly this equality. \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_skeleton.lean#L250}{\popout}
+Taking a closer look at the definition of \lean{sumMap}, one sees that in the case where \lean{p} comes from the base space or from a closed ball of dimension less than \lean{m}, it does the same as \lean{SkeletonProjection × id}, at least if one ignores the subtype coercions. It would have been inconvenient to write this application into the definition of \lean{sumMap}, so instead we proved the two lemmas that state exactly this equality. \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_skeleton.lean#L302}{\popout}
 
 \begin{minted}{lean4}
 lemma sumMap_eq_SkelProj_C (m : ℕ) (x : C) (t : unitInterval) : sumMap X m 
@@ -1058,7 +1058,7 @@ lemma sumMap_eq_SkelProj_LtOrSphere {m : ℕ} (n : Fin (m + 1))
 \end{minted}
 
 \subsubsection{Continuity of the retraction} \label{subsubsec:lean:skel:continuityretraction}
-Now that all relevant maps are defined, we can turn to the proof that \lean{r} is continuous. As announced, the continuity comes from the theorem \lean{Topology.IsQuotientMap.continuous_lift_prod_left}. Let us see what is left to prove: \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_skeleton.lean#L474}{\popout}
+Now that all relevant maps are defined, we can turn to the proof that \lean{r} is continuous. As announced, the continuity comes from the theorem \lean{Topology.IsQuotientMap.continuous_lift_prod_left}. Let us see what is left to prove: \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_skeleton.lean#L524}{\popout}
 
 \begin{minted}{lean4}
 lemma continuousRetract (m : ℕ) : Continuous (r (X := X) m) := by
@@ -1070,14 +1070,14 @@ After this first line of the proof the current goal becomes
 Continuous fun (p : (ungluedSkel X m) × I) => r (SkeletonProjection X 
   (m + 1) p.1, p.2) 
 \end{minted} 
-Showing this comes down to two major steps. The first is that \lean{sumMap} factors through \lean{(fun p ↦ ((SkeletonProjection X (m + 1) p.1), p.2))}, from which it follows easily that the continuity goal is equivalent to the continuity of \lean{sumMap}. That continuity is then the second step. We start with \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_skeleton.lean#L353}{\popout} 
+Showing this comes down to two major steps. The first is that \lean{sumMap} factors through \lean{(fun p ↦ ((SkeletonProjection X (m + 1) p.1), p.2))}, from which it follows easily that the continuity goal is equivalent to the continuity of \lean{sumMap}. That continuity is then the second step. We start with \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_skeleton.lean#L393}{\popout} 
 \begin{minted}{lean4}
 lemma factors (m : ℕ) : (sumMap X m).FactorsThrough (fun p ↦ 
   ((SkeletonProjection X (m + 1) p.1), p.2)) := by 
   intro x y hxy 
   ...
 \end{minted}
-Here \lean{x} and \lean{y} are two points of \lean{ungluedSkel × I} whose second coordinates agree and which have the same image under \lean{SkeletonProjection}. We have to show that \lean{sumMap X m x = sumMap X m y}. In \lean{sumMap_eq_SkelProj_C} and \lean{sumMap_eq_SkelProj_LtOrSphere} we already have useful tools for this goal. One part that required some work is the following: \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_skeleton.lean#L307}{\popout}
+Here \lean{x} and \lean{y} are two points of \lean{ungluedSkel × I} whose second coordinates agree and which have the same image under \lean{SkeletonProjection}. We have to show that \lean{sumMap X m x = sumMap X m y}. In \lean{sumMap_eq_SkelProj_C} and \lean{sumMap_eq_SkelProj_LtOrSphere} we already have useful tools for this goal. One part that required some work is the following: \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_skeleton.lean#L344}{\popout}
 \begin{minted}{lean4}
 lemma SkeletonProj_inj_top {m : ℕ} {n : Fin (m + 1)} (hnm : ↑n = m) 
   (i : cell X n) (x : closedBall (0 : Fin n → ℝ) 1) (x_ball : x.1 ∈ ball 
@@ -1087,7 +1087,7 @@ lemma SkeletonProj_inj_top {m : ℕ} {n : Fin (m + 1)} (hnm : ↑n = m)
 \end{minted}
 The lemma \lean{SkeletonProj_inj_top} says that if \lean{x} lies in a specific open ball of top dimension and \lean{y} is any other point of \lean{ungluedSkel} with the same image under \lean{SkeletonProjection}, then \lean{y} is that very point \lean{x}. \\
 The proof of \lean{factors} is long because it splits into many case distinctions, beginning with whether \lean{x} lies in the base space or in a closed ball, and considering in each case the same two options for \lean{y} separately. In the case where \lean{x} lies in a closed ball we distinguish further whether it lies in the top-dimensional open cell or not. Most of these cases are quite short in themselves. \\
-In the mathematical argument it was enough to distinguish whether a point lies in the top-dimensional cell or not. So one may ask why the formalisation splits the situation up so much further. The reason is that we cannot simply say that a point lies in the base space. A point of \lean{ungluedSkel} is given by a constructor, either as \lean{Sum.inl c} for some \lean{c : C} or as \lean{Sum.inr ⟨n, i, x⟩}, so the case analysis over the constructors has to be made anyway, and it is then easier to treat the resulting combinations separately. For the continuity of \lean{sumMap} we precompose the map with the homeomorphism \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_skeleton.lean#L429}{\popout}
+In the mathematical argument it was enough to distinguish whether a point lies in the top-dimensional cell or not. So one may ask why the formalisation splits the situation up so much further. The reason is that we cannot simply say that a point lies in the base space. A point of \lean{ungluedSkel} is given by a constructor, either as \lean{Sum.inl c} for some \lean{c : C} or as \lean{Sum.inr ⟨n, i, x⟩}, so the case analysis over the constructors has to be made anyway, and it is then easier to treat the resulting combinations separately. For the continuity of \lean{sumMap} we precompose the map with the homeomorphism \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_skeleton.lean#L475}{\popout}
 \begin{minted}{lean4}
 def homeoProd (m : ℕ) :
   (C × unitInterval) ⊕ (Σ (n : Fin (m + 1)) (_ : cell X n),
@@ -1098,7 +1098,7 @@ def homeoProd (m : ℕ) :
 The domain of this composite is no longer a product, but a disjoint union, and on each summand the continuity goal is proved by combining results established earlier, such as \lean{cubesretract_continuous} and the continuity of the characteristic maps. Since continuity is preserved under precomposition with a homeomorphism, this yields that \lean{sumMap}, and finally also \lean{r}, is continuous.  
 
 \subsubsection {Properties of the retraction} \label{subsubsec:lean:skel:propertiesretraction}
-In this section we conclude the proof of the HEP for consecutive skeleta. For the proof via the retraction criterion we have to make a small adjustment to the map \lean{r}. As mentioned above, the desired retraction should have \lean{(skeletonLT X (m + 1)) × ℝ} as its domain, whereas \lean{r} is only defined on the unit interval in the second component. The easiest way to extend \lean{r} turned out to be precomposing the second coordinate with the map \lean{ProjIcc}, which was defined in the first file \lean{HEP_definition.lean}. The final definition therefore looks as follows. \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_skeleton.lean#L488}{\popout}
+In this section we conclude the proof of the HEP for consecutive skeleta. For the proof via the retraction criterion we have to make a small adjustment to the map \lean{r}. As mentioned above, the desired retraction should have \lean{(skeletonLT X (m + 1)) × ℝ} as its domain, whereas \lean{r} is only defined on the unit interval in the second component. The easiest way to extend \lean{r} turned out to be precomposing the second coordinate with the map \lean{ProjIcc}, which was defined in the first file \lean{HEP_definition.lean}. The final definition therefore looks as follows. \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_skeleton.lean#L539}{\popout}
 
 \begin{minted}{lean4}
 def retr_skeleton (m : ℕ) : (skeletonLT X (m + 1)) × ℝ → (skeletonLT X 
@@ -1106,7 +1106,7 @@ def retr_skeleton (m : ℕ) : (skeletonLT X (m + 1)) × ℝ → (skeletonLT X
 \end{minted}
 
 It only remains to show that \lean{retr_skeleton} is continuous, maps into the right set and fixes the points it has to fix. The continuity follows directly from all the work done before, and the claims about \lean{mapsTo} and \lean{fixesOn} are first proved for \lean{sumMap} and then transferred to \lean{retr_skeleton}. 
-Altogether this results in the following lemma. \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_skeleton.lean#L528}{\popout}
+Altogether this results in the following lemma. \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_skeleton.lean#L583}{\popout}
 
 \begin{minted}{lean4}
 lemma HEP'_skeleton (m : ℕ) : HEP' (skeletonLT X (m + 1)).carrier 
@@ -1120,7 +1120,7 @@ Note that although the statement is phrased in terms of \lean{HEP'}, since both 
 
 \subsection{HEP for finite dimensional relative CW-complexes} \label{subsec:lean:relCW}
 In this last part of the formalisation we arrive at the result that finite dimensional relative CW-complexes satisfy the HEP. As the mathematical chapter already showed, the finite dimensional case follows from what we have proved so far by a straightforward induction, whereas the general case requires considerably more work. Given the time available for this thesis, we had to stop at this point. \\
-We first run the induction over the skeleta, and then show that a finite dimensional complex is one of its own skeleta. In Lean the induction looks as follows. \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_relCW.lean#L26}{\popout} 
+We first run the induction over the skeleta, and then show that a finite dimensional complex is one of its own skeleta. In Lean the induction looks as follows. \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_relCW.lean#L46}{\popout} 
 
 \begin{minted}{lean4}
 lemma HEP_skelLT_base (m : ℕ) : HEP' (skeletonLT X m) C := by
@@ -1136,7 +1136,7 @@ lemma HEP_skelLT_base (m : ℕ) : HEP' (skeletonLT X m) C := by
 \end{minted}
 
 The base case is the lemma \lean{HEP_self}, which we proved at the very beginning, just after defining the HEP. Getting there requires rewriting with the fact that the base space is the same as the $(-1)$-skeleton. For the induction step we combine the induction hypothesis with the HEP for two consecutive skeleta via the transitivity lemma \lean{HEP_trans}. \\
-The corresponding statement for \lean{skeleton} then follows from the one for \lean{skeletonLT}, since \lean{skeleton X m} is by definition \lean{skeletonLT X (m+1)}. \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_relCW.lean#L37}{\popout} 
+The corresponding statement for \lean{skeleton} then follows from the one for \lean{skeletonLT}, since \lean{skeleton X m} is by definition \lean{skeletonLT X (m+1)}. \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_relCW.lean#L58}{\popout} 
 \begin{minted}{lean4}
 lemma HEP_skel_base (m : ℕ) : HEP' (skeleton X m) C := by
   rw [skeleton.congr_simp X m m rfl]
@@ -1146,14 +1146,14 @@ lemma HEP_skel_base (m : ℕ) : HEP' (skeleton X m) C := by
 % Throughout the project we worked with \lean{skeletonLT} rather than \lean{skeleton}, as recommended by Hannah Scholz, % Quelle hinzufügen
 % and derived the statement for \lean{skeleton} from it only at the end. As the induction above demonstrates, \lesn{skeletonLT} is particularly convenient here, because its calue at 0 is the base space, which one may think of as the $(-1)-$skeleton and which would otherwise be left out. \\
 
-It remains to show that for a finite dimensional complex there is an $m \in \mathbb{N}$ with \lean{X = skeletonLT X m}. This is the content of the following lemma. \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_relCW.lean#L72}{\popout}
+It remains to show that for a finite dimensional complex there is an $m \in \mathbb{N}$ with \lean{X = skeletonLT X m}. This is the content of the following lemma. \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_relCW.lean#L92}{\popout}
 \begin{minted}{lean4}
 lemma RelCWFinite_eq_SkelLT (hX : FiniteDimensional X) : ∃ (m : ℕ), 
   X = skeletonLT X m := by ...    
 \end{minted}
 The idea of the proof is simple. Being finite dimensional means that the index types of the cells are empty from some dimension $m$ on. The complex itself can be written as the union of the base space with all open cells, and in \lean{RelCW_eq_UnionSkelLtCell} we show that it can equally be written as the union of \lean{skeletonLT X m} with the open cells of dimension at least $m$. For the $m$ given by finite dimensionality the second part of this union is empty, which gives the claim.
 
-Putting the two steps together, the final proof is short. \href{https://github.com/marasilge/Bachelorarbeit/blob/b918ac6235de35aba40d4a7fa5debcd519f64fa7/Formalisation/HEP_relCW.lean#L85}{\popout}
+Putting the two steps together, the final proof is short. \href{https://github.com/marasilge/Bachelorarbeit/blob/5bf43fcb22ac750561a1ae22678b84e6c60381d3/Formalisation/HEP_relCW.lean#L106}{\popout}
 \begin{minted}{lean4}
 lemma HEP_RelCWFinite (hX : FiniteDimensional X) : HEP' X C := by
   obtain ⟨m, hm⟩ := RelCWFinite_eq_SkelLT X hX
